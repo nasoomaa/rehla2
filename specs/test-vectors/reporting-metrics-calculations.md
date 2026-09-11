@@ -11,13 +11,14 @@ This suite proves the mathematical precision, cohort evaluation, division-by-zer
 1. Timezone for all cohorts is strictly `Africa/Khartoum` (UTC+2).
 2. All monetary metrics are evaluated in integer minor units before formatting.
 3. Denominators equal to 0 must yield `0.00%` or `0` duration without exceptions.
-4. Ratios and percentages are calculated with exact floating precision and formatted to two decimal places.
+4. Ratios use exact integer/rational or decimal arithmetic and are rounded to two decimal places; binary floating point is forbidden.
+5. Every calculation supplies an explicit UTC `as_of` cutoff.
 
 ---
 
 ## 3. Fixed Benchmark Test Fixture
 
-The test dataset contains activity recorded for cohort date **`2026-09-11`** (`2026-09-10 22:00:00 UTC` to `2026-09-11 21:59:59 UTC`):
+The test dataset contains activity recorded for cohort date **`2026-09-11`** (`2026-09-10 22:00:00 UTC` to `2026-09-11 21:59:59.999999 UTC`) with **`as_of = 2026-09-11T22:00:00Z`**:
 
 ### 3.1 User Registrations:
 - User #101: `created_at = 2026-09-11 08:00:00 UTC`
@@ -66,10 +67,10 @@ The test dataset contains activity recorded for cohort date **`2026-09-11`** (`2
 | **M06** | Transfer Approval Ratio| `(Approved TopUps / Decided TopUps) * 100` | `(2 / 3) * 100` | `"66.67%"` |
 | **M07** | Orders Breakdown | Group by Service Name: Count & Value | UAE Visa: `2` (`50,000 SDG`)<br>Saudi Visa: `1` (`40,000 SDG`) | Breakdown Table |
 | **M08** | Fulfillment Duration | `Sum(completed - received) / Completed Execs` | `(8.0 + 6.0) / 2` | `"7.00 hours"` |
-| **M09** | Action Required Volume | `Executions that entered action_required` | `1` | `1` (`33.33%` of active executions) |
+| **M09** | Action Required Volume | Count of transitions into `action_required` in the window | `1` | `1` transition (`1` distinct execution) |
 | **M10** | Completed Orders Rate | `(Completed Executions / Total Executions) * 100` | `(2 / 3) * 100` | `"66.67%"` |
 | **M11** | Traveler Profile Reuse | `(Travelers with >1 order / Used Travelers) * 100`| Used: Travelers #1, #3 (2). With >1: Traveler #1 (1).<br>`(1 / 2) * 100` | `"50.00%"` |
-| **M12** | Customer Retention Rate| `(Customers with >1 order / Buyer Customers) * 100`| Buyers: User #101, #102 (2). With >1: User #101 (1).<br>`(1 / 2) * 100` | `"50.00%"` |
+| **M12** | Customer Repeat-Usage Proxy| `(Customers with >1 paid order / Buyer Customers) * 100` as of cutoff | Buyers: User #101, #102 (2). With >1: User #101 (1).<br>`(1 / 2) * 100` | `"50.00%"` |
 
 ---
 
@@ -83,4 +84,4 @@ The test dataset contains activity recorded for cohort date **`2026-09-11`** (`2
 | **ZER-04** | Fulfillment Duration | `0` (Hours) | `0` (Completed)| No executions completed today | `"0.00 hours"` |
 | **ZER-05** | Completed Orders Rate | `0` (Completed)| `0` (Total) | No orders active today | `"0.00%"` |
 | **ZER-06** | Traveler Reuse Rate | `0` (Reused) | `0` (Total Used)| No orders placed yet | `"0.00%"` |
-| **ZER-07** | Customer Retention Rate| `0` (Repeat) | `0` (Buyers) | No buyers registered yet | `"0.00%"` |
+| **ZER-07** | Customer Repeat-Usage Proxy| `0` (Repeat) | `0` (Buyers) | No buyers registered yet | `"0.00%"` |

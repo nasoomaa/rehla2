@@ -103,12 +103,13 @@ git commit -m "feat(wallet): add locked append-only wallet ledger"
 - Create: `packages/Rehla/TopUps/src/Actions/{CreateBankAccount,UpdateBankAccount,DeactivateBankAccount,SubmitTopUp}.php`
 - Create: `packages/Rehla/TopUps/src/Queries/{ListActiveBankAccounts,ListOwnedTopUps,GetTopUpForReview}.php`
 - Create: `packages/Rehla/TopUps/src/Support/NormalizeTransactionReference.php`
+- Create: `packages/Rehla/TopUps/src/Actions/{ReplaceTopUpReceipt,ConfigureMinimumTopUp}.php`
 - Test: `packages/Rehla/TopUps/tests/Feature/BankAccountTest.php`
 - Test: `packages/Rehla/TopUps/tests/Integration/SubmitTopUpTest.php`
 
 **Interfaces:**
 - Produces: `SubmitTopUp::handle(SubmitTopUpData): TopUpData`.
-- Consumes: `OwnedDocuments` للتحقق من receipt clean/owned/purpose=`top_up_receipt`.
+- Consumes: `OwnedDocuments` للتحقق من receipt clean/owned/classification=`bank_receipt`.
 
 - [ ] **Step 1: اكتب اختبار الإرسال والتفرد**
 
@@ -134,7 +135,8 @@ bank_accounts: id, bank_name_en/ar, beneficiary_name, account_number,
                logo_document_id, active, sort_order, created_by, timestamps
 top_up_settings: id singleton, minimum_amount_minor, updated_by, updated_at
 top_up_requests: id, account_id, wallet_id, bank_account_id, amount_minor,
-                 transaction_reference, normalized_reference, receipt_document_id,
+                 minimum_amount_minor_at_submission, transaction_reference,
+                 normalized_reference, receipt_document_id,
                  status, submitted_at, reviewed_by nullable, decided_at nullable,
                  rejection_reason nullable, credit_ledger_entry_id nullable, timestamps
 ```
@@ -143,7 +145,7 @@ top_up_requests: id, account_id, wallet_id, bank_account_id, amount_minor,
 
 - [ ] **Step 4: نفذ SubmitTopUp**
 
-تحقق من بنك active، والمبلغ `>=5000_00` أوالإعداد الحالي، والreceipt clean وowned، ثم أضف request بحالة `under_review` واربط المستند بـattach. تعطيل البنك يمنع الطلبات الجديدة ويترك التاريخ.
+اقفل إعداد الحد الأدنى الحالي (قيمته الأولية `5000_00`) واحفظه مع الطلب، ثم تحقق من بنك active والمبلغ والreceipt clean/owned وأضف request بحالة `under_review`. ينفذ `ConfigureMinimumTopUp` بقدرة `topups.settings.manage` وMFA وAudit. يسمح `ReplaceTopUpReceipt` للمالك باستبدال receipt نظيف داخل الطلب نفسه ما دام `under_review` مع Audit للقديم والجديد؛ لا يغير البنك أو المرجع ولا يسمح بعد القرار. تعطيل البنك يمنع الطلبات الجديدة ويترك التاريخ.
 
 Run: `php artisan test packages/Rehla/TopUps/tests`
 

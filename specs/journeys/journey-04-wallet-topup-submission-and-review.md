@@ -132,7 +132,7 @@ Customer navigates to `/account/wallet` and clicks **"Top Up Balance"**.
    - Wallet balance is NOT modified (remains `0.00 SDG`).
    - Ledger is untouched (no debit or credit recorded).
    - Appends to `audit_entries`.
-   - Enqueues `TopUpRejected` notification.
+   - Creates the in-app rejection notification atomically and enqueues external-channel delivery when enabled.
    - Commits transaction.
 5. Customer receives alert: `"Your top-up request of 50,000.00 SDG was rejected. Reason: Funds not received in platform account."`
 
@@ -143,8 +143,7 @@ Customer navigates to `/account/wallet` and clicks **"Top Up Balance"**.
 ### Path 4F-1: Amount Below Minimum Threshold
 1. Customer enters amount `4,000.00 SDG` (`400,000` minor units).
 2. Validation check detects `amount_minor < 500,000`.
-3. System halts with HTTP 422 `top_up.below_minimum`:
-   `"The minimum top-up amount is 5,000 SDG."`
+3. System halts with HTTP 422 `top_up.below_minimum`, includes current `minimum_amount_minor = 500000`, and displays `"The minimum top-up amount is 5,000 SDG."` for this initial-setting example.
 
 ### Path 4F-2: Reused Bank Transaction Reference Number
 1. Customer (or another user) enters transaction reference `"TXN-987654321"` for Bank of Khartoum that was previously submitted.

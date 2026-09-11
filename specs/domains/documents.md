@@ -53,12 +53,13 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
         ▼
    Pending Scan
         │
-        └──► Quarantined ──► Clean
-                              OR Rejected (Retained 30 days for audit)
-               │
-               ├──► Attached (Permanently retained with Order/TopUp)
-               │
-               └──► Unattached (Pruned after 24 hours)
+        ▼
+   Quarantined ─────────────► Rejected (Retained 30 days for audit)
+        │
+        ▼
+      Clean ──► Attached (Follows parent retention; never orphan-pruned)
+        │
+        └─────► Unattached (Pruned after 24 hours)
 ```
 
 - **Pending Scan**: File has landed in private staging storage; scanning and magic byte verification in progress.
@@ -89,7 +90,7 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
   - Magic bytes inspected: verifies file header matches declared extension.
   - Image decodability checked (verifies image headers and pixel streams).
   - Malware engine signature scan executed.
-  - Status transitioned to `clean` or `rejected`.
+  - Status first transitions to `quarantined` while deep inspection runs, then to exactly one terminal scan result: `clean` or `rejected`.
 - **Observable Behavior**: Document status updated in database. If rejected, reason is logged to audit trail.
 
 ### 6.3 AttachDocumentsToEntity (System Command)
@@ -118,7 +119,7 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
    - PDF: First 4 bytes must be `%PDF` (`0x25 0x50 0x44 0x46`).
    - JPEG: First 3 bytes must be `0xFF 0xD8 0xFF`.
    - PNG: First 8 bytes must be `0x89 0x50 0x4E 0x47 0x0D 0x0A 0x1A 0x0A`.
-   Any mismatch between declared MIME type and magic bytes triggers immediate transition to `rejected`.
+   Any mismatch between declared MIME type and magic bytes records a rejection reason and completes the quarantine pipeline as `rejected`.
 2. **Race Condition Protection**: Attachment locks the document record with `SELECT FOR UPDATE` within the checkout transaction. The orphan pruning job checks attachment status within a transaction, preventing a file verified during checkout from being purged mid-flight.
 
 ---

@@ -54,8 +54,8 @@ Fulfillment Officer claims execution `exec-9988` from the operational fulfillmen
    - Inserts open record into `customer_action_requests`.
    - Transitions `service_executions.status = 'action_required'`.
    - Appends status history entry and writes to `audit_entries`.
-   - Enqueues `CustomerActionRequested` event to Outbox.
-   - Outbox worker dispatches in-app notification:
+   - Creates the in-app request atomically and enqueues external delivery when enabled.
+   - The customer sees the in-app notification:
      `"Action required for order ORD-202609-1001: The uploaded personal photo has a dark background..."`
 
 ---
@@ -79,7 +79,7 @@ Fulfillment Officer claims execution `exec-9988` from the operational fulfillmen
    - Transitions `service_executions.status = 'action_received'`.
    - Marks document `doc-photo-clear-102` as `attached`.
    - Appends status history entry (`action_required -> action_received`).
-   - Dispatches `CustomerActionReceived` event to Outbox.
+   - Creates the in-app acknowledgement atomically and enqueues external delivery when enabled.
    - Customer interface displays: `"Requested Action Received. Our team is processing your order."`
 
 ---
@@ -102,7 +102,7 @@ Fulfillment Officer claims execution `exec-9988` from the operational fulfillmen
       - `completed_at = NOW()`
     - Appends final status history entry (`completed`).
     - Appends audit log entry.
-    - Enqueues `ExecutionCompleted` notification to Outbox.
+    - Creates the in-app completion notification atomically and enqueues external-channel delivery when enabled.
 14. **Customer receives final delivery**:
     - Customer receives notification: `"Your order ORD-202609-1001 is complete! Your UAE Visa is ready for download."`
     - Customer opens `/account/orders/ORD-202609-1001`.

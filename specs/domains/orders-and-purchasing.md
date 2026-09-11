@@ -150,5 +150,5 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
 - **Documents**: Attachment and verification of clean status.
 - **Wallet**: Atomic debiting and ledger synchronization.
 - **Fulfillment**: Spawns independent operational fulfillment record.
-- **Notifications**: Enqueues `OrderSubmitted` event to Outbox.
+- **Notifications**: Creates the in-app confirmation atomically and queues enabled external channels through Outbox.
 - **Audit**: Log entry recorded for commercial purchase transaction.

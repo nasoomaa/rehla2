@@ -162,18 +162,23 @@ git commit -m "feat(purchasing): define purchase contracts and idempotency"
 
 ```php
 dataset('allowed execution transitions', [
-    ['order_received', 'under_review'],
-    ['order_received', 'cancelled'],
-    ['under_review', 'in_processing'],
-    ['under_review', 'customer_action_required'],
+    ['received', 'under_review'],
+    ['received', 'processing'],
+    ['received', 'cancelled'],
+    ['under_review', 'processing'],
+    ['processing', 'under_review'],
+    ['under_review', 'action_required'],
     ['under_review', 'cancelled'],
-    ['in_processing', 'customer_action_required'],
-    ['in_processing', 'completed'],
-    ['in_processing', 'cancelled'],
-    ['customer_action_required', 'requested_action_received'],
-    ['customer_action_required', 'cancelled'],
-    ['requested_action_received', 'in_processing'],
-    ['requested_action_received', 'cancelled'],
+    ['processing', 'action_required'],
+    ['processing', 'completed'],
+    ['processing', 'cancelled'],
+    ['action_required', 'action_received'],
+    ['action_required', 'cancelled'],
+    ['action_received', 'under_review'],
+    ['action_received', 'processing'],
+    ['action_received', 'completed'],
+    ['action_received', 'cancelled'],
+    ['under_review', 'completed'],
 ]);
 
 it('allows only the declared transition graph', function (string $from, string $to): void {
@@ -191,7 +196,8 @@ Expected: FAIL قبل state machine.
 
 ```text
 service_executions: id, order_id unique, account_id, traveler_id, service_id,
-                    form_version_id, status, last_status_at, created_at, updated_at
+                    form_version_id, fulfillment_policy_version_id,
+                    status, last_status_at, created_at, updated_at
 execution_status_history: id, execution_id, from_status nullable, to_status,
                           actor_type, actor_id, reason nullable, created_at
 execution_internal_notes: id, execution_id, staff_id, body, created_at
@@ -211,11 +217,11 @@ $this->app->bind(
 );
 ```
 
-يضيف الإنشاء `order_received` وhistory في معاملة المستدعي بلا commit. يسجل Transition Audit وOutbox. إلغاء Execution لا يستدعي Wallet ولاينشئ refund.
+أضف fulfillment policy بإصدارات draft/published غير قابلة للتعديل بعد النشر وفق `specs/contracts/service-fulfillment-sop.md`. يضيف الإنشاء `received` ونسخة policy وhistory في معاملة المستدعي بلا commit. يسجل Transition Audit والإشعار الذري وOutbox للقنوات الخارجية. إلغاء Execution لا يستدعي Wallet ولاينشئ refund.
 
 - [ ] **Step 5: اختبر الصلاحيات والتاريخ**
 
-اختبر منع الانتقال غير المسموح، ومنع موظف بلا`executions.manage`، ومنع transition بعد completed/cancelled، وحماية history عبر SQL.
+اختبر منع الانتقال غير المسموح في policy الملتقطة، ومنع موظف بلا`executions.transition`، ومنع transition بعد completed/cancelled، وحماية history عبر SQL، وبقاء execution القديم على policy القديمة بعد نشر نسخة أحدث.
 
 Run: `php artisan test packages/Rehla/Fulfillment/tests`
 
@@ -239,7 +245,7 @@ git commit -m "feat(fulfillment): add execution lifecycle and history"
 
 **Interfaces:**
 - Consumes: `OwnedDocuments` عندما يطلب الإجراء وثيقة.
-- Produces: response مرتبطة بطلب مفتوح ثم transition إلى`requested_action_received`.
+- Produces: response مرتبطة بطلب مفتوح ثم transition إلى`action_received`.
 
 - [ ] **Step 1: اكتب اختبار الملكية والاستجابة**
 
@@ -283,14 +289,14 @@ git commit -m "feat(fulfillment): add customer action responses"
 
 **Files:**
 - Create: `packages/Rehla/Purchasing/src/Actions/SubmitOrder.php`
-- Create: `packages/Rehla/Purchasing/src/Exceptions/{PriceChanged,FormVersionChanged,IdempotencyKeyReused,OperationInProgress}.php`
+- Create: `packages/Rehla/Purchasing/src/Exceptions/{PriceChanged,FormVersionChanged,FulfillmentPolicyMissing,IdempotencyKeyReused,OperationInProgress}.php`
 - Modify: `packages/Rehla/Purchasing/src/PurchasingServiceProvider.php`
 - Test: `packages/Rehla/Purchasing/tests/Integration/SubmitOrderTest.php`
 - Test: `packages/Rehla/Purchasing/tests/Integration/SubmitOrderConcurrencyTest.php`
 - Test: `packages/Rehla/Purchasing/tests/Integration/SubmitOrderRollbackTest.php`
 
 **Interfaces:**
-- Consumes: `ServiceCatalog::currentQuote`, `GetPublishedForm::handle`, `FormSubmissionValidator::validate`, `GetOwnedTravelerSnapshot::handle`, `OwnedDocuments::assertCleanOwned`, `WalletDebitor::debit`, `OrderWriter::createPaid`, `ExecutionCreator::create`, `AuditWriter::append`, `OutboxWriter::append`.
+- Consumes: locked `ServiceCatalog::currentQuote`, `GetPublishedForm::handle`, `GetPublishedFulfillmentPolicy::handle`, `FormSubmissionValidator::validate`, `GetOwnedTravelerSnapshot::handle`, `OwnedDocuments::assertCleanOwned`, `WalletDebitor::debit`, `OrderWriter::createPaid`, `ExecutionCreator::create`, `AuditWriter::append`, `CreateInAppNotification`, `OutboxWriter::append`.
 - Produces: `SubmitOrder::handle(SubmitOrderData): SubmitOrderResult`.
 
 - [ ] **Step 1: اكتب happy-path atomic contract**
@@ -324,18 +330,20 @@ return DB::transaction(function () use ($data, $fingerprint): SubmitOrderResult 
 
     $quote = $this->catalog->currentQuote($data->serviceId);
     $form = $this->forms->handle($data->serviceId);
+    $policy = $this->fulfillmentPolicies->handle($data->serviceId);
     $traveler = $this->travelers->handle($data->accountId, $data->travelerId);
     $submission = $this->validator->validate($form->id, $data->answers, $data->documentIds);
-    $debit = $this->wallet->debit(DebitWalletData::forPurchase($data, $quote));
-    $order = $this->orders->createPaid(CreatePaidOrderData::from($data, $quote, $form, $traveler, $submission, $debit));
-    $execution = $this->executions->create(CreateExecutionData::from($order, $form, $submission));
+    $orderId = $this->orders->nextId();
+    $debit = $this->wallet->debit(DebitWalletData::forPurchase($orderId, $data, $quote));
+    $order = $this->orders->createPaid(CreatePaidOrderData::from($orderId, $data, $quote, $form, $policy, $traveler, $submission, $debit));
+    $execution = $this->executions->create(CreateExecutionData::from($order, $form, $policy, $submission));
     $this->audit->append(AppendAuditData::orderSubmitted($data, $order, $execution));
     $this->outbox->append(OutboxMessageData::orderSubmitted($order, $execution));
     return $this->attempts->complete($attempt, SubmitOrderResult::from($order, $execution));
 }, attempts: 3);
 ```
 
-قبل debit تحقق من `available=true`, `accepted_price_minor===quote.priceMinor`, `accepted_price_version===quote.version`, و`form_version_id===published.id`. لا تنفذ external IO داخل closure.
+اكتسب الأقفال بالترتيب: purchase attempt، service/current price، published form، published fulfillment policy، traveler، documents مرتبة، wallet. تشمل fingerprint السعر وإصداره والنموذج والإجابات المرتبة ومعرفات المستندات. قبل debit تحقق من `available=true`, `accepted_price_minor===quote.priceMinor`, `accepted_price_version===quote.version`, و`form_version_id===published.id` ووجود policy منشورة. لا تنفذ external IO داخل closure.
 
 - [ ] **Step 4: اختبر claims ورسائل الأخطاء**
 

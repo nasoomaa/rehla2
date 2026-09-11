@@ -35,7 +35,7 @@
 
 **Interfaces:**
 - Produces: `RegisterCustomer::handle(RegisterCustomerData): UserData`; `AuthorizesActor::allows(ActorData, AbilityName, ?ResourceRef): bool`.
-- Produces abilities: `services.manage`, `forms.manage`, `customers.view`, `travelers.view`, `wallets.view`, `bank_accounts.manage`, `topups.review`, `orders.view`, `executions.manage`, `documents.view`, `content.manage`, `notifications.manage`, `roles.manage`, `audit.view`, `reporting.view`.
+- Produces the exact canonical registry in `specs/cross-cutting/security-and-privacy.md`; tests reject every undeclared alias.
 
 - [ ] **Step 1: اكتب اختبارات التسجيل والمنع الافتراضي**
 
@@ -69,7 +69,7 @@ interface AuthorizesActor
 
 - [ ] **Step 4: أثبت عزل customer/admin guards وMFA policy**
 
-اختبر أن customer session لا تدخل `/admin`، وأن staff بلا قدرة يحصل على403، وأن قدرات `topups.review`, `roles.manage`, `audit.view` تتطلب `mfa_confirmed_at` حديثة وفق نافذة12ساعة.
+اختبر أن customer session لا تدخل `/admin`، وأن staff بلا قدرة يحصل على403، وأن قدرات `topups.review`, `topups.settings.manage`, `access.manage`, `audit.view` تتطلب `mfa_confirmed_at` حديثة وفق نافذة أربع ساعات.
 
 Run: `php artisan test packages/Rehla/Identity/tests`
 
@@ -268,6 +268,7 @@ git commit -m "feat(travelers): add owned traveler profiles and passport uniquen
 - Create: `packages/Rehla/Notifications/src/Models/{OutboxMessage,Notification}.php`
 - Test: `packages/Rehla/Notifications/tests/Integration/OutboxTransactionTest.php`
 - Test: `packages/Rehla/Notifications/tests/Integration/OutboxLeaseTest.php`
+- Test: `packages/Rehla/Notifications/tests/Feature/InAppNotificationTest.php`
 
 **Interfaces:**
 - Produces: `OutboxWriter::append(OutboxMessageData): string` يعمل على اتصال ومعاملة المستدعي.
@@ -286,6 +287,11 @@ it('rolls back outbox with the business transaction', function (): void {
 
     expect(DB::table('outbox_messages')->count())->toBe(0);
 });
+
+it('commits the in-app notification with its business event', function (): void {
+    createBusinessEventAndNotification();
+    expect(DB::table('notifications')->count())->toBe(1);
+});
 ```
 
 - [ ] **Step 2: شغل RED**
@@ -296,11 +302,11 @@ Expected: FAIL قبل schema.
 
 - [ ] **Step 3: نفذ outbox schema وclaim**
 
-أنشئ `outbox_messages(id, event_name, aggregate_type, aggregate_id, payload_version, payload jsonb, deduplication_key unique, available_at, locked_at, locked_by, attempts default0, delivered_at, last_error, created_at)` و`notifications(id, user_id, type, payload, read_at, created_at)`. يستخدم claim معاملة قصيرة و`FOR UPDATE SKIP LOCKED`، ويعيد السجلات التي انتهت lease مدتها5دقائق.
+أنشئ `outbox_messages(id, event_name, aggregate_type, aggregate_id, payload_version, payload jsonb, deduplication_key unique, available_at, locked_at, locked_by, lock_token, lease_expires_at, attempts default0, delivered_at, last_error, last_trace_id, created_at)` و`notifications(id, user_id, type, payload, read_at, created_at)`. ينشأ in-app notification مع العملية، ويستخدم claim معاملة قصيرة و`FOR UPDATE SKIP LOCKED` ويولد token جديدًا عند كل claim أو استعادة lease منتهية.
 
 - [ ] **Step 4: أثبت التنافس والاسترداد**
 
-باستخدام اتصالين، توقع ألا يطالب عاملان بالسجل نفسه. قدم clock بعد6دقائق وتوقع أن يعاد claim لسجل عامل مات. اجعل `MarkFailed` يزيد attempts وينقل الرسالة إلى dead-letter logic بعد10محاولات دون حذفها.
+باستخدام اتصالين، توقع ألا يطالب عاملان بالسجل نفسه. قدم clock بعد انتهاء lease وتوقع claim جديدًا وtoken مختلفًا، ثم أثبت أن العامل القديم لا يستطيع MarkDelivered أو MarkFailed. ينقل الفشل الخامس الرسالة إلى dead-letter دون حذفها، ويحفظ error منظفًا وtrace ID فقط.
 
 Run: `php artisan test packages/Rehla/Notifications/tests`
 

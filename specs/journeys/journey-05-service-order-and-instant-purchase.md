@@ -179,7 +179,7 @@ Customer clicks **"Order Now"** on the service details page for "UAE 30-Day Tour
 - **Documents**: Attachment of uploaded photo.
 - **Wallet**: Atomic debit and ledger recording.
 - **Fulfillment**: Execution case instantiation.
-- **Notifications**: Outbox event creation.
+- **Notifications**: Atomic in-app confirmation and Outbox delivery for enabled external channels.
 - **Audit**: Immutable audit entry.
 
 ---

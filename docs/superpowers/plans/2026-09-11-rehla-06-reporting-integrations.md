@@ -91,35 +91,31 @@ git add packages/Rehla/Reporting docs/requirements/rehla-phase-1-acceptance.csv 
 git commit -m "feat(reporting): add twelve phase-one product metrics"
 ```
 
-### Task 2: Outbox Worker, In-app Projector and Dead Letters
+### Task 2: Outbox Worker, External Delivery and Dead Letters
 
 **Files:**
 - Create: `packages/Rehla/Notifications/src/Jobs/DeliverOutboxMessage.php`
-- Create: `packages/Rehla/Notifications/src/Listeners/InAppNotificationProjector.php`
 - Create: `packages/Rehla/Notifications/src/Console/{RunOutboxWorker,ReplayDeadLetter}.php`
 - Create: `packages/Rehla/Notifications/src/Contracts/NotificationChannel.php`
 - Create: `packages/Rehla/Notifications/src/Data/DeliveryResult.php`
 - Modify: `routes/console.php`
 - Test: `packages/Rehla/Notifications/tests/Integration/OutboxWorkerTest.php`
-- Test: `packages/Rehla/Notifications/tests/Feature/InAppNotificationTest.php`
 
 **Interfaces:**
 - Consumes: claimed `OutboxEnvelope`.
-- Produces: notification واحدة لكل `(user_id,outbox_message_id,channel)` وdelivery result مدقق.
+- Produces: external delivery واحدة منطقيًا لكل `(recipient,outbox_message_id,channel)` عندما يدعم المزود deduplication، وdelivery result مسيج بـlock token ومدقق. إشعار in-app سبق إنشاؤه ذريًا مع العملية.
 
 - [ ] **Step 1: اكتب اختبار الموت وإعادة التشغيل**
 
 ```php
-it('recovers a message after a worker dies and projects it once', function (): void {
+it('fences a stale worker after another worker reclaims the message', function (): void {
     $message = pendingOutbox('order.submitted');
-    claimAs('dead-worker', $message, now());
+    $oldToken = claimAs('dead-worker', $message, now())->lockToken;
     travel(6)->minutes();
-    runOutboxWorker('replacement-worker');
+    $newToken = claimAs('replacement-worker', $message, now())->lockToken;
 
-    expect(notificationFor($message))->toHaveCount(1)
-        ->and(outbox($message)->delivered_at)->not->toBeNull();
-    runOutboxWorker('replacement-worker');
-    expect(notificationFor($message))->toHaveCount(1);
+    expect(markDelivered('dead-worker', $oldToken, $message))->toBeFalse()
+        ->and(markDelivered('replacement-worker', $newToken, $message))->toBeTrue();
 });
 ```
 
@@ -127,15 +123,15 @@ it('recovers a message after a worker dies and projects it once', function (): v
 
 Run: `php artisan test packages/Rehla/Notifications/tests/Integration/OutboxWorkerTest.php`
 
-Expected: FAIL قبل worker/projector.
+Expected: FAIL قبل worker وسياج lease.
 
 - [ ] **Step 3: نفذ dispatch والتسليم**
 
-يعمل command كل دقيقة، يطالب100 رسالة، ويدفع Job لكل واحدة. يسجل projector notification للمستخدم المستهدف عبر unique `(user_id,outbox_message_id,channel)`. بعد نجاح كل القنوات المطلوبة ينفذ `MarkDelivered`; عند الفشل يسجل error منظفًا ويحسب exponential backoff بحد60دقيقة.
+يعمل command كل دقيقة، يطالب100 رسالة، ويولد `lock_token` و`lease_expires_at` ثم يدفع Job لكل واحدة. بعد نجاح القنوات المطلوبة ينفذ `MarkDelivered(id, worker_id, lock_token)`؛ وعند الفشل ينفذ `MarkFailed` بالسياج نفسه ويسجل error منظفًا وtrace ID ويحسب exponential backoff بحد60دقيقة. تحديث صفر صف يعني فقدان lease ويلزم تجاهل نتيجة العامل القديم.
 
 - [ ] **Step 4: نفذ dead-letter replay المدقق**
 
-ينقل `attempts>=10` منطقيًا إلى dead-letter بحقل `dead_lettered_at`. يتطلب `rehla:outbox-replay {id} --reason=` سببًا غير فارغ وقدرة `notifications.manage`، ويمسح lock/delivered/dead-letter fields ويكتب Audit، ولا يغير payload.
+ينقل الفشل في المحاولة الخامسة إلى dead-letter بحقل `dead_lettered_at`. يتطلب `rehla:outbox-replay {id} --reason=` سببًا غير فارغ وقدرة `notifications.replay`، ويمسح حقول claim/delivery/dead-letter ويكتب Audit، ولا يغير payload.
 
 Run: `php artisan test packages/Rehla/Notifications/tests`
 
@@ -203,4 +199,3 @@ Expected: PASS للمؤشرات وOutbox والتكاملات.
 git add packages/Rehla/Integrations config/rehla-integrations.php docs/requirements/rehla-phase-1-acceptance.csv
 git commit -m "feat(integrations): add side-effect-free WhatsApp inquiries"
 ```
-

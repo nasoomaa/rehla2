@@ -2,7 +2,7 @@
 
 ## 1. Purpose
 
-The Reporting and Analytics domain computes and presents the 12 core platform business metrics defined in Section 62 of the Rehla Product Concept. It acts strictly as a read model consumer, aggregating transactional source data across domains to evaluate operational velocity, financial throughput, review turnaround, and customer retention.
+The Reporting and Analytics domain computes and presents the 12 core platform business metrics defined in Section 62 of the Rehla Product Concept. It acts strictly as a read model consumer, aggregating transactional source data across domains to evaluate operational velocity, financial throughput, review turnaround, and repeat usage.
 
 ---
 

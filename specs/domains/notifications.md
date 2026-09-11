@@ -2,14 +2,14 @@
 
 ## 1. Purpose
 
-The Notifications and Outbox domain manages customer communication, in-app notification tracking, and reliable asynchronous event dispatching. It implements the Transactional Outbox pattern to guarantee that notification events are captured atomically with business database transactions, preventing lost events while isolating business workflows from external network latencies and channel failures.
+The Notifications and Outbox domain manages customer communication, atomic in-app notification records, and reliable asynchronous external-channel dispatch. It uses a Transactional Outbox for external delivery while keeping business workflows isolated from network latency and channel failure.
 
 ---
 
 ## 2. Actors
 
 - **Customer**: Views in-app notification list, unread notification counter, and marks notifications as read.
-- **System (Transactional Outbox)**: Atomically writes notification payloads to the Outbox table during business transactions.
+- **System**: Atomically writes the in-app notification and any required external-channel Outbox payload during the business transaction.
 - **Background Worker**: Polls the Outbox table, claims batches using pessimistic locks, dispatches messages to delivery channels, and records delivery status.
 
 ---
@@ -31,7 +31,7 @@ The Notifications and Outbox domain manages customer communication, in-app notif
   - Event Name.
   - Payload Version.
   - Payload (JSON).
-  - Deduplication Key (unique string preventing duplicate external sends).
+  - Deduplication Key (deterministic unique string supporting duplicate suppression).
   - Status (`available`, `locked`, `delivered`, `dead_letter`).
   - Available At (timestamp for scheduled/retry execution).
   - Locked At (timestamp when worker claimed message).
@@ -46,7 +46,7 @@ The Notifications and Outbox domain manages customer communication, in-app notif
 
 ## 4. Invariants
 
-1. **Transactional Outbox Atomic Write**: Whenever a business event produces a notification, the Outbox record must be inserted inside the exact same database transaction as the business state change.
+1. **Atomic Notification Write**: The in-app record and every required external-channel Outbox record are inserted in the same transaction as the business state change. If no external channel is enabled, no redundant Outbox row is required.
 2. **Zero External I/O Inside Business Transactions**: No external network calls (SMS APIs, email gateways, WhatsApp webhooks) may ever be executed inside a database transaction.
 3. **At-Least-Once Delivery**: All outbox messages are guaranteed to be attempted at least once. If an external channel fails, the message remains in the outbox for exponential backoff retries.
 4. **Deduplication Idempotency**: Every outbox message possesses a deterministic unique `deduplication_key`. Adapters should use it when supported, but at-least-once delivery still permits duplicates after an ambiguous provider response.
@@ -86,19 +86,19 @@ The Notifications and Outbox domain manages customer communication, in-app notif
 
 ## 6. Commands and Actions
 
-### 6.1 AppendOutboxMessage (Internal System Contract)
+### 6.1 RecordNotificationEvent (Internal System Contract)
 - **Preconditions**: Called within an enclosing database transaction by a business domain.
 - **Inputs**: Event Name, Deduplication Key, Recipient Account ID, In-App Data (Title EN/AR, Body EN/AR, Link), External Dispatch Data (channel targets).
 - **Expected Outcome**:
   - Inserts record into `in_app_notifications` table with status `unread`.
-  - Inserts record into `outbox_messages` table with status `available`.
+  - Inserts an `outbox_messages` row with status `available` for each enabled asynchronous external channel.
 - **Observable Behavior**: In-app notification immediately becomes visible as soon as the enclosing transaction commits.
 
 ### 6.2 ClaimOutboxBatch (Worker Action)
 - **Preconditions**: Executed by background queue worker.
 - **Inputs**: Batch Size (e.g. 50), Worker ID, Lease Duration (e.g. 60 seconds).
 - **Expected Outcome**:
-  - Queries `outbox_messages` where `status = 'available'` AND `available_at <= NOW()` ORDER BY `id` ASC LIMIT `batch_size` FOR UPDATE SKIP LOCKED.
+  - Queries eligible rows where `(status = 'available' AND available_at <= NOW()) OR (status = 'locked' AND lease_expires_at <= NOW())`, ordered by ID with the batch limit and `FOR UPDATE SKIP LOCKED`.
   - Claims available or expired rows and updates each with `status = 'locked'`, `locked_at = NOW()`, `locked_by = worker_id`, a fresh random `lock_token`, `lease_expires_at`, and `attempts = attempts + 1`.
 - **Observable Behavior**: Locks batch safely across multiple concurrent worker processes without row contention.
 
@@ -158,7 +158,7 @@ The Notifications and Outbox domain manages customer communication, in-app notif
 ## 10. Cross-Domain Interactions
 
 - **Identity Domain**: Listens for `CustomerRegistered` to send welcome messages.
-- **Top-Ups Domain**: Approval/rejection actions enqueue outbox notifications.
-- **Orders Domain**: Purchase submission enqueues confirmation outbox notification.
-- **Fulfillment Domain**: Every status transition and customer action request enqueues an outbox notification.
+- **Top-Ups Domain**: Approval/rejection actions create atomic in-app records and required external deliveries.
+- **Orders Domain**: Purchase submission creates its in-app confirmation and required external deliveries.
+- **Fulfillment Domain**: Status transitions and customer action requests create in-app records and required external deliveries.
 - **Audit Domain**: Dead-letter occurrences and worker anomalies write to the audit log.

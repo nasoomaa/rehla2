@@ -33,7 +33,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
     "errors": {
       "answers.mother_name": ["The mother name field is required."]
     },
-    "trace_id": "req-8f4b2a9e-10c3"
+    "correlation_id": "req-8f4b2a9e-10c3"
   }
   ```
 
@@ -121,7 +121,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
     "service_id": "svc_1",
     "price_version_id": "price_7",
     "form_version_id": "form_4",
-    "schema_checksum": "sha256:7f83b1657ff1fc...",
+    "schema_checksum": "sha256:fca3367c3c2678e6e63c8d144235c66ede00fd00495a68927c920522aa1386fc",
     "fields": [
       {
         "key": "mother_name",

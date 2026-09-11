@@ -612,7 +612,7 @@ CustomerActionRequested
 ExecutionCompleted
 ```
 
-الحدث المطلوب للتسليم يكتب إلى Outbox داخل معاملة العملية. يحتوي السجل على `available_at`, `locked_at`, `locked_by`, `attempts`, `delivered_at`, `deduplication_key` وpayload version. يطالب العامل بدفعة عبر `FOR UPDATE SKIP LOCKED` أو آلية مكافئة، ويعيد السجل بعد انتهاء lease لعامل مات. بعد حد المحاولات ينتقل إلى dead-letter مع مسار replay يدوي مدقق.
+ينشأ إشعار in-app داخل معاملة العملية، ويكتب حدث القنوات الخارجية المطلوبة إلى Outbox في المعاملة نفسها. يحتوي سجل Outbox على `available_at`, `locked_at`, `locked_by`, `lock_token`, `lease_expires_at`, `attempts`, `delivered_at`, `deduplication_key` وpayload version. يطالب العامل بدفعة عبر `FOR UPDATE SKIP LOCKED` أو آلية مكافئة ويولد token جديدًا لكل lease. لا يقبل `MarkDelivered` أو `MarkFailed` إلا `(id, worker_id, lock_token)` الحالي؛ لذلك لا يستطيع العامل القديم اعتماد نتيجة بعد إعادة المطالبة. الحد الابتدائي خمس محاولات، ثم dead-letter مع replay يدوي مدقق.
 
 التسليم **at-least-once**؛ لا ندعي exactly-once مع مزود خارجي. يمنع deduplication تكرار الأثر الذي نستطيع التحكم به، ويحمل الطلب الخارجي مفتاح idempotency إن دعمه المزود. wake-up للعامل يحدث بعد commit، وتبقى polling recovery وسيلة الاستعادة إذا ضاعت إشارة wake-up.
 

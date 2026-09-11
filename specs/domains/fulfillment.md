@@ -114,7 +114,7 @@ The Fulfillment and Service Execution domain owns the operational processing lif
   - Updates status and `updated_at`.
   - Appends record to `ExecutionStatusHistory`.
   - Appends entry to Audit log.
-  - Dispatches `ExecutionStatusChanged` notification to Outbox.
+  - Creates the in-app update and appends external-channel delivery to Outbox.
 - **Observable Behavior**: Immediate update of execution status on customer portal; customer receives notification.
 - **Failure Behavior**: Invalid transition returns HTTP 422 with code `execution.invalid_transition`.
 
@@ -124,7 +124,7 @@ The Fulfillment and Service Execution domain owns the operational processing lif
 - **Expected Outcome**:
   - Creates open `CustomerActionRequest`.
   - Transitions execution status to `action_required`.
-  - Dispatches `CustomerActionRequested` notification to Outbox.
+  - Creates the in-app request and appends external-channel delivery to Outbox.
 - **Observable Behavior**: Order card on customer dashboard prominently displays "Action Required From You" with staff instructions.
 
 ### 6.4 SubmitCustomerActionResponse (Customer Command)
@@ -133,7 +133,7 @@ The Fulfillment and Service Execution domain owns the operational processing lif
 - **Expected Outcome**:
   - Marks `CustomerActionRequest` as `resolved`.
   - Transitions execution status to `action_received`.
-  - Dispatches `CustomerActionReceived` notification to Outbox.
+  - Creates the in-app acknowledgement and appends external-channel delivery to Outbox.
 - **Observable Behavior**: Status immediately reflects "Requested Action Received"; fulfillment staff queue alerted.
 - **Authorization**: Scoped to owning customer.
 
@@ -143,8 +143,8 @@ The Fulfillment and Service Execution domain owns the operational processing lif
 - **Expected Outcome**:
   - Links issued document to execution.
   - Transitions status to `completed`.
-  - Dispatches `ExecutionCompleted` notification to Outbox.
-- **Observable Behavior**: Customer receives completion alert; customer can download issued visa PDF. Order marked "Completed".
+  - Creates the in-app completion and appends external-channel delivery to Outbox.
+- **Observable Behavior**: Customer receives a completion alert and can request the issued visa PDF. The execution is displayed as "Completed" while the Commercial Order remains `paid`.
 
 ### 6.6 CancelExecution (Staff Command)
 - **Preconditions**: Staff has `executions.transition`; execution is not in a terminal state (`completed` or `cancelled`).
@@ -152,7 +152,7 @@ The Fulfillment and Service Execution domain owns the operational processing lif
 - **Expected Outcome**:
   - Status transitioned to `cancelled`.
   - Appends audit log entry with staff ID and cancellation rationale.
-  - Dispatches `ExecutionCancelled` notification to Outbox.
+  - Creates the in-app cancellation and appends external-channel delivery to Outbox.
   - Wallet balance is not modified; this specification makes no assumption about a separate refund or compensation process.
 - **Validation Rules**: Cancellation reason mandatory (min 15 chars).
 
@@ -193,5 +193,5 @@ The Fulfillment and Service Execution domain owns the operational processing lif
 
 - **Orders & Purchasing Domain**: Orders instantiate execution records with the immutable fulfillment-policy version captured at checkout.
 - **Documents Domain**: Application attachments, customer response files, and final issued visas are stored and verified clean via Documents.
-- **Notifications Domain**: Every status change emits an Outbox event for customer notification.
+- **Notifications Domain**: Every customer-visible status change creates an atomic in-app record and queues enabled external channels through Outbox.
 - **Audit Domain**: Every operational status transition, note addition, and cancellation reason is recorded.

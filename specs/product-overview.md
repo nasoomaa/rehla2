@@ -48,7 +48,7 @@ Historically, these workflows have been fragmented across disparate chat convers
 1. **Service Discovery & Assessment**: Users browse published travel services, inspect prerequisites, validity conditions, expected turnaround times, and current authoritative prices in Sudanese Pounds (SDG).
 2. **Pre-Purchase Inquiry**: Users can launch WhatsApp with pre-filled service inquiry details to clarify questions without creating orders or debiting funds.
 3. **Traveler Profile Vault**: Users save and maintain complete traveler profiles (family members) with validated passport details to eliminate redundant data entry on future orders.
-4. **Wallet Top-Up via Bank Transfer**: Users specify an amount (minimum 5,000 SDG), select a platform bank account, perform an out-of-band transfer, and upload the transaction reference number and receipt for manual administrative verification.
+4. **Wallet Top-Up via Bank Transfer**: Users specify an amount meeting the configurable minimum (initially 5,000 SDG), select a platform bank account, perform an out-of-band transfer, and upload the transaction reference number and receipt for manual administrative verification.
 5. **Instant One-Click Order & Atomic Debit**: Once wallet funds are confirmed, users select a service and traveler, complete the dynamic application form, upload required private documents, and submit the order. The system atomically debits the wallet, creates a permanent commercial order record, and generates an independent service execution record.
 6. **Execution Tracking & Collaborative Document Exchange**: Customers track the progress of each order in real time. If staff mark an order as "Action Required", the customer uploads the requested documentation or corrections, automatically resuming fulfillment.
 7. **Operational Administrative Control**: Operations staff verify top-ups, validate documents, progress execution lifecycles, and maintain an immutable audit trail.
@@ -100,7 +100,7 @@ Rehla strictly enforces separation among six core business concepts:
 3. **Strict Document Privacy Pipeline**: Sensitive documents (passports, national IDs, bank receipts) are stored on private disks, quarantined upon upload, verified for magic bytes and malware, and only accessible via authenticated, short-lived signed URLs.
 4. **Immutable Append-Only Wallet Ledger**: Balances are calculated from append-only credit and debit entries using integer minor units in SDG. Historical ledger rows are never updated or deleted. This is a wallet ledger contract, not a claim that Phase 1 implements a general accounting double-entry system.
 5. **Concurrency-Safe Purchasing**: Submission uses scoped idempotency keys, re-verifies wallet balance and authoritative prices inside a serialized database transaction, and guarantees zero partial state.
-6. **Comprehensive Metric Analytics**: 12 core business metrics computed over `Africa/Khartoum` timezone cohorts to track turnaround times, approval rates, and retention.
+6. **Comprehensive Metric Analytics**: 12 core business metrics computed over `Africa/Khartoum` timezone cohorts to track turnaround times, approval rates, traveler reuse, and the Phase 1 customer repeat-usage proxy.
 
 ---
 

@@ -294,19 +294,19 @@ git commit -m "feat(api): expose complete versioned Rehla API"
 
 ```php
 dataset('admin sections', [
-    ['overview', 'reporting.view', 'view'],
+    ['overview', 'admin.overview.view', 'view'],
     ['services', 'services.manage', 'mutate-via-action'],
-    ['application-forms', 'forms.manage', 'mutate-via-action'],
+    ['application-forms', 'forms.view', 'mutate-via-action'],
     ['customers', 'customers.view', 'masked-sensitive'],
     ['travelers', 'travelers.view', 'masked-passport'],
     ['wallets', 'wallets.view', 'read-only'],
-    ['bank-accounts', 'bank_accounts.manage', 'mutate-via-action'],
+    ['bank-accounts', 'banks.view', 'mutate-via-action'],
     ['top-up-requests', 'topups.review', 'approve-reject-action'],
     ['orders', 'orders.view', 'read-only'],
-    ['service-executions', 'executions.manage', 'transition-action'],
+    ['service-executions', 'executions.view', 'transition-action'],
     ['content', 'content.manage', 'mutate-via-action'],
-    ['notifications', 'notifications.manage', 'replay-action'],
-    ['roles-permissions', 'roles.manage', 'mfa-required'],
+    ['notifications', 'notifications.view', 'replay-action'],
+    ['roles-permissions', 'access.view', 'mfa-required'],
     ['audit-log', 'audit.view', 'read-only'],
 ]);
 ```

@@ -88,7 +88,7 @@ The Top-Ups and Bank Transfers domain manages the funding pipeline for customer 
   - Duplicate reference: HTTP 422 with code `top_up.reference_used` and message: `"This bank transaction reference number has already been used."`
 
 ### 6.2 ApproveTopUpRequest
-- **Preconditions**: Staff member has `topups.review` ability and active TOTP MFA session; request is in `under_review` status.
+- **Preconditions**: Staff member has `topups.review`, TOTP was verified within four hours, and the request is `under_review`.
 - **Inputs**: Top-Up Request ID.
 - **Expected Outcome**:
   - Locks top-up row (`SELECT FOR UPDATE`).
@@ -97,18 +97,18 @@ The Top-Ups and Bank Transfers domain manages the funding pipeline for customer 
   - Inside same database transaction, calls Wallet domain `CreditWallet` with amount and reference.
   - Updates top-up status to `approved`, sets `reviewer_id` and `decision_at = NOW()`.
   - Appends Audit log entry.
-  - Enqueues `TopUpApproved` notification to Outbox.
+  - Creates the in-app notification and enqueues external-channel delivery in the Outbox.
 - **Observable Behavior**: Customer wallet balance immediately reflects credited amount; customer receives in-app notification.
 - **Failure Behavior**: Concurrent approval calls serialize cleanly; second call detects `approved` status and returns success without double-crediting.
 
 ### 6.3 RejectTopUpRequest
-- **Preconditions**: Staff member has `topups.review` ability; request is in `under_review` status.
+- **Preconditions**: Staff member has `topups.review`, TOTP was verified within four hours, and the request is `under_review`.
 - **Inputs**: Top-Up Request ID, Rejection Reason (EN/AR).
 - **Expected Outcome**:
   - Locks top-up row.
   - Updates status to `rejected`, sets `reviewer_id`, `decision_at = NOW()`, and `rejection_reason`.
   - Appends Audit log entry.
-  - Enqueues `TopUpRejected` notification to Outbox.
+  - Creates the in-app notification and enqueues external-channel delivery in the Outbox.
   - Wallet balance is left untouched.
 - **Validation Rules**: Rejection reason is mandatory (min 10 chars, max 500 chars).
 - **Observable Behavior**: Request marked rejected on customer dashboard; customer sees rejection reason.
@@ -163,5 +163,5 @@ The Top-Ups and Bank Transfers domain manages the funding pipeline for customer 
 
 - **Documents Domain**: Uploads receipt image, verifies `clean` status, and marks it `attached`.
 - **Wallet Domain**: Approval triggers atomic `CreditWallet` call inside the review transaction.
-- **Notifications Domain**: Emits `TopUpApproved` or `TopUpRejected` to outbox.
+- **Notifications Domain**: Creates atomic in-app results and Outbox records for enabled external channels.
 - **Audit Domain**: Review decisions, reviewer IDs, reasons, and timestamps are recorded in the audit log.
