@@ -29,7 +29,7 @@ When a customer submits proof of an out-of-band bank transfer:
 
 ### Field Semantics:
 - `bank_account_id`: Integer ID of the destination platform bank account selected by the customer. Must reference an `active` account.
-- `amount_minor`: Integer minor units of SDG (scale 100). Minimum value: `500,000` (equivalent to 5,000.00 SDG).
+- `amount_minor`: Integer minor units of SDG (scale 100). It must meet the current minimum setting locked at submission; the initial setting is `500000` (5,000.00 SDG).
 - `transaction_reference`: The unique alphanumeric transaction identifier issued by the customer’s commercial banking application (e.g. Bank of Khartoum / Bankak, O-Cash, Fawry).
 - `receipt_document_id`: The ID of a private document previously uploaded and marked `clean` via the Documents domain. Must be an image (JPEG/PNG) or PDF.
 
@@ -60,7 +60,7 @@ Before approving a top-up request, the reviewing staff member must execute this 
 3. **Reference Verification**:
    Verify that the transaction reference number visibly printed on the receipt matches `transaction_reference`.
 4. **Timestamp Plausibility**:
-   Verify that the receipt timestamp is recent (within 72 hours of submission).
+   Verify the receipt timestamp using the bank-specific review procedure. Phase 1 defines no universal automatic 72-hour rejection rule.
 5. **Internal Statement Reconciliation**:
    Staff cross-references their internal online banking portal or commercial statement to confirm the funds actually cleared into the platform's bank account.
 
@@ -86,6 +86,11 @@ Before approving a top-up request, the reviewing staff member must execute this 
   - `invalid_reference`: `"The reference number does not correspond to a valid transfer."`
 - Wallet balance is NOT changed.
 - Customer receives `TopUpRejected` notification with rejection reason.
+
+### 6.3 Unreadable Receipt Correction:
+- Before a terminal decision, the reviewer may keep the request `under_review` and ask the customer for a clearer receipt.
+- The customer invokes `ReplaceTopUpReceipt` on the same request. Amount, bank account, and normalized reference do not change.
+- A rejected request is terminal and cannot be resubmitted with the reserved reference. This avoids conflict between correction and reference uniqueness.
 
 ---
 

@@ -26,10 +26,12 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
   - Service Snapshot (JSON copy of service name, description, duration, and price at purchase time).
   - Traveler Snapshot (JSON copy of traveler name, DOB, gender, passport number, issue/expiry dates).
   - Form Version ID used.
+  - Service Price Version ID used.
+  - Fulfillment Policy Version ID used by the execution.
   - Status (permanently `paid`).
   - Created Timestamp (UTC).
 - **Scoped Idempotency Key**: A unique string provided in the `Idempotency-Key` HTTP header, scoped to the authenticated `account_id`.
-- **Request Fingerprint**: A SHA-256 cryptographic hash of the normalized request payload (service ID, traveler ID, accepted price, form version ID, and answers).
+- **Request Fingerprint**: A SHA-256 hash of canonical service ID, traveler ID, accepted price and price version, form version, ordered answers, and referenced document IDs.
 - **One Traveler per Order**: A single commercial order represents exactly one service for exactly one traveler.
 
 ---
@@ -69,24 +71,24 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
   - Idempotency Key (header).
   - Service ID.
   - Traveler ID.
-  - Accepted Price Minor (`amount_minor`).
+  - Accepted Price Minor (`amount_minor`) and Accepted Price Version ID.
   - Form Version ID.
   - Form Answers (key-value dictionary).
   - Document IDs (list of clean document IDs referenced in answers).
 - **Expected Outcome (Atomic Transaction Execution Order)**:
   1. Begin PostgreSQL database transaction.
-  2. Evaluate and lock idempotency record `(account_id, idempotency_key)` using `FOR UPDATE`. If record exists and fingerprint matches, return cached order response. If fingerprint mismatches, rollback and return HTTP 409.
-  3. Lock customer Wallet row (`SELECT FOR UPDATE`).
-  4. Query authoritative Service Catalog: assert service is `active`, and authoritative price equals `accepted_price`.
-  5. Query Forms domain: assert `form_version_id` is the active published version; validate all answers against schema.
-  6. Query Travelers domain: verify traveler belongs to customer; extract immutable `TravelerSnapshot`.
-  7. Query Documents domain: verify all document IDs exist, belong to customer, are in `clean` status; mark them `attached`.
-  8. Call Wallet domain `DebitWallet` for `accepted_price`; obtain `ledger_entry_id`.
-  9. Insert immutable `CommercialOrder` record containing service snapshot, traveler snapshot, price paid, and debit reference.
-  10. Call Fulfillment domain `CreateExecution` (via internal contract) to instantiate the service fulfillment case linked to this order.
-  11. Enqueue `OrderSubmitted` domain event to the Notifications Outbox.
-  12. Store order response in the idempotency record.
-  13. Commit database transaction.
+  2. Insert the pending idempotency attempt under unique `(account_id, idempotency_key)`, or lock/read the existing row. A matching completed fingerprint returns its response; a mismatch returns HTTP 409. The unique insert resolves the missing-row race.
+  3. Lock the service and current price-version pointer. Assert active status and exact accepted price/version.
+  4. Lock the published form-version pointer. Assert the submitted form version is current and validate its answers.
+  5. Lock the published fulfillment-policy pointer and capture its immutable version.
+  6. Lock the traveler, verify ownership, and build the immutable traveler snapshot.
+  7. Lock referenced documents in ascending opaque-ID order; verify ownership and `clean` status.
+  8. Lock the customer wallet and verify sufficient balance.
+  9. Allocate the Order ID before the debit, then call `DebitWallet` with that Order ID as its immutable reference; obtain `ledger_entry_id`.
+  10. Insert the immutable Commercial Order with service, traveler, price, form, policy, and debit snapshots; attach the documents.
+  11. Create the service execution with the captured policy version through the internal contract.
+  12. Insert audit, in-app notification, and required outbox records.
+  13. Store the order response in the idempotency attempt and commit.
 - **Observable Behavior**: Returns HTTP 201 Created with order reference, summary, paid amount, and execution tracking ID. Customer wallet is debited; order appears in "My Orders".
 - **Validation Rules**: All fields mandatory. Accepted price must match database price. Form responses must pass schema rules.
 
@@ -98,7 +100,7 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
 
 ### 6.3 ListCustomerOrders
 - **Preconditions**: Customer is authenticated.
-- **Inputs**: Pagination parameters, optional status filter.
+- **Inputs**: Pagination parameters and optional execution-status filter. Commercial order status is always `paid`.
 - **Expected Outcome**: Chronological list of commercial orders placed by the customer, sorted by creation date descending.
 
 ---
@@ -108,9 +110,13 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
 1. **Lock Sequencing Protocol**:
    To prevent database deadlocks under heavy concurrent load, the transaction must acquire row locks in a strictly defined order:
    1. Idempotency record lock.
-   2. Wallet row lock (`SELECT FOR UPDATE`).
-   3. Traveler row lock.
-   4. Documents row locks (sorted by `document_id` ascending).
+   2. Service/current-price pointer.
+   3. Published form pointer.
+   4. Published fulfillment-policy pointer.
+   5. Traveler row.
+   6. Document rows in ascending opaque-ID order.
+   7. Wallet row.
+   Any command acquiring more than one of these resources follows this order.
 2. **Order Reference Generation**:
    Order references follow the deterministic format:
    `ORD-YYYYMM-XXXX` (where `YYYYMM` is current year/month and `XXXX` is a sequential or cryptographic alphanumeric code).
@@ -131,6 +137,7 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
 - **Insufficient Balance**: HTTP 422, code `wallet.insufficient_balance`.
 - **Idempotency Key Conflict**: HTTP 409 Conflict, code `order.idempotency_conflict`. Message: `"The idempotency key has already been used with a different request payload."`
 - **Form Version Outdated**: HTTP 409 Conflict, code `form.version_outdated`.
+- **Fulfillment Policy Missing**: HTTP 422, code `service.fulfillment_policy_missing`.
 - **Traveler Ownership Violation**: HTTP 404 Not Found, code `traveler.not_found`.
 
 ---

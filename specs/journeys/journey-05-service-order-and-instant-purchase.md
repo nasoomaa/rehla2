@@ -26,7 +26,8 @@ An authenticated customer purchases a travel service for a saved traveler by com
 1. Customer is authenticated and possesses an active wallet with balance `50,000.00 SDG` (`5,000,000` minor units).
 2. Service "UAE 30-Day Tourist Visa" is `active` with an authoritative price of `25,000.00 SDG` (`2,500,000` minor units).
 3. Published Form Version #4 is active for the service.
-4. Traveler profile "Ahmed Mohammed Osman" (Passport: `P01234567`) is saved in the customer's vault.
+4. A published fulfillment-policy version is active for the service.
+5. Traveler profile "Ahmed Mohammed Osman" (Passport: `P01234567`) is saved in the customer's vault.
 
 ---
 
@@ -64,16 +65,13 @@ Customer clicks **"Order Now"** on the service details page for "UAE 30-Day Tour
      - Remaining Balance after Purchase: `"25,000.00 SDG"`
 6. **User clicks "Submit Order"**:
    - Browser generates a unique idempotency key: `Idempotency-Key: "uuid-order-8811"`.
-   - Client sends `POST /api/v1/order-submissions` with service ID `1`, traveler ID `12`, accepted price `2500000`, form version `4`, and answers payload.
+   - Client sends `POST /api/v1/order-submissions` with opaque service/traveler IDs, accepted price `2500000`, accepted price-version ID, form-version ID, and answers.
 7. **Purchasing orchestrator executes atomic transaction**:
    - Begins PostgreSQL transaction.
-   - Locks and validates `(account_id, "uuid-order-8811")` in `idempotency_keys` table.
-   - Acquires pessimistic lock on customer's `wallets` row (`SELECT FOR UPDATE`).
-   - Re-verifies Catalog: service is `active`, authoritative price is exactly `2,500,000` minor units.
-   - Re-verifies Forms: version #4 is currently active; validates answers schema.
-   - Re-verifies Travelers: traveler #12 belongs to customer; extracts frozen `TravelerSnapshot`.
-   - Re-verifies Documents: document `doc-photo-99` belongs to customer and is `clean`; marks it `attached`.
-   - Re-verifies Wallet balance: `5,000,000 >= 2,500,000` minor units.
+   - Inserts or locks the unique customer/key purchase attempt, closing the concurrent missing-row race.
+   - Locks and verifies in order: service/current price version, published form pointer, published fulfillment-policy pointer, traveler, sorted documents, then wallet.
+   - Re-verifies exact accepted price/version, validates answers against captured Form #4, captures the policy version, confirms ownership/clean documents, and checks balance.
+   - Allocates the Order ID before creating its debit so the ledger reference is complete and immutable.
    - Calls `Wallet\Contracts\DebitWallet`:
      - Decrements `current_balance_minor` to `2,500,000` (`25,000.00 SDG`).
      - Inserts `wallet_ledger_entries` record:
@@ -96,7 +94,7 @@ Customer clicks **"Order Now"** on the service details page for "UAE 30-Day Tour
      - Inserts `service_executions` record linked to order #1001 with initial status `received`.
      - Appends initial status changelog entry (`received`).
    - Appends purchase record to `audit_entries`.
-   - Enqueues `OrderSubmitted` message to `outbox_messages`.
+   - Creates the in-app confirmation and enqueues `OrderSubmitted` for enabled external channels.
    - Stores completed order response in `idempotency_keys`.
    - Commits database transaction.
 8. **Client receives confirmation**:

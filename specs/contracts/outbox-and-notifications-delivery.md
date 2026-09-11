@@ -2,143 +2,74 @@
 
 ## 1. Responsibility
 
-This contract defines the transactional boundary, queue semantics, persistence schema, worker locking model, and delivery failure protocols for asynchronous event distribution across the Rehla platform. It guarantees that domain events are written atomically with business state changes and dispatched at-least-once to communication channels without compromising transaction response times.
+This contract defines atomic event capture and at-least-once dispatch to asynchronous external channels. In-app notifications are business records inserted in the same transaction as the event; they do not wait for the dispatcher.
 
----
+## 2. Producer and consumer
 
-## 2. Producer and Consumer
+- Producers are core domain commands that create a customer-visible event.
+- The Notifications dispatcher claims outbox rows; Integrations adapters deliver versioned payloads.
+- Producers perform no external network I/O in their database transaction.
 
-- **Producers**: All core domain packages creating domain events (`Identity`, `TopUps`, `Purchasing`, `Orders`, `Fulfillment`).
-- **Consumers**: Notifications Dispatcher Worker (`packages/Rehla/Notifications`), External Messaging Adapters (`packages/Rehla/Integrations`).
+## 3. Persistence contract
 
----
+Each `outbox_messages` record contains:
 
-## 3. Outbox Table Schema Contract
+| Field | Contract |
+|---|---|
+| `id` | Opaque primary identifier. |
+| `event_name`, `payload_version`, `payload` | Versioned event envelope. |
+| `deduplication_key` | Deterministic unique value such as `topup.approved:{top_up_id}:v1`; never includes a retry timestamp. |
+| `status` | `available`, `locked`, `delivered`, or `dead_letter`. |
+| `available_at` | UTC eligibility time. |
+| `locked_at`, `locked_by` | Current claim metadata. |
+| `lock_token` | Fresh unpredictable value generated for every claim. |
+| `lease_expires_at` | UTC time after which another worker may replace the claim. |
+| `attempts` | Claims performed; initial maximum is 5. |
+| `last_error`, `last_trace_id` | Bounded sanitized diagnostic data; no stack trace or sensitive payload. |
+| `delivered_at`, `created_at` | UTC timestamps. |
 
-All domain producers insert records into the `outbox_messages` table:
+The producer inserts the in-app notification and external-channel outbox row inside the owning business transaction. A rollback removes both.
 
-| Column | Type | Constraints | Description |
-|---|---|---|---|
-| `id` | `BIGSERIAL` | Primary Key | Monotonically increasing sequence identifier. |
-| `event_name` | `VARCHAR(100)` | NOT NULL | Canonical event name (e.g. `order.submitted`). |
-| `payload_version` | `INTEGER` | NOT NULL, Default `1` | Schema version of the JSON payload. |
-| `payload` | `JSONB` | NOT NULL | Complete event attributes and recipient details. |
-| `deduplication_key`| `VARCHAR(150)` | NOT NULL, UNIQUE | Idempotency hash preventing double delivery. |
-| `status` | `VARCHAR(20)` | NOT NULL, Default `available` | `available`, `locked`, `delivered`, `dead_letter`. |
-| `available_at` | `TIMESTAMPTZ` | NOT NULL | Scheduled or retry execution threshold. |
-| `locked_at` | `TIMESTAMPTZ` | NULL | Timestamp when worker acquired row lock. |
-| `locked_by` | `VARCHAR(100)` | NULL | Unique identifier of claiming worker instance. |
-| `attempts` | `SMALLINT` | NOT NULL, Default `0` | Number of dispatch attempts executed. |
-| `last_error` | `TEXT` | NULL | Captured error message or stack trace if failed. |
-| `delivered_at` | `TIMESTAMPTZ` | NULL | UTC timestamp upon confirmed delivery. |
-| `created_at` | `TIMESTAMPTZ` | NOT NULL | Creation timestamp (inside enclosing transaction). |
+## 4. Claim protocol
 
----
+In one short database transaction, the dispatcher selects eligible `available` rows and `locked` rows whose `lease_expires_at <= NOW()`, ordered by ID, using `FOR UPDATE SKIP LOCKED`. For each row it writes:
 
-## 4. Producer Contract (`AppendOutboxMessage`)
-
-Producers MUST call the outbox append method within their primary database transaction:
-
-```php
-interface OutboxContract
-{
-    public function append(
-        string $eventName,
-        string $deduplicationKey,
-        array $payload,
-        int $payloadVersion = 1,
-        ?\DateTimeInterface $availableAt = null
-    ): OutboxMessageId;
-}
+```text
+status = locked
+locked_by = current worker ID
+lock_token = fresh random token
+locked_at = NOW()
+lease_expires_at = NOW() + configured lease duration
+attempts = attempts + 1
 ```
 
-### Invariants:
-1. Producer must supply a deterministic `deduplication_key` (e.g. `topup_approved:{top_up_id}:{timestamp}`).
-2. Producer must NOT invoke any HTTP client or queue socket within the transaction.
-3. If the transaction rolls back, the outbox record is rolled back automatically.
+The worker retains the returned `(id, worker_id, lock_token)` capability. Network delivery occurs after the claim transaction commits.
 
----
+## 5. Fenced completion and failure
 
-## 5. Consumer Worker Lock and Polling Protocol
+A success update is accepted only when all of these still match:
 
-Background workers poll the outbox using PostgreSQL pessimistic row locking:
-
-### Polling Query:
 ```sql
-SELECT id, event_name, payload, attempts, deduplication_key
-FROM outbox_messages
-WHERE status = 'available'
-  AND available_at <= NOW()
-ORDER BY id ASC
-LIMIT 50
-FOR UPDATE SKIP LOCKED;
+WHERE id = :message_id
+  AND status = 'locked'
+  AND locked_by = :worker_id
+  AND lock_token = :lock_token
 ```
 
-### Claiming Action:
-```sql
-UPDATE outbox_messages
-SET status = 'locked',
-    locked_at = NOW(),
-    locked_by = :worker_id,
-    attempts = attempts + 1
-WHERE id IN (:claimed_ids);
-```
+It sets `delivered`, `delivered_at`, and clears claim fields. A zero-row update means the worker lost its lease; it discards the result and must not overwrite the current owner's state.
 
----
+A transient failure uses the same fence, sets `available_at` to an application-calculated UTC timestamp, records bounded safe diagnostic data, and clears claim fields. Attempts 1–4 use initial delays 30, 60, 120, and 240 seconds. Failure on attempt 5 moves the row to `dead_letter`, raises a monitoring alert, and appends an audit entry.
 
-## 6. Retry, Backoff, and Dead-Letter Semantics
+An operator with `notifications.replay` may replay a dead letter. Replay creates or resets a dispatch attempt under a documented, audited procedure and does not alter the original business record.
 
-1. **Successful Delivery**:
-   Upon positive receipt or channel acceptance:
-   ```sql
-   UPDATE outbox_messages
-   SET status = 'delivered',
-       delivered_at = NOW(),
-       locked_by = NULL
-   WHERE id = :message_id;
-   ```
-2. **Transient Delivery Failure**:
-   If delivery fails and `attempts < 5`:
-   - Calculates exponential backoff: `delay_seconds = (2 ^ attempts) * 15`.
-   - Backoff schedule:
-     - Attempt 1: 30 seconds.
-     - Attempt 2: 60 seconds.
-     - Attempt 3: 120 seconds.
-     - Attempt 4: 240 seconds.
-   ```sql
-   UPDATE outbox_messages
-   SET status = 'available',
-       available_at = NOW() + INTERVAL ':delay_seconds seconds',
-       locked_at = NULL,
-       locked_by = NULL,
-       last_error = :error_message
-   WHERE id = :message_id;
-   ```
-3. **Exhausted Retries (Dead-Letter)**:
-   If delivery fails on Attempt 5 (`attempts >= 5`):
-   ```sql
-   UPDATE outbox_messages
-   SET status = 'dead_letter',
-       locked_at = NULL,
-       locked_by = NULL,
-       last_error = :error_message
-   WHERE id = :message_id;
-   ```
-   An alert is dispatched to platform monitoring, and an entry is written to `audit_entries`.
+## 6. Delivery semantics
 
----
+At-least-once delivery can produce a duplicate when the provider accepted a request but its response was lost. Adapters pass the deterministic deduplication key to providers that support idempotency. Consumers must tolerate repeated versioned events. The corpus does not claim exactly-once external delivery.
 
-## 7. Crash Recovery (Lease Lock Expiry)
+## 7. Acceptance
 
-If an outbox worker terminates abruptly (SIGKILL, container preemption) while holding locked messages:
-- The lease threshold is defined as **60 seconds**.
-- A scheduled watchdog task runs every 60 seconds:
-  ```sql
-  UPDATE outbox_messages
-  SET status = 'available',
-      locked_at = NULL,
-      locked_by = NULL
-  WHERE status = 'locked'
-    AND locked_at < NOW() - INTERVAL '60 seconds';
-  ```
-- This ensures orphaned messages are reclaimed automatically without manual administrative intervention.
+- Two workers cannot hold the same active lease.
+- After lease expiry, a new worker/token can reclaim the row and the old token updates zero rows.
+- A crash after provider acceptance may cause a retry without losing the event.
+- Attempt 5 produces a dead letter, sanitized diagnostics, alert, and audit entry.
+- In-app notification visibility is atomic with its business event even when all external channels are unavailable.

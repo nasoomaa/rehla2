@@ -10,18 +10,19 @@ The Top-Ups and Bank Transfers domain manages the funding pipeline for customer 
 
 - **Customer**: Inspects active platform bank accounts, performs external bank transfers, submits top-up requests with receipts and transaction reference numbers, and tracks review status.
 - **Operations Reviewer (Staff)**: Inspects pending top-up requests, verifies receipt images against internal commercial bank statements, and approves or rejects requests with documented reasons.
-- **Platform Administrator**: Manages platform bank accounts (adding accounts, updating details, deactivating accounts).
+- **Platform Administrator**: Manages platform bank accounts and the auditable minimum top-up setting.
 
 ---
 
 ## 3. Concepts
 
-- **Platform Bank Account**: An official bank account owned by Rehla to receive customer transfers. Contains: Bank Name, Beneficiary Name, Account Number, IBAN / Branch, Bank Logo Media, Sort Order, and Status (`active`, `inactive`).
+- **Platform Bank Account**: An official bank account owned by Rehla to receive customer transfers. Contains Bank Name, Beneficiary Name, Account Number, public Bank Logo Media, Sort Order, and Status (`active`, `inactive`).
+- **Minimum Top-Up Setting**: The positive integer threshold evaluated at submission. Its initial value is `500000` minor units and every change records actor, old/new values, reason, and UTC timestamp.
 - **Top-Up Request**: A formal submission by a customer declaring a transfer. Contains:
   - Request ID.
   - Account ID.
   - Platform Bank Account ID.
-  - Claimed Amount Minor (`amount_minor >= 500,000`, min 5,000 SDG).
+  - Claimed Amount Minor and the minimum setting value evaluated at submission.
   - Transaction Reference Number (bank transaction ID).
   - Normalized Transaction Reference Number (uppercase, stripped).
   - Receipt Document ID (clean private document).
@@ -36,12 +37,13 @@ The Top-Ups and Bank Transfers domain manages the funding pipeline for customer 
 
 ## 4. Invariants
 
-1. **Minimum Top-Up Threshold**: The minimum allowed top-up amount is 5,000.00 SDG (`amount_minor >= 500,000`). Submissions below this amount are strictly rejected.
+1. **Configurable Minimum Top-Up Threshold**: The initial minimum is 5,000.00 SDG (`500000` minor units). Authorized staff may change it; each submission atomically evaluates and snapshots the current positive threshold.
 2. **Bank Reference Uniqueness**: The combination of `(bank_account_id, normalized_reference)` must be globally unique across all top-up requests. A transaction reference number cannot be submitted twice for the same bank account.
 3. **Receipt Document Mandatory**: A top-up request must be accompanied by exactly one verified `clean` document ID representing the bank transfer receipt.
 4. **Single Credit Invariant**: An approved top-up request can credit the user’s wallet exactly once. Concurrent, repetitive, or replayed approval commands must never produce duplicate credits.
 5. **Rejection Safety**: Rejecting a top-up request records the decision, reviewer ID, timestamp, and rejection reason, but produces zero changes to the wallet balance.
 6. **Bank Account Historical Preservation**: Deactivating a platform bank account hides it from new customer top-ups, but preserves all historical top-up requests and audit records linked to it.
+7. **Reference Permanence**: The unique bank/reference pair is reserved by its original request in every state. Correcting an unreadable receipt replaces the receipt on that same `under_review` request and never creates a second request with the reference.
 
 ---
 
@@ -78,7 +80,7 @@ The Top-Ups and Bank Transfers domain manages the funding pipeline for customer 
   - Top-up request record inserted with status `under_review`.
 - **Observable Behavior**: Top-up request appears in customer’s top-up list and admin review queue.
 - **Validation Rules**:
-  - Amount: positive integer, `amount_minor >= 500,000` (min 5,000 SDG).
+  - Amount: positive integer greater than or equal to the locked current minimum setting.
   - Transaction Reference Number: non-empty string, min 4 chars, max 50 chars.
 - **Authorization**: Scoped to authenticated customer. Write rate limit applied (max 5 submissions per hour).
 - **Failure Behavior**:
@@ -116,6 +118,17 @@ The Top-Ups and Bank Transfers domain manages the funding pipeline for customer 
 - **Inputs**: Bank Name, Beneficiary Name, Account Number, Logo Document ID, Sort Order, Status (`active` or `inactive`).
 - **Expected Outcome**: Bank account created or updated.
 
+### 6.5 ReplaceTopUpReceipt
+- **Preconditions**: The customer owns the request; it remains `under_review`; replacement document belongs to that customer and is `clean` with classification `bank_receipt`.
+- **Inputs**: Top-Up Request ID, Replacement Receipt Document ID.
+- **Expected Outcome**: The same request and normalized reference remain in place; the replacement becomes the current receipt and an audit entry records old/new document IDs. The former receipt remains historically linked and follows attached-document retention.
+- **Failure Behavior**: A decided request returns HTTP 409 `top_up.already_decided`; a foreign request returns HTTP 404.
+
+### 6.6 ConfigureMinimumTopUp
+- **Preconditions**: Staff has `topups.settings.manage` and a TOTP verification no older than four hours.
+- **Inputs**: Positive `minimum_amount_minor`, mandatory reason.
+- **Expected Outcome**: The setting changes atomically and an immutable audit entry records actor, old/new values, reason, and timestamp. Existing requests retain their submitted amount and captured threshold.
+
 ---
 
 ## 7. Business Rules
@@ -140,7 +153,7 @@ The Top-Ups and Bank Transfers domain manages the funding pipeline for customer 
 ## 9. Failure Behavior
 
 - **Reference Already Used**: HTTP 422, code `top_up.reference_used`. Localized message: `"This bank transaction reference number has already been used."`
-- **Amount Below Minimum**: HTTP 422, code `top_up.below_minimum`. Message: `"The minimum top-up amount is 5,000 SDG."`
+- **Amount Below Minimum**: HTTP 422, code `top_up.below_minimum`; response metadata includes the currently required `minimum_amount_minor`.
 - **Missing Receipt**: HTTP 422, code `top_up.receipt_required`. Message: `"A clear bank transfer receipt must be attached."`
 - **Already Decided**: HTTP 409 Conflict, code `top_up.already_decided`. Message: `"This top-up request has already been reviewed."`
 

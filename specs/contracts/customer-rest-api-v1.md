@@ -9,7 +9,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 ## 2. Producer and Consumer
 
 - **Producer**: Rehla Backend Application (`packages/Rehla/Api`).
-- **Consumers**: Native Mobile Applications (iOS / Android), Customer Single-Page Web Applications, Third-Party Client Integrations.
+- **Consumers**: Rehla's customer Web client and first-party native mobile applications.
 
 ---
 
@@ -21,6 +21,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 - **Authorization**: `Authorization: Bearer <token>` for all protected endpoints.
 - **Idempotency**: `Idempotency-Key: <unique-uuid-or-string>` required on `POST /order-submissions`.
 - **Locale Header**: `Accept-Language: en` or `Accept-Language: ar` (controls error and content localization).
+- **Identifiers**: Every ID in a request or response is an opaque JSON string.
 - **Standard Error Response**: `application/problem+json` format:
   ```json
   {
@@ -58,7 +59,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
   ```json
   {
     "user": {
-      "id": 101,
+      "id": "usr_101",
       "name": "Ahmed Ibrahim",
       "email": "ahmed@example.com",
       "locale": "en",
@@ -94,7 +95,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
   {
     "data": [
       {
-        "id": 1,
+        "id": "svc_1",
         "name": "UAE 30-Day Tourist Visa",
         "slug": "uae-30-day-visa",
         "short_description": "Single-entry tourist visa for the United Arab Emirates.",
@@ -117,8 +118,9 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 - **Outputs** (HTTP 200 OK):
   ```json
   {
-    "service_id": 1,
-    "form_version_id": 4,
+    "service_id": "svc_1",
+    "price_version_id": "price_7",
+    "form_version_id": "form_4",
     "schema_checksum": "sha256:7f83b1657ff1fc...",
     "fields": [
       {
@@ -146,6 +148,10 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 #### `GET /api/v1/travelers`
 - **Auth**: Bearer token (Customer).
 - **Outputs**: Paginated array of travelers belonging to calling account.
+
+#### `GET /api/v1/travelers/{id}`
+- **Auth**: Bearer token (Customer ownership enforced).
+- **Outputs**: One owned traveler. A missing or foreign ID returns HTTP 404.
 
 #### `POST /api/v1/travelers`
 - **Auth**: Bearer token (Customer).
@@ -191,24 +197,28 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 
 #### `GET /api/v1/bank-accounts`
 - **Auth**: Bearer token (Customer).
-- **Outputs**: List of active platform bank accounts (Bank Name, Account Number, Beneficiary Name, Logo URL).
+- **Outputs**: Active platform bank accounts plus the current `minimum_top_up_minor` setting used by submission validation.
+
+#### `GET /api/v1/top-ups` and `GET /api/v1/top-ups/{id}`
+- **Auth**: Bearer token (Customer ownership enforced).
+- **Outputs**: Paginated owned requests or one request including captured minimum, current receipt status, review status, and decision reason. A foreign ID returns HTTP 404.
 
 #### `POST /api/v1/top-ups`
 - **Auth**: Bearer token (Customer).
 - **Inputs**:
   ```json
   {
-    "bank_account_id": 2,
+    "bank_account_id": "bank_2",
     "amount_minor": 5000000,
     "transaction_reference": "BOK-987654321",
     "receipt_document_id": "doc-uuid-101"
   }
   ```
-- **Validation**: `amount_minor >= 500000` (min 5,000 SDG), `transaction_reference` unique for target bank account.
+- **Validation**: `amount_minor` meets the current configurable minimum; `transaction_reference` is unique for the target bank account.
 - **Outputs** (HTTP 201 Created):
   ```json
   {
-    "id": 401,
+    "id": "topup_401",
     "amount_minor": 5000000,
     "formatted_amount": "50,000.00 SDG",
     "bank_name": "Bank of Khartoum",
@@ -219,6 +229,11 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
   ```
 - **Errors**: HTTP 422 `top_up.below_minimum`, HTTP 422 `top_up.reference_used`.
 
+#### `PUT /api/v1/top-ups/{id}/receipt`
+- **Auth**: Bearer token (Customer ownership enforced).
+- **Inputs**: `receipt_document_id` referencing an owned clean `bank_receipt`.
+- **Behavior**: Replaces the receipt on the same `under_review` request without changing its bank/reference pair. Decided requests return HTTP 409 `top_up.already_decided`.
+
 ---
 
 ### 4.5 Document Uploads
@@ -226,7 +241,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 #### `POST /api/v1/uploads`
 - **Auth**: Bearer token (Customer).
 - **Content-Type**: `multipart/form-data`.
-- **Inputs**: `file` (Binary), `classification` (`bank_receipt`, `passport_scan`, `applicant_photo`, `supporting_doc`).
+- **Inputs**: `file` and a private classification defined by the Documents domain.
 - **Validation**: PDF <= 20MB, JPEG/PNG <= 10MB; magic bytes inspection.
 - **Outputs** (HTTP 201 Created):
   ```json
@@ -234,10 +249,14 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
     "document_id": "doc-a1b2c3d4",
     "filename": "passport_scan.pdf",
     "size_bytes": 1048576,
-    "status": "clean",
+    "status": "pending_scan",
     "expires_at": "2026-09-12T20:15:00Z"
   }
   ```
+
+#### `GET /api/v1/uploads/{document_id}`
+- **Auth**: Bearer token (Customer ownership enforced).
+- **Outputs**: Scan status (`pending_scan`, `quarantined`, `clean`, or `rejected`) and a safe rejection code when terminal. Clients poll this route before attaching the document.
 
 #### `GET /api/v1/documents/{id}/content`
 - **Auth**: Bearer token (Owning customer).
@@ -253,10 +272,11 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 - **Inputs**:
   ```json
   {
-    "service_id": 1,
-    "traveler_id": 12,
+    "service_id": "svc_1",
+    "traveler_id": "trav_12",
     "accepted_price_minor": 2500000,
-    "form_version_id": 4,
+    "accepted_price_version_id": "price_7",
+    "form_version_id": "form_4",
     "answers": {
       "mother_name": "Fatima Hassan",
       "personal_photo": "doc-a1b2c3d4"
@@ -283,6 +303,8 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
   - HTTP 422 `wallet.insufficient_balance`.
   - HTTP 409 `order.idempotency_conflict` (if key reused with different payload).
   - HTTP 409 `form.version_outdated`.
+  - HTTP 422 `service.fulfillment_policy_missing`.
+  - HTTP 422 `request.idempotency_key_required` when the header is absent.
 
 #### `GET /api/v1/orders` & `GET /api/v1/orders/{order_ref}`
 - **Auth**: Bearer token (Customer). Returns order summary, frozen snapshots, and execution progress.

@@ -39,7 +39,7 @@ Customer navigates to `/account/wallet` and clicks **"Top Up Balance"**.
 1. **User opens Top-Up page**:
    - Browser requests `GET /account/wallet/top-up`.
    - System renders active platform bank accounts (Bank of Khartoum, Beneficiary Name: "Rehla Travel Services", Account Number: "1234567").
-   - System displays instructions and minimum transfer threshold notice: `"Minimum top-up amount: 5,000.00 SDG"`.
+   - System displays the current minimum setting; initially: `"Minimum top-up amount: 5,000.00 SDG"`.
 2. **User executes external transfer**:
    - User opens their mobile banking application (Bankak).
    - User transfers `50,000.00 SDG` to the platform's Bank of Khartoum account.
@@ -52,12 +52,12 @@ Customer navigates to `/account/wallet` and clicks **"Top Up Balance"**.
 4. **User uploads receipt file**:
    - User selects the saved screenshot (`receipt.png`).
    - Browser uploads file to `POST /api/v1/uploads` with classification `bank_receipt`.
-   - Documents domain verifies PNG magic bytes, checks for malware, ensures file size < 10MB, saves to private storage disk, and returns `document_id = "doc-rec-101"` in `clean` status.
+   - Documents returns `document_id = "doc-rec-101"` in `pending_scan`; the browser polls the authenticated upload-status route until it becomes `clean`.
 5. **User submits top-up request**:
    - User clicks **"Submit for Review"**.
    - Browser sends `POST /api/v1/top-ups` with bank account ID, amount `5000000` minor units, reference, and `document_id`.
 6. **System validates and stores top-up request**:
-   - Verifies `amount_minor >= 500,000` (50,000 SDG is valid).
+   - Locks and snapshots the current minimum (`500000` initially), then verifies the submitted amount meets it.
    - Normalizes transaction reference to `"TXN987654321"`.
    - Checks database uniqueness constraint: asserts no top-up exists for `(bank_account_id = 2, normalized_reference = "TXN987654321")`.
    - Marks document `doc-rec-101` as `attached`.
@@ -105,10 +105,10 @@ Customer navigates to `/account/wallet` and clicks **"Top Up Balance"**.
       - `reviewer_id = staff_user_id`
       - `decision_at = NOW()`
     - Appends record to `audit_entries` with reviewer ID, old state (`under_review`), and new state (`approved`).
-    - Enqueues `TopUpApproved` message in `outbox_messages`.
+    - Creates the in-app notification and enqueues `TopUpApproved` for enabled external channels.
     - Commits database transaction.
 13. **Customer receives balance credit and alert**:
-    - Outbox worker delivers in-app notification:
+    - The atomically created in-app notification is visible immediately:
       `"Your wallet top-up of 50,000.00 SDG via Bank of Khartoum has been approved."`
     - Customer refreshes dashboard or receives real-time update:
       - Wallet Balance: **`50,000.00 SDG`**
@@ -163,7 +163,8 @@ Customer navigates to `/account/wallet` and clicks **"Top Up Balance"**.
 
 ## 8. Recovery Behavior
 
-- On rejection due to unreadable receipt, the customer can initiate a new top-up request with a clear photo.
+- If a receipt is unreadable before a terminal decision, staff keeps the request `under_review`; the customer uploads a clean replacement and replaces the receipt on that same request. The bank/reference pair remains reserved and the replacement is audited.
+- After approval or rejection, receipt replacement is forbidden and the reference cannot be reused in a new request.
 - On reference collision due to typographical error, the customer re-enters the exact reference from their banking app.
 
 ---

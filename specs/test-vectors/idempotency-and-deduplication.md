@@ -25,7 +25,7 @@ This suite proves the deterministic behavior of idempotency keys during checkout
 | **IDP-03** | `acc_10` | `"key-alpha"` | `hash("svc1:trav99:2500000:v4")` | Completed (`ORD-1001`) | **409 Conflict** | Rejected: `order.idempotency_conflict` |
 | **IDP-04** | `acc_10` | `"key-alpha"` | `hash("svc2:trav12:3000000:v1")` | Completed (`ORD-1001`) | **409 Conflict** | Rejected: `order.idempotency_conflict` |
 | **IDP-05** | `acc_20` | `"key-alpha"` | `hash("svc1:trav88:2500000:v4")` | None for `acc_20` | **201 Created** | Independent account; order created |
-| **IDP-06** | `acc_10` | `""` (Omitted) | Any | N/A | **400 Bad Request** | Header `Idempotency-Key` mandatory |
+| **IDP-06** | `acc_10` | `""` (Omitted) | Any | N/A | **422 Unprocessable Entity** | `request.idempotency_key_required` |
 
 ---
 

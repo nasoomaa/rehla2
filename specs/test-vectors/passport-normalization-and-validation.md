@@ -8,7 +8,7 @@ This suite proves the deterministic normalization, regex validation (`^[A-Z0-9]{
 
 ## 2. Invariants Under Test
 
-1. Passport input must be normalized: all whitespace, hyphens, and non-alphanumeric characters stripped; all letters converted to uppercase ASCII.
+1. Passport normalization removes Unicode whitespace and hyphens and uppercases ASCII letters. Any other punctuation remains invalid and is never silently deleted.
 2. Normalized length must be between 6 and 12 characters inclusive.
 3. Normalized characters must belong strictly to the character class `[A-Z0-9]`.
 4. Global Uniqueness: A normalized passport number cannot exist more than once across the entire `travelers` table.
@@ -31,8 +31,8 @@ This suite proves the deterministic normalization, regex validation (`^[A-Z0-9]{
 | **PAS-09** | Boundary | `"P1234567890123"` (13 chars)| `"P1234567890123"`| Invalid | `traveler.invalid_passport_format` (Too long, > 12) |
 | **PAS-10** | Invalid | `""` (Empty string) | `""` | Invalid | `traveler.passport_required` |
 | **PAS-11** | Invalid | `"   "` (Whitespace only) | `""` | Invalid | `traveler.passport_required` |
-| **PAS-12** | Invalid | `"P0123#456"` | `"P0123456"` | Valid if stripped, or invalid if non-alphanumeric rejected | Stripping strips `#`, yielding 8 chars |
-| **PAS-13** | Invalid | `"12345@"` | `"12345"` | Invalid | Stripped length 5 is too short (< 6) |
+| **PAS-12** | Invalid | `"P0123#456"` | `"P0123#456"` | Invalid | `traveler.invalid_passport_format`; `#` is not silently removed |
+| **PAS-13** | Invalid | `"12345@"` | `"12345@"` | Invalid | `traveler.invalid_passport_format`; punctuation rejected |
 
 ---
 
@@ -62,11 +62,14 @@ This suite proves the deterministic normalization, regex validation (`^[A-Z0-9]{
 
 ```php
 function normalizePassport(string $rawInput): string {
-    // 1. Remove all characters except A-Z, a-z, 0-9
-    $stripped = preg_replace('/[^A-Za-z0-9]/', '', $rawInput) ?? '';
+    // 1. Remove Unicode whitespace and hyphen characters only.
+    $stripped = preg_replace('/[\p{Z}\s\p{Pd}-]+/u', '', $rawInput) ?? '';
     // 2. Uppercase ASCII
     $normalized = strtoupper($stripped);
-    // 3. Length validation
+    // 3. Reject punctuation/non-ASCII alphanumeric and validate length.
+    if (preg_match('/^[A-Z0-9]+$/', $normalized) !== 1) {
+        throw new \InvalidArgumentException("Passport number contains unsupported characters.");
+    }
     $length = strlen($normalized);
     if ($length < 6 || $length > 12) {
         throw new \InvalidArgumentException("Passport number must be between 6 and 12 alphanumeric characters.");

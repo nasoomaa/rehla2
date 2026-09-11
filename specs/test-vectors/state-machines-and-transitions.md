@@ -52,3 +52,12 @@ This suite proves the deterministic validation of all state transitions across t
 | **EXE-TR16** | `processing` | `completed` | Staff | Issued document ID missing | **Invalid** | `execution.missing_issued_document` |
 | **EXE-TR17** | `processing` | `action_required` | Staff | Empty instructions provided | **Invalid** | `execution.missing_action_instructions` |
 | **EXE-TR18** | `action_required`| `completed` | Staff | Attempt to complete pending action| **Invalid** | `execution.invalid_transition` |
+| **EXE-TR19** | `received` | `processing` | Staff | Captured policy permits direct processing | **Valid** | Processing started |
+| **EXE-TR20** | `processing` | `under_review` | Staff | Captured policy permits renewed review | **Valid** | Case returns to review |
+| **EXE-TR21** | `action_received` | `under_review` | Staff | Response requires review | **Valid** | Case returns to review |
+| **EXE-TR22** | `under_review` | `completed` | Staff | Captured policy permits; required clean issued document attached | **Valid** | Case completed |
+| **EXE-TR23** | `under_review` | `cancelled` | Staff | Mandatory reason | **Valid** | Case cancelled |
+| **EXE-TR24** | `action_required` | `cancelled` | Staff | Mandatory reason | **Valid** | Case cancelled |
+| **EXE-TR25** | `action_received` | `cancelled` | Staff | Mandatory reason | **Valid** | Case cancelled |
+
+Every valid row is also evaluated against the execution's captured fulfillment-policy version. If the standard graph permits a transition but that service policy omits it, the deterministic outcome is `execution.invalid_transition`.

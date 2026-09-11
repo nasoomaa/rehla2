@@ -16,6 +16,7 @@ The Reporting and Analytics domain computes and presents the 12 core platform bu
 ## 3. Concepts
 
 - **Cohort Window**: A defined time interval (e.g. Daily, Weekly, Monthly) anchored to the business timezone `Africa/Khartoum` (UTC+2).
+- **As-Of Timestamp**: Required UTC cutoff controlling which decisions and transitions are visible, so the same window and cutoff reproduce the same result.
 - **Read Model**: A denormalized or indexed projection optimized for analytical queries without locking or degrading primary transactional tables.
 - **The 12 Core Metrics**:
   1. **Registered Users Count**: Total accounts created within the cohort window.
@@ -31,7 +32,7 @@ The Reporting and Analytics domain computes and presents the 12 core platform bu
   9. **Customer Action Volume**: Total count of service executions that entered `action_required` status at least once.
   10. **Completed Orders Percentage**: Percentage of eligible service executions that reached `completed` status within the cohort.
   11. **Traveler Profile Reuse Rate**: Percentage of distinct travelers who have been the beneficiary of more than one commercial order.
-  12. **Customer Retention Rate**: Percentage of customer accounts that placed two or more distinct orders across their lifecycle.
+  12. **Customer Repeat-Usage Proxy**: Percentage of purchasing accounts that placed more than one paid order as of the cutoff. It is explicitly a repeat-usage proxy, not a time-based cohort-retention claim.
 
 ---
 
@@ -40,7 +41,8 @@ The Reporting and Analytics domain computes and presents the 12 core platform bu
 1. **Read-Only Invariant**: The reporting domain must NEVER perform write operations on source transactional business tables (`wallets`, `orders`, `executions`, `users`).
 2. **Timezone Standardization**: All daily, weekly, and monthly date boundaries are evaluated in the `Africa/Khartoum` timezone (UTC+2), regardless of the server's native system timezone.
 3. **Division-by-Zero Safety**: Whenever a ratio or rate denominator is zero, the metric must deterministically return `0.00%` or `0` rather than throwing an error or yielding `null`.
-4. **Historical Stability**: Historical metrics computed for closed past periods must remain constant and reproducible from deterministic fixtures.
+4. **Reproducibility**: The same cohort window, `as_of`, source data, and metric version produce the same result. A later cutoff may include late decisions and therefore may legitimately change a past submission cohort.
+5. **Exact Arithmetic**: Monetary sums and ratios use integer or exact decimal/rational arithmetic, never binary floating point.
 
 ---
 
@@ -52,15 +54,15 @@ The Reporting and Analytics domain computes and presents the 12 core platform bu
 | **M02** | Saved Travelers | Count of travelers with `created_at` in cohort | N/A | Integer count |
 | **M03-A** | Order Count | Count of paid orders with `created_at` in cohort | N/A | Integer count |
 | **M03-B** | Order Gross Value | Sum of `price_paid_minor` for orders in cohort | N/A | SDG minor units (`amount_minor`) |
-| **M04** | Top-Up Completion Rate | Count of top-ups with status in `[approved, rejected]` | Total top-ups submitted in cohort | Percentage (`0.00%` to `100.00%`) |
-| **M05** | Top-Up Turnaround | Sum of `(decision_at - submitted_at)` | Count of decided top-ups in cohort | Duration (Minutes / Hours) |
-| **M06** | Transfer Approval Ratio | Count of top-ups with status `approved` | Total decided top-ups in cohort | Percentage (`0.00%` to `100.00%`) |
-| **M07** | Orders by Service | Count of orders for each distinct `service_id` | Total orders in cohort | Table / Breakdown |
-| **M08** | Fulfillment Duration | Sum of `(completed_at - received_at)` | Count of completed executions in cohort | Duration (Hours / Days) |
-| **M09** | Action Required Volume | Count of executions that entered `action_required` | Total active executions in cohort | Integer count & Percentage |
-| **M10** | Completed Orders Rate | Count of executions with status `completed` | Eligible cohort executions | Percentage (`0.00%` to `100.00%`) |
-| **M11** | Traveler Reuse Rate | Count of travelers with order_count > 1 | Count of all travelers with order_count >= 1 | Percentage (`0.00%` to `100.00%`) |
-| **M12** | Customer Retention Rate | Count of accounts with order_count > 1 | Count of accounts with order_count >= 1 | Percentage (`0.00%` to `100.00%`) |
+| **M04** | Top-Up Completion Rate | Top-ups submitted in the window and terminal by `as_of` | All top-ups submitted in the window | Percentage (`0.00%` to `100.00%`) |
+| **M05** | Top-Up Turnaround | Sum of decision minus submission for the M04 terminal set | Count of that terminal set | Duration (Minutes / Hours) |
+| **M06** | Transfer Approval Ratio | Approved requests in the M04 terminal set | All terminal requests in that set | Percentage (`0.00%` to `100.00%`) |
+| **M07** | Orders by Service | Count and `price_paid_minor` sum of orders created in window grouped by service snapshot | N/A | Table / Breakdown |
+| **M08** | Fulfillment Duration | Sum of completed minus received for transitions to completed in window by `as_of` | Count of those completions | Duration (Hours / Days) |
+| **M09** | Action Required Volume | Count of transition events into `action_required` in window by `as_of` | N/A | Integer count; distinct execution count may also be shown |
+| **M10** | Completed Orders Rate | Executions received in window and completed by `as_of` | All executions received in window | Percentage (`0.00%` to `100.00%`) |
+| **M11** | Traveler Reuse Rate | Travelers used by more than one paid order as of cutoff | Travelers used by at least one paid order as of cutoff | Percentage (`0.00%` to `100.00%`) |
+| **M12** | Customer Repeat-Usage Proxy | Accounts with more than one paid order as of cutoff | Accounts with at least one paid order as of cutoff | Percentage (`0.00%` to `100.00%`) |
 
 ---
 
@@ -68,18 +70,18 @@ The Reporting and Analytics domain computes and presents the 12 core platform bu
 
 ### 6.1 GetPlatformOverviewMetrics
 - **Preconditions**: Staff has `admin.overview.view` ability.
-- **Inputs**: Cohort Period (`today`, `this_week`, `this_month`, or custom start/end dates in `YYYY-MM-DD`).
+- **Inputs**: Cohort Period (`today`, `this_week`, `this_month`, or custom start/end dates) and required UTC `as_of` timestamp.
 - **Expected Outcome**: Returns aggregated KPIs (M01 through M12) formatted for administrative dashboard widgets.
 - **Authorization**: Denied by default; requires `admin.overview.view`.
 
 ### 6.2 GetTopUpPerformanceReport
 - **Preconditions**: Staff has `admin.overview.view`.
-- **Inputs**: Bank Account ID (optional filter), Date Range.
+- **Inputs**: Bank Account ID (optional filter), Date Range, `as_of`.
 - **Expected Outcome**: Returns volume of submitted transfers, approved vs rejected counts, average review turnaround time, and backlog size of pending requests.
 
 ### 6.3 GetFulfillmentPerformanceReport
 - **Preconditions**: Staff has `admin.overview.view`.
-- **Inputs**: Service ID (optional filter), Date Range.
+- **Inputs**: Service ID (optional filter), Date Range, `as_of`.
 - **Expected Outcome**: Returns execution throughput, average completion time, volume of customer action requests, and current execution backlog by status.
 
 ---

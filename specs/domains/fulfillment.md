@@ -48,8 +48,9 @@ The Fulfillment and Service Execution domain owns the operational processing lif
 2. **Deterministic State Machine**: Status transitions must adhere strictly to the allowed state graph. Arbitrary or backward status jumps are strictly forbidden.
 3. **Mandatory Action Request Rationale**: Transitioning to `action_required` requires an explicit, non-empty customer-facing instruction describing what action is needed.
 4. **Automatic Resume on Response**: When a customer submits the requested information or document for an open action request, the execution status must automatically transition to `action_received`.
-5. **No Automated Refunds on Cancellation**: In Phase 1, transitioning an execution to `cancelled` is an operational termination only. It does NOT trigger an automated wallet refund. Any financial compensation is resolved manually out-of-band.
-6. **Internal Notes Privacy**: Internal operational notes must never be leaked through customer APIs, customer web interfaces, or customer notifications.
+5. **No Automatic Financial Effect on Cancellation**: Transitioning an execution to `cancelled` is operational only and does not change the wallet. Refund or compensation behavior is unspecified until an approved product policy defines it.
+6. **Captured Policy**: Each execution uses the immutable fulfillment-policy version captured by checkout. Publishing a later policy cannot alter an existing execution's allowed transitions or completion requirements.
+7. **Internal Notes Privacy**: Internal operational notes must never be leaked through customer APIs, customer web interfaces, or customer notifications.
 
 ---
 
@@ -100,7 +101,7 @@ The Fulfillment and Service Execution domain owns the operational processing lif
 
 ### 6.1 CreateExecution (Internal Contract Command)
 - **Preconditions**: Called within the atomic `SubmitOrder` transaction by Purchasing domain.
-- **Inputs**: Order ID, Account ID, Service ID, Form Version ID, Form Answers, Document IDs.
+- **Inputs**: Order ID, Account ID, Service ID, Form Version ID, captured Fulfillment Policy Version ID, Form Answers, Document IDs.
 - **Expected Outcome**: New execution record created with initial status `received`; initial status changelog entry appended.
 - **Observable Behavior**: Execution appears on customer’s active orders list and staff fulfillment queue.
 
@@ -152,7 +153,7 @@ The Fulfillment and Service Execution domain owns the operational processing lif
   - Status transitioned to `cancelled`.
   - Appends audit log entry with staff ID and cancellation rationale.
   - Dispatches `ExecutionCancelled` notification to Outbox.
-  - Wallet balance is NOT modified (manual refund process applies).
+  - Wallet balance is not modified; this specification makes no assumption about a separate refund or compensation process.
 - **Validation Rules**: Cancellation reason mandatory (min 15 chars).
 
 ### 6.7 AddInternalNote (Staff Command)
@@ -190,7 +191,7 @@ The Fulfillment and Service Execution domain owns the operational processing lif
 
 ## 10. Cross-Domain Interactions
 
-- **Orders & Purchasing Domain**: Orders instantiate service execution records upon checkout commit.
+- **Orders & Purchasing Domain**: Orders instantiate execution records with the immutable fulfillment-policy version captured at checkout.
 - **Documents Domain**: Application attachments, customer response files, and final issued visas are stored and verified clean via Documents.
 - **Notifications Domain**: Every status change emits an Outbox event for customer notification.
 - **Audit Domain**: Every operational status transition, note addition, and cancellation reason is recorded.

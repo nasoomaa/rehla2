@@ -16,7 +16,7 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
 
 ## 3. Concepts
 
-- **Document Record**: Metadata tracking a stored file: ID, Account ID, Storage Disk (`private` or `public`), Storage Key, Original Filename, Detected MIME Type, File Size (bytes), SHA-256 Checksum, Document Classification (`bank_receipt`, `passport_scan`, `applicant_photo`, `supporting_doc`, `service_media`), Lifecycle Status, and Expiration Timestamp.
+- **Document Record**: Metadata tracking a stored file: ID, owner/scope, Storage Disk (`private` or `public`), Storage Key, Original Filename, Detected MIME Type, File Size, SHA-256 Checksum, canonical classification, Lifecycle Status, and retention metadata. Private classifications are `bank_receipt`, `passport_scan`, `identity_document`, `applicant_photo`, `supporting_document`, and `issued_document`; public classifications are `service_media` and `bank_logo`.
 - **Upload Session**: A temporary staging container created when a user initiates an upload.
 - **Private Storage Disk**: A secure storage system (object storage bucket or protected filesystem) strictly inaccessible from public internet gateways. All customer-uploaded documents reside here.
 - **Public Storage Disk**: Publicly accessible storage used strictly for marketing assets, service banner images, and bank logos.
@@ -39,7 +39,7 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
 5. **Retention Rules**:
    - **Orphaned (Unattached) Temporary Uploads**: Retained for exactly 24 hours from upload time, then permanently purged.
    - **Rejected / Infected Uploads**: Retained in quarantine for exactly 30 days for security auditing, then permanently erased.
-   - **Attached Documents**: Permanently retained as part of the immutable historical record of the commercial order or top-up request.
+   - **Attached Documents**: Never pruned as orphans. Their retention follows the parent record's approved policy; Phase 1 retains them indefinitely until a deletion/retention policy is approved.
 6. **Zero Public Disclosure**: Downloads of private documents must pass an explicit authorization check and be served via short-lived signed URLs (lifetime <= 15 minutes) or authorized proxy streaming with `X-Content-Type-Options: nosniff` and safe `Content-Disposition`.
 
 ---
@@ -53,9 +53,8 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
         ▼
    Pending Scan
         │
-        ├──► Quarantined ──► Rejected (Retained 30 days for audit)
-        │
-        └──► Clean
+        └──► Quarantined ──► Clean
+                              OR Rejected (Retained 30 days for audit)
                │
                ├──► Attached (Permanently retained with Order/TopUp)
                │
@@ -74,9 +73,9 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
 
 ### 6.1 UploadDocument
 - **Preconditions**: Customer is authenticated.
-- **Inputs**: File Binary, Original Filename, Declared Classification (`bank_receipt`, `passport_scan`, `applicant_photo`, `supporting_doc`).
+- **Inputs**: File Binary, Original Filename, one allowed private classification.
 - **Expected Outcome**: File stored in private staging bucket; document record created in `pending_scan` status; asynchronous scanning task scheduled.
-- **Observable Behavior**: Returns HTTP 201 Created with `document_id`, filename, size, and current status (`pending_scan` or `clean` if scanned synchronously).
+- **Observable Behavior**: Returns HTTP 201 with `document_id`, filename, size, and `pending_scan`. The authenticated client polls the upload-status endpoint until `clean` or `rejected`.
 - **Validation Rules**:
   - File size must be within quota (<= 10MB image, <= 20MB PDF).
   - Extension must be `.pdf`, `.jpg`, `.jpeg`, or `.png`.
@@ -126,7 +125,7 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
 
 ## 8. Edge Cases
 
-- **User Uploads File and Immediately Submits Order**: Scanning is optimized to complete synchronously within 200ms for standard images. If scanning is still in progress, checkout waits up to a bounded timeout (2000ms) or returns a user-friendly retry message: `"Document verification in progress. Please wait a moment."`
+- **User Uploads File and Immediately Submits Order**: If status remains `pending_scan` or `quarantined`, checkout returns `document.verification_pending`; it does not wait inside the purchase transaction. The client polls and retries after a terminal scan result.
 - **Tampered Extension**: A user renames an executable `.exe` or `.sh` script to `.png`. The magic bytes validator immediately detects non-PNG header bytes and flags the document as `rejected`.
 
 ---

@@ -17,7 +17,7 @@ A new user registers an account on Rehla, establishes secure credentials, automa
 
 ## 3. Preconditions
 
-1. The user has a valid, accessible email address not currently registered in Rehla.
+1. The user has a valid, accessible email address not registered by any active or suspended Rehla account.
 2. The platform is online and accepting new registrations.
 
 ---
@@ -51,15 +51,15 @@ The user clicks **"Sign Up"** on the Rehla header or navigates to `/register`.
    - Password is encrypted using Argon2id / bcrypt.
    - User record is inserted into `users` table with status `active`.
 6. **System initializes default wallet**:
-   - Inside the registration transaction, system provisions an empty wallet for the user in `wallets` table.
+   - A synchronous in-process `CustomerRegistered` handler provisions the empty wallet inside the registration transaction; failure rolls back the user record.
    - Currency is set to `SDG`.
    - `current_balance_minor` is initialized to `0`.
    - Status is set to `active`.
 7. **System creates session and tokens**:
    - For Web: Creates an authenticated HTTP session cookie.
    - For API: Generates initial Sanctum Bearer token.
-8. **System enqueues welcome notification**:
-   - Inserts `CustomerRegistered` outbox message and creates initial welcome in-app notification: `"Welcome to Rehla! Explore travel services and fund your wallet to get started."`
+8. **System records welcome notification**:
+   - Creates the welcome in-app notification atomically and inserts a `CustomerRegistered` outbox message only for enabled asynchronous external channels.
 9. **System commits transaction**:
    - PostgreSQL transaction commits cleanly.
 10. **System redirects to customer account dashboard**:
@@ -108,7 +108,7 @@ The user clicks **"Sign Up"** on the Rehla header or navigates to `/register`.
 
 ## 8. Recovery Behavior
 
-- On duplicate email, the user can click **"Sign In"** or use the password recovery option.
+- On duplicate email, the user can click **"Sign In"**. Password recovery is outside this journey unless separately specified.
 - On validation failure, field-level error messages direct the user to correct the specific fields without leaving the page.
 
 ---

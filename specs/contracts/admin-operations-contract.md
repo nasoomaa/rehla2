@@ -32,17 +32,17 @@ This contract governs the boundary between the Administrative Control Plane (e.g
 | Section / Resource | Required View Ability | Modification Commands | Sensitive Fields & Masking |
 |---|---|---|---|
 | **Overview** | `admin.overview.view` | None (Read-only analytics) | Aggregated KPIs only |
-| **Services** | `services.view` | `CreateService`, `UpdatePrice`, `PublishService`, `DeactivateService` | Pricing history requires `services.manage` |
+| **Services** | `services.view` | `CreateService`, `UpdatePrice`, `PublishService`, `DeactivateService`, `PublishFulfillmentPolicy` | Published price and fulfillment-policy versions are immutable |
 | **Application Forms** | `forms.view` | `CreateDraft`, `UpdateDraft`, `PublishVersion` | Schema editor requires `forms.draft` / `forms.publish` |
 | **Customers** | `customers.view` | `SuspendCustomer`, `ReactivateCustomer` | Contact details allowlisted; requires `customers.view_sensitive` |
 | **Travelers** | `travelers.view` | None (No direct profile editing by staff) | Passport number masked as `P*****567` unless `travelers.view_sensitive` |
-| **Wallets & Ledger** | `wallets.view` | Compensating adjustment command only | Ledger entries immutable; no edit/delete buttons |
+| **Wallets & Ledger** | `wallets.view` | None in Phase 1 | Ledger entries immutable; a future correction procedure requires separate approval |
 | **Bank Accounts** | `banks.view` | `CreateBankAccount`, `UpdateBankAccount`, `ToggleStatus` | Internal banking notes restricted to `banks.manage` |
-| **Top-Up Requests** | `topups.view` | `ApproveTopUp`, `RejectTopUp` | Transfer receipt requires `documents.view_sensitive`; MFA required |
+| **Top-Up Requests** | `topups.view` | `ApproveTopUp`, `RejectTopUp`, `ConfigureMinimumTopUp` | Receipt requires `documents.view_sensitive`; review/settings commands require fresh MFA |
 | **Orders** | `orders.view` | None (Permanent commercial records) | Order snapshots permanently immutable |
 | **Service Executions**| `executions.view` | `TransitionStatus`, `RequestCustomerAction`, `CompleteExecution`, `CancelExecution`, `AddInternalNote` | Attached documents gated by policy; internal notes hidden from customers |
 | **Content** | `content.view` | `CreatePage`, `UpdatePage`, `PublishPage` | Markdown / Rich Text sanitization enforced |
-| **Notifications** | `notifications.view` | `ReplayOutboxMessage` | Recipient PII masked unless `notifications.manage` |
+| **Notifications** | `notifications.view` | `ReplayOutboxMessage` | Replay requires `notifications.replay`; recipient PII remains masked |
 | **Roles & Permissions**| `access.view` | `AssignRole`, `UpdateAbilities` | Requires MFA; super-admin role self-revocation prevented |
 | **Audit Log** | `audit.view` | None (Strictly read-only) | Requires MFA; sensitive payload fields masked |
 
@@ -84,7 +84,7 @@ This contract governs the boundary between the Administrative Control Plane (e.g
    When an administrator clicks to inspect a passport scan, national ID, or bank receipt:
    - The Admin panel does NOT render a public S3/CDN link.
    - It requests a signed, temporary streaming token via `Documents\Contracts\GetSecureDownloadUrl`.
-   - The token has a maximum lifetime of 15 minutes and is tied to the requesting staff member's IP and session.
+   - Authorization is rechecked at access time. Any temporary grant has a maximum lifetime of 15 minutes and is tied to the requesting staff session.
    - File is delivered with `Content-Disposition: inline` and `X-Content-Type-Options: nosniff`.
 2. **Passport Number Masking**:
    In list views and tables, passport numbers appear masked:

@@ -16,7 +16,7 @@ The Identity and Access Management domain owns customer accounts, staff user pro
 
 ## 3. Concepts
 
-- **User Account**: The central identity record containing email, full name, phone number, password hash, status (`active`, `suspended`), preferred language (`en` or `ar`), and timestamps.
+- **User Account**: The central identity record containing email, full name, password hash, status (`active`, `suspended`), preferred language (`en` or `ar`), and timestamps.
 - **Staff Profile**: Operational metadata linked to an administrative user, defining departmental affiliation, active status, and MFA configuration.
 - **Role**: A named collection of granular abilities (e.g., `Reviewer`, `Fulfillment Officer`, `Platform Administrator`).
 - **Ability (Permission)**: An atomic authorization grant representing a specific action or visibility scope (e.g., `topups.review`, `services.manage`, `travelers.view_sensitive`, `audit.view`).
@@ -29,11 +29,11 @@ The Identity and Access Management domain owns customer accounts, staff user pro
 
 ## 4. Invariants
 
-1. **Email Uniqueness**: Email addresses must be normalized (lowercased, whitespace stripped) and unique across all active accounts.
+1. **Email Uniqueness**: Email addresses must be normalized (lowercased, surrounding whitespace stripped) and unique across all accounts, including suspended accounts.
 2. **Session Guard Isolation**: Customer sessions and Admin sessions must use separate cookies and distinct session stores; a customer session can never authenticate an administrative request, and vice versa.
 3. **Deny-by-Default**: In the absence of an explicit role grant or ability assignment, all administrative and sensitive operations are forbidden.
 4. **Least Privilege**: Staff users receive only explicitly assigned abilities; new staff profiles possess zero permissions upon creation.
-5. **MFA Enforcement for High-Risk Abilities**: Any staff account possessing `topups.review`, `access.manage`, or `audit.view` cannot execute those abilities without an active, verified TOTP MFA session.
+5. **MFA Enforcement for High-Risk Abilities**: Exercising `topups.review`, `topups.settings.manage`, `access.manage`, or `audit.view` requires a verified TOTP challenge no older than four hours.
 6. **Account Ownership Immutability**: The link between an account and its historical records (orders, wallet, travelers) is permanent and cannot be transferred to another user.
 
 ---
@@ -61,9 +61,9 @@ The Identity and Access Management domain owns customer accounts, staff user pro
 ## 6. Commands and Actions
 
 ### 6.1 RegisterCustomer
-- **Preconditions**: Email is not registered to an active account.
+- **Preconditions**: Normalized email is not registered to any account.
 - **Inputs**: Full Name, Email, Password, Password Confirmation, Preferred Language (`en` or `ar`).
-- **Expected Outcome**: New customer account created, default wallet provisioned, notification preferences initialized.
+- **Expected Outcome**: New customer account, empty wallet, notification preferences, welcome in-app notification, and any external-channel outbox record commit atomically.
 - **Observable Behavior**: On Web: customer is authenticated and redirected to dashboard. On API: HTTP 201 Created returned with account profile and initial Bearer token.
 - **State Changes**: New account record inserted with status `active`.
 - **Validation Rules**:
@@ -73,7 +73,7 @@ The Identity and Access Management domain owns customer accounts, staff user pro
   - Preferred Language: `en` or `ar` (defaults to `en`).
 - **Authorization**: Public endpoint; strict IP-based and subnet rate limiting (max 5 requests per minute).
 - **Failure Behavior**: Validation failure returns HTTP 422 with field errors. Duplicate email returns HTTP 422 with generic error `"An account with this email already exists."`
-- **Side Effects**: Emits `CustomerRegistered` domain event; triggers wallet initialization.
+- **Side Effects**: Emits `CustomerRegistered` inside the transaction. Wallet handles it synchronously in-process before commit; external channel delivery remains asynchronous through the outbox. Failure to create the wallet rolls back registration.
 
 ### 6.2 AuthenticateCustomer
 - **Preconditions**: Account exists and is in `active` status.
@@ -135,5 +135,5 @@ The Identity and Access Management domain owns customer accounts, staff user pro
 
 ## 10. Cross-Domain Interactions
 
-- **Wallet Domain**: When `CustomerRegistered` occurs, the Wallet domain initializes an empty wallet for the user.
+- **Wallet Domain**: A synchronous in-process `CustomerRegistered` handler initializes the empty wallet in the registration transaction. Identity does not import Wallet internals.
 - **Audit Domain**: All staff logins, failed staff login attempts, role reassignments, and account suspensions write immutable entries to the Audit domain.

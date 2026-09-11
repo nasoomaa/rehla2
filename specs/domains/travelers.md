@@ -17,14 +17,14 @@ The Travelers domain manages beneficiary traveler profiles associated with custo
 ## 3. Concepts
 
 - **Traveler Profile**: A persistent record belonging to an Account Owner representing an individual beneficiary. Contains:
-  - Full Name (English and Arabic).
+  - Full Name (one required Unicode value as written in official records).
   - Date of Birth.
   - Gender (`male`, `female`).
   - Raw Passport Number (as entered by user).
   - Normalized Passport Number (computed authoritative representation).
   - Passport Issue Date.
   - Passport Expiry Date.
-- **Normalized Passport Number**: A passport number stripped of all whitespace, hyphens, and non-alphanumeric characters, converted strictly to uppercase, validated against `^[A-Z0-9]{6,12}$`.
+- **Normalized Passport Number**: Remove Unicode whitespace and hyphens, convert ASCII letters to uppercase, reject any remaining punctuation, then validate against `^[A-Z0-9]{6,12}$`.
 - **Traveler Snapshot**: An immutable, serialized snapshot of the traveler’s exact biographical data at the time of order submission, stored permanently in the Commercial Order record.
 
 ---

@@ -34,14 +34,15 @@ This contract defines the interface and lifecycle guarantees for physical storag
 | `passport_scan` | `application/pdf`, `image/jpeg`, `image/png` | `.pdf`, `.jpg`, `.jpeg`, `.png` | 10 MiB (image) / 20 MiB (PDF) | Checked against file headers |
 | `bank_receipt` | `application/pdf`, `image/jpeg`, `image/png` | `.pdf`, `.jpg`, `.jpeg`, `.png` | 10 MiB (image) / 20 MiB (PDF) | Checked against file headers |
 | `applicant_photo`| `image/jpeg`, `image/png` | `.jpg`, `.jpeg`, `.png` | 10 MiB | Checked against file headers |
-| `supporting_doc` | `application/pdf`, `image/jpeg`, `image/png` | `.pdf`, `.jpg`, `.jpeg`, `.png` | 20 MiB | Checked against file headers |
+| `identity_document`, `supporting_document`, `issued_document` | `application/pdf`, `image/jpeg`, `image/png` | `.pdf`, `.jpg`, `.jpeg`, `.png` | 20 MiB | Checked against file headers |
 | `service_media` | `image/jpeg`, `image/png` (public) | `.jpg`, `.jpeg`, `.png` | 5 MiB | Standard image check |
+| `bank_logo` | `image/jpeg`, `image/png` (public) | `.jpg`, `.jpeg`, `.png` | 5 MiB | Standard image check |
 
 ---
 
 ## 5. Scanning and Sanitization Protocol
 
-Every customer file uploaded to the `private` disk enters the scanning pipeline:
+Every file, including staff-managed public media, enters the scanning pipeline before publication or attachment:
 
 ```text
 Upload ──► Private Staging ──► Magic Byte Verification ──► Image Decoder / Antivirus
@@ -72,8 +73,8 @@ Upload ──► Private Staging ──► Magic Byte Verification ──► Ima
   - The hourly scheduler deletes the storage blob and marks the database record purged.
 - **Rejected File Retention (30-Day Audit Rule)**:
   - Files marked `rejected` are isolated in a quarantine bucket for exactly 30 days to facilitate security analysis and abuse tracking, after which they are permanently expunged.
-- **Attached Document Permanence**:
-  - Once a document transitions to `attached`, its retention is permanently bound to the lifecycle of the parent commercial order or top-up request. It can never be deleted by the orphan cleaner.
+- **Attached Document Retention**:
+  - Once attached, a document can never be deleted by the orphan cleaner. Its retention follows the parent policy; Phase 1 retains it indefinitely until an approved retention policy says otherwise.
 
 ---
 
@@ -90,7 +91,7 @@ DocumentStreamResponse getAuthorizedStream(string $documentId, AuthenticatedActo
 ```http
 HTTP/1.1 200 OK
 Content-Type: application/pdf
-Content-Disposition: attachment; filename="verified_passport_P01234567.pdf"
+Content-Disposition: attachment; filename="document-a1b2c3.pdf"
 Content-Security-Policy: default-src 'none'
 X-Content-Type-Options: nosniff
 Cache-Control: private, no-cache, no-store, must-revalidate

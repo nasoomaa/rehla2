@@ -138,7 +138,7 @@ Fulfillment Officer claims execution `exec-9988` from the operational fulfillmen
 ## 8. Recovery Behavior
 
 - If the customer's replacement photo is also rejected, staff can trigger another `RequestCustomerAction` with revised guidance.
-- Download links for completed visas remain accessible indefinitely in the customer's order history.
+- While retention permits, the customer can request a fresh authorized short-lived download from order history; no permanent private link is stored or exposed.
 
 ---
 
@@ -164,4 +164,4 @@ Fulfillment Officer claims execution `exec-9988` from the operational fulfillmen
 
 ## 11. External-System Interactions
 
-- None. Immigration processing is performed externally by staff, with outputs attached to the platform.
+- Staff uses the external immigration authority portal manually. Rehla has no Phase 1 programmatic integration or transaction coupling with it; staff attaches the returned official output through the Documents contract.

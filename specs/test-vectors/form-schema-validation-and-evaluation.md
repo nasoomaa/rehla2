@@ -50,7 +50,9 @@ This suite proves the deterministic validation of customer submitted answers aga
 
 ## 4. Checksum Integrity Vectors
 
+Canonicalization recursively sorts object keys lexicographically, preserves array order and string contents, and encodes UTF-8 JSON without insignificant whitespace. The checksum is the full lowercase hexadecimal SHA-256 of those bytes.
+
 | Case ID | Schema Definition | Computed SHA-256 Checksum | Submission Schema Checksum | Result |
 |---|---|---|---|---|
-| **CHK-01** | Normalized JSON Schema V1 | `e3b0c44298fc1c...` | `e3b0c44298fc1c...` | Accepted: Checksums match |
-| **CHK-02** | Tampered Field Label in DB | `a1b2c3d4e5f6...` | `e3b0c44298fc1c...` | Rejected: Integrity violation detected |
+| **CHK-01** | `{"fields":[{"key":"mother_name","required":true,"type":"short_text"}],"version":1}` | `fca3367c3c2678e6e63c8d144235c66ede00fd00495a68927c920522aa1386fc` | Same full hash | Accepted |
+| **CHK-02** | Adds `"label":"Changed"` to the field | `b19bddb1eb3e970ec6fd5465ca613667af3dd9e19664f4b0c64584bb53bc34d0` | CHK-01 hash | Rejected: `form.schema_integrity_failed` |

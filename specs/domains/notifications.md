@@ -36,6 +36,8 @@ The Notifications and Outbox domain manages customer communication, in-app notif
   - Available At (timestamp for scheduled/retry execution).
   - Locked At (timestamp when worker claimed message).
   - Locked By (worker instance identifier).
+  - Lock Token (new opaque token for each claim).
+  - Lease Expires At (UTC timestamp after which the claim can be replaced).
   - Attempts Count (integer, max 5).
   - Last Error (diagnostic text if delivery failed).
   - Delivered At (timestamp when delivery confirmed).
@@ -47,7 +49,7 @@ The Notifications and Outbox domain manages customer communication, in-app notif
 1. **Transactional Outbox Atomic Write**: Whenever a business event produces a notification, the Outbox record must be inserted inside the exact same database transaction as the business state change.
 2. **Zero External I/O Inside Business Transactions**: No external network calls (SMS APIs, email gateways, WhatsApp webhooks) may ever be executed inside a database transaction.
 3. **At-Least-Once Delivery**: All outbox messages are guaranteed to be attempted at least once. If an external channel fails, the message remains in the outbox for exponential backoff retries.
-4. **Deduplication Idempotency**: Every outbox message possesses a unique `deduplication_key`. External adapters use this key to prevent duplicate customer messages during network retries.
+4. **Deduplication Idempotency**: Every outbox message possesses a deterministic unique `deduplication_key`. Adapters should use it when supported, but at-least-once delivery still permits duplicates after an ambiguous provider response.
 5. **Customer Ownership**: Customers can only view and mutate the read status of their own notifications (`account_id == notification.account_id`).
 6. **Dead-Letter Containment**: After reaching the maximum retry threshold (5 attempts), a message transitions to `dead_letter` without halting worker queues.
 
@@ -97,17 +99,17 @@ The Notifications and Outbox domain manages customer communication, in-app notif
 - **Inputs**: Batch Size (e.g. 50), Worker ID, Lease Duration (e.g. 60 seconds).
 - **Expected Outcome**:
   - Queries `outbox_messages` where `status = 'available'` AND `available_at <= NOW()` ORDER BY `id` ASC LIMIT `batch_size` FOR UPDATE SKIP LOCKED.
-  - Updates matched records: `status = 'locked'`, `locked_at = NOW()`, `locked_by = worker_id`, `attempts = attempts + 1`.
+  - Claims available or expired rows and updates each with `status = 'locked'`, `locked_at = NOW()`, `locked_by = worker_id`, a fresh random `lock_token`, `lease_expires_at`, and `attempts = attempts + 1`.
 - **Observable Behavior**: Locks batch safely across multiple concurrent worker processes without row contention.
 
 ### 6.3 MarkMessageDelivered (Worker Action)
 - **Preconditions**: External adapter confirms message delivered or accepted.
-- **Inputs**: Message ID.
-- **Expected Outcome**: Updates message: `status = 'delivered'`, `delivered_at = NOW()`, `locked_by = NULL`.
+- **Inputs**: Message ID, Worker ID, Lock Token.
+- **Expected Outcome**: Updates only a row still locked by that worker/token. Zero updated rows means the lease was lost and the worker must discard its result.
 
 ### 6.4 HandleDeliveryFailure (Worker Action)
 - **Preconditions**: External dispatch threw network or provider error.
-- **Inputs**: Message ID, Error Message.
+- **Inputs**: Message ID, Worker ID, Lock Token, bounded safe error code/message, Trace ID.
 - **Expected Outcome**:
   - If `attempts < 5`: sets `status = 'available'`, computes exponential backoff `available_at = NOW() + (2^attempts * 15 seconds)`.
   - If `attempts >= 5`: sets `status = 'dead_letter'`, logs error to Audit, alerts monitoring.
@@ -135,20 +137,20 @@ The Notifications and Outbox domain manages customer communication, in-app notif
    - `execution.action_received`: `"Your submitted documents have been received and are under review."`
    - `execution.completed`: `"Your order {order_ref} is complete. Your visa is ready for download."`
    - `execution.cancelled`: `"Your order {order_ref} has been cancelled. Reason: {reason}"`
-2. **Worker Crash Recovery**: If a worker process crashes while holding locked messages, the lease expires after 60 seconds (`locked_at < NOW() - INTERVAL '60 seconds'`). A recovery scheduler unlocks expired messages back to `available`.
+2. **Worker Crash Recovery and Fencing**: An expired lease can be reclaimed with a new token. Every success/failure update compares message ID, `locked` status, worker ID, and token, so the former worker cannot acknowledge or reschedule the reclaimed row.
 
 ---
 
 ## 8. Edge Cases
 
-- **Multiple Outbox Workers Running Concurrently**: PostgreSQL `FOR UPDATE SKIP LOCKED` guarantees that no two workers can claim the same outbox row simultaneously, completely preventing duplicate execution within the platform.
+- **Multiple Outbox Workers Running Concurrently**: `FOR UPDATE SKIP LOCKED` prevents simultaneous claims. At-least-once delivery can still repeat an external send after a crash or ambiguous provider response; channel idempotency and deterministic keys reduce that risk.
 - **External Network Failure**: If external SMS or email gateways go offline, Outbox rows remain persisted in PostgreSQL. When the external provider recovers, workers resume delivery in chronological sequence.
 
 ---
 
 ## 9. Failure Behavior
 
-- **Dead Letter Exceeded**: When a message fails 5 times, it is placed into `dead_letter` status with the full error stack trace captured in `last_error`.
+- **Dead Letter Exceeded**: After 5 failures the message enters `dead_letter`. `last_error` stores only a bounded sanitized code/message and trace ID; full stack details belong in access-controlled logs.
 - **Notification Not Found / Unauthorized**: HTTP 404 Not Found when marking a non-existent or foreign notification as read.
 
 ---

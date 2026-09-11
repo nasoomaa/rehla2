@@ -98,7 +98,7 @@ Rehla strictly enforces separation among six core business concepts:
 1. **Bilingual Presentation**: English (`en`) as primary display language, with full Arabic (`ar`) support including Right-to-Left (RTL) layout.
 2. **Dynamic Form Versioning**: Service forms are versioned. Publishing a new version immediately applies to new submissions while existing orders retain their historical form schema and responses.
 3. **Strict Document Privacy Pipeline**: Sensitive documents (passports, national IDs, bank receipts) are stored on private disks, quarantined upon upload, verified for magic bytes and malware, and only accessible via authenticated, short-lived signed URLs.
-4. **Immutable Double-Entry Ledger**: Balances are calculated from append-only ledger entries using integer minor units in SDG. Corrections are recorded as compensating entries; historical ledger rows are never updated or deleted.
+4. **Immutable Append-Only Wallet Ledger**: Balances are calculated from append-only credit and debit entries using integer minor units in SDG. Historical ledger rows are never updated or deleted. This is a wallet ledger contract, not a claim that Phase 1 implements a general accounting double-entry system.
 5. **Concurrency-Safe Purchasing**: Submission uses scoped idempotency keys, re-verifies wallet balance and authoritative prices inside a serialized database transaction, and guarantees zero partial state.
 6. **Comprehensive Metric Analytics**: 12 core business metrics computed over `Africa/Khartoum` timezone cohorts to track turnaround times, approval rates, and retention.
 
@@ -108,7 +108,7 @@ Rehla strictly enforces separation among six core business concepts:
 
 - **Account Owner (Customer)**: The authenticated entity possessing a platform account, managing a wallet, and submitting orders.
 - **Traveler**: A person for whom travel services are ordered. Belongs to an Account Owner.
-- **Normalized Passport Number**: A passport number stripped of spaces, hyphens, and punctuation, converted to uppercase, validated against `^[A-Z0-9]{6,12}$`, and globally unique across all travelers in the platform.
+- **Normalized Passport Number**: A passport number with Unicode whitespace and hyphens removed and ASCII letters uppercased. Remaining punctuation is rejected; the result must match `^[A-Z0-9]{6,12}$` and is globally unique.
 - **Wallet**: An Account Owner's financial balance represented as integer minor units of SDG (scale 100).
 - **Minor Unit (`amount_minor`)**: 1 SDG = 100 minor units (piastres). 5,000 SDG = 500,000 minor units.
 - **Top-Up Request**: A formal submission by a customer claiming external bank transfer of funds, verified by staff before crediting the wallet.
@@ -174,7 +174,7 @@ Rehla strictly enforces separation among six core business concepts:
 ## 11. Important Non-Functional Requirements
 
 1. **Auditability**: Every financial movement and critical operational decision (top-up approval/rejection, status transition, document rejection, role modification) must record an immutable audit entry with actor identity, timestamp, decision rationale, and correlation ID.
-2. **Idempotency**: All write-sensitive endpoints (order checkout, top-up submission, review decisions) must accept an idempotency key and guarantee that identical retries produce the exact original outcome without duplicate debits or duplicate records.
+2. **Idempotency and Deduplication**: Checkout uses a customer-scoped idempotency key. Top-up submission deduplicates the platform-bank/reference pair. Replayed terminal review decisions return the recorded outcome without a second financial effect.
 3. **Performance**: Order checkout transactions must execute within 500ms under standard database conditions. Public catalog views must render within 200ms.
 4. **Availability & Recovery**: Target Recovery Point Objective (RPO) is 15 minutes; target Recovery Time Objective (RTO) is 4 hours. Automated point-in-time recovery coordinates database state and private object storage blobs.
 
@@ -192,4 +192,4 @@ The following capabilities are explicitly excluded from Phase 1:
 - Incomplete order draft persistence.
 - Group bookings / multiple travelers in a single order.
 - Third-party travel agency or airline marketplace.
-- Automated wallet refunds upon execution cancellation (cancellation is operational only; refunds are handled manually/out-of-band in Phase 1).
+- Automated wallet effects upon execution cancellation. Refund and compensation behavior is unspecified until an approved product policy defines it.

@@ -12,7 +12,7 @@ This suite proves that monetary values in Sudanese Pounds (SDG) are represented 
 2. Floating-point numbers (`float`, `double`) are rejected in money calculations.
 3. 1 SDG = 100 minor units.
 4. Negative balances and negative transaction amounts are strictly rejected (`amount_minor >= 0`).
-5. Minimum top-up amount is 5,000.00 SDG (`500,000` minor units).
+5. The minimum top-up is a positive auditable setting whose initial value is 5,000.00 SDG (`500000` minor units).
 
 ---
 
@@ -23,8 +23,8 @@ This suite proves that monetary values in Sudanese Pounds (SDG) are represented 
 | **MON-01** | Normal | Standard integer conversion | `500000` minor units | Formatted: `"5,000.00 SDG"` / `"5,000.00 ج.س"` | Currency: `SDG`, Scale: 100 | Valid |
 | **MON-02** | Normal | Fractional SDG conversion | `250050` minor units | Formatted: `"2,500.50 SDG"` / `"2,500.50 ج.س"` | Scale: 100 | Valid |
 | **MON-03** | Normal | High value conversion | `150000000` minor units | Formatted: `"1,500,000.00 SDG"` | Scale: 100 | Valid |
-| **MON-04** | Boundary | Minimum allowed top-up | `500000` minor units (5,000 SDG) | Accepted by TopUp validator | Top-up threshold check | Valid |
-| **MON-05** | Boundary | Just below minimum top-up | `499999` minor units (4,999.99 SDG)| Rejected with `top_up.below_minimum` | Top-up threshold check | Invalid |
+| **MON-04** | Boundary | Initial minimum allowed top-up | `500000` minor units (5,000 SDG) | Accepted | Current minimum = `500000` | Valid |
+| **MON-05** | Boundary | Just below initial minimum | `499999` minor units | Rejected with `top_up.below_minimum` and current threshold | Current minimum = `500000` | Invalid |
 | **MON-06** | Boundary | Zero amount top-up | `0` minor units | Rejected with `top_up.below_minimum` | Positive integer check | Invalid |
 | **MON-07** | Invalid | Negative minor units | `-1` minor units | Exception: `InvalidArgumentException` | Integer signedness check | Invalid |
 | **MON-08** | Invalid | Float type input | `5000.50` (float) | Rejected: Strict integer type expected | No float allowed | Invalid |
@@ -32,6 +32,8 @@ This suite proves that monetary values in Sudanese Pounds (SDG) are represented 
 | **MON-10** | Normal | Balance subtraction (Debit)| Initial: `5,000,000` (50,000 SDG)<br>Debit: `2,500,000` (25,000 SDG) | New Balance: `2,500,000` (25,000 SDG) | Ledger debit entry created | Valid |
 | **MON-11** | Boundary | Exact balance exhaustion | Initial: `2,500,000` (25,000 SDG)<br>Debit: `2,500,000` (25,000 SDG) | New Balance: `0` (0.00 SDG) | Allowed (Zero balance valid) | Valid |
 | **MON-12** | Boundary | Overdraft rejection | Initial: `2,500,000` (25,000 SDG)<br>Debit: `2,500,001` (25,000.01 SDG)| Rejected with `wallet.insufficient_balance`; Balance remains `2,500,000` | Non-negative constraint | Invalid |
+| **MON-13** | Configuration | Raised minimum boundary | `749999` rejected; `750000` accepted | Decisions use new threshold | Current minimum = `750000` | Deterministic |
+| **MON-14** | Historical | Existing request after threshold change | Submitted at `500000` under captured minimum `500000` | Remains reviewable | Current minimum later `750000` | Valid |
 
 ---
 

@@ -102,7 +102,7 @@ The Application Forms domain owns dynamic service application form definitions, 
 
 ## 7. Business Rules
 
-1. **Schema Checksum Verification**: Every published version includes a SHA-256 hash of its normalized JSON schema. If the checksum mismatches upon loading, the system raises an immediate integrity alert.
+1. **Schema Checksum Verification**: Canonical JSON recursively sorts object keys, preserves array order and string contents, and uses UTF-8 without insignificant whitespace. Every published version stores the full lowercase SHA-256 of these bytes; mismatch raises `form.schema_integrity_failed` and an integrity alert.
 2. **Independent Snapshots**: When a customer submits an order, their responses are frozen as JSON alongside the exact `form_version_id`.
 3. **No Phantom Fields**: Responses containing fields not declared in the target version schema are rejected immediately.
 

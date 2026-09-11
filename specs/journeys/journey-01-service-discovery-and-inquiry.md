@@ -17,7 +17,7 @@ A user (guest or customer) browses available travel offerings on Rehla, inspects
 ## 3. Preconditions
 
 1. At least one travel service (e.g. "UAE 30-Day Tourist Visa") is published in `active` status in the Service Catalog.
-2. An active form version is linked to the service.
+2. Catalog publication is complete. A published form and fulfillment policy are required only when the user proceeds to ordering; otherwise the service may be discoverable but its order action is unavailable.
 3. Customer care WhatsApp phone number is configured in platform settings.
 
 ---
