@@ -1,0 +1,238 @@
+# Rehla Wallet and Top-ups Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** بناء محفظة صحيحة محاسبيًا وطلبات شحن بنكي لا يمكن اعتمادها أوقيدها مرتين.
+
+**Architecture:** يملك Wallet الرصيد والدفتر ويعرض Credit/Debit contracts فقط. تملك TopUps الحسابات البنكية وطلبات التحويل، وتنفذ الاعتماد في معاملة واحدة تشمل قفل الطلب والمحفظة وCredit وAudit وOutbox.
+
+**Tech Stack:** PostgreSQL bigint/check constraints/row locks/triggers، Laravel transactions، Pest integration tests باتصالين.
+
+**Spec:** `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`
+
+## Global Constraints
+
+- المبلغ integer minor units وعملة `SDG` فقط.
+- ledger append-only؛ التصحيح قيد جديد بعلاقة `reverses_entry_id`.
+- لا تستخدم cache أوqueue لتقرير الرصيد.
+- لا تختبر concurrency داخل wrapper transaction واحد.
+
+---
+
+### Task 1: Wallet and Append-only Ledger
+
+**Files:**
+- Create: `packages/Rehla/Wallet/database/migrations/*_create_wallet_tables.php`
+- Create: `packages/Rehla/Wallet/database/migrations/*_protect_wallet_ledger.php`
+- Create: `packages/Rehla/Wallet/src/Enums/LedgerEntryType.php`
+- Create: `packages/Rehla/Wallet/src/Data/{WalletBalance,WalletEntryData,DebitResult,CreditResult}.php`
+- Create: `packages/Rehla/Wallet/src/Contracts/{WalletReader,WalletCreditor,WalletDebitor}.php`
+- Create: `packages/Rehla/Wallet/src/Actions/{OpenWallet,CreditWallet,DebitWallet,ReverseWalletEntry}.php`
+- Create: `packages/Rehla/Wallet/src/Queries/{GetWalletBalance,ListWalletEntries}.php`
+- Test: `packages/Rehla/Wallet/tests/Integration/WalletLedgerTest.php`
+- Test: `packages/Rehla/Wallet/tests/Integration/ConcurrentDebitTest.php`
+
+**Interfaces:**
+- Produces: `WalletCreditor::credit(CreditWalletData): CreditResult`.
+- Produces: `WalletDebitor::debit(DebitWalletData): DebitResult`.
+- البيانات تشمل `accountId`, `amount: Money`, `referenceType`, `referenceId`, `idempotencyKey`.
+
+- [ ] **Step 1: اكتب اختبارات الرصيد والدفتر**
+
+```php
+it('derives every balance change from one immutable ledger entry', function (): void {
+    $wallet = openWallet($accountId);
+    credit($wallet, 5_000_00, 'top_up', 'topup-1');
+    debit($wallet, 2_500_00, 'order', 'order-1');
+
+    expect(walletBalance($wallet)->minor)->toBe(2_500_00)
+        ->and(walletEntries($wallet))->toHaveCount(2);
+    $entryId = DB::table('wallet_ledger_entries')->value('id');
+    expect(fn () => DB::table('wallet_ledger_entries')->where('id', $entryId)->delete())
+        ->toThrow(QueryException::class);
+});
+```
+
+- [ ] **Step 2: شغل RED على PostgreSQL**
+
+Run: `php artisan test packages/Rehla/Wallet/tests/Integration/WalletLedgerTest.php`
+
+Expected: FAIL قبل schema.
+
+- [ ] **Step 3: أنشئ schema والـcontracts**
+
+```text
+wallets: id uuid, account_id uuid unique, currency char(3), balance_minor bigint,
+         lock_version bigint, created_at, updated_at
+wallet_ledger_entries: id uuid, wallet_id, type, amount_minor bigint,
+         balance_after_minor bigint, reference_type, reference_id,
+         idempotency_key, reverses_entry_id nullable, created_at
+```
+
+أضف checks للعملة وamount الموجب وbalance غير السالب، وunique `(wallet_id,reference_type,reference_id,type)` و`(wallet_id,idempotency_key)`. يمنع trigger UPDATE وDELETE على ledger. تقفل Credit وDebit صف wallet بـ`FOR UPDATE` وتضيف ledger وتحدث balance في المعاملة الموجودة دون فتح commit مستقل.
+
+- [ ] **Step 4: أثبت التزامن والـidempotency**
+
+ابدأ رصيدًا 2,500 SDG، وشغل Debitين متوازيين كل منهما 2,500. توقع نتيجة ناجحة واحدة و`INSUFFICIENT_BALANCE` للثانية، balance=0 وقيد debit واحد. أعد نفس idempotency key وتوقع نفس `DebitResult` بلا قيد إضافي.
+
+Run: `php artisan test packages/Rehla/Wallet/tests/Integration/ConcurrentDebitTest.php`
+
+Expected: PASS على اتصالين مستقلين.
+
+- [ ] **Step 5: اختبر التصحيح والتسوية**
+
+اختبر أن `ReverseWalletEntry` يضيف قيدًا معاكسًا ولا يغير القديم، وأن مجموع entries يساوي `wallets.balance_minor`.
+
+Run: `php artisan test packages/Rehla/Wallet`
+
+Expected: PASS.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add packages/Rehla/Wallet docs/requirements/rehla-phase-1-acceptance.csv
+git commit -m "feat(wallet): add locked append-only wallet ledger"
+```
+
+### Task 2: Bank Accounts and Top-up Submission
+
+**Files:**
+- Create: `packages/Rehla/TopUps/database/migrations/*_create_top_up_tables.php`
+- Create: `packages/Rehla/TopUps/src/Enums/TopUpStatus.php`
+- Create: `packages/Rehla/TopUps/src/Data/{BankAccountData,SubmitTopUpData,TopUpData}.php`
+- Create: `packages/Rehla/TopUps/src/Actions/{CreateBankAccount,UpdateBankAccount,DeactivateBankAccount,SubmitTopUp}.php`
+- Create: `packages/Rehla/TopUps/src/Queries/{ListActiveBankAccounts,ListOwnedTopUps,GetTopUpForReview}.php`
+- Create: `packages/Rehla/TopUps/src/Support/NormalizeTransactionReference.php`
+- Test: `packages/Rehla/TopUps/tests/Feature/BankAccountTest.php`
+- Test: `packages/Rehla/TopUps/tests/Integration/SubmitTopUpTest.php`
+
+**Interfaces:**
+- Produces: `SubmitTopUp::handle(SubmitTopUpData): TopUpData`.
+- Consumes: `OwnedDocuments` للتحقق من receipt clean/owned/purpose=`top_up_receipt`.
+
+- [ ] **Step 1: اكتب اختبار الإرسال والتفرد**
+
+```php
+it('rejects a reused reference for the same bank after normalization', function (): void {
+    submitTopUp($ownerA, bank: $bank, reference: ' ab-12 34 ', amountMinor: 5_000_00, receipt: cleanReceipt($ownerA));
+
+    expect(fn () => submitTopUp($ownerB, bank: $bank, reference: 'AB1234', amountMinor: 5_000_00, receipt: cleanReceipt($ownerB)))
+        ->toThrow(TransactionReferenceUsed::class);
+});
+```
+
+- [ ] **Step 2: شغل RED**
+
+Run: `php artisan test packages/Rehla/TopUps/tests/Integration/SubmitTopUpTest.php`
+
+Expected: FAIL قبل schema/actions.
+
+- [ ] **Step 3: أنشئ schema**
+
+```text
+bank_accounts: id, bank_name_en/ar, beneficiary_name, account_number,
+               logo_document_id, active, sort_order, created_by, timestamps
+top_up_settings: id singleton, minimum_amount_minor, updated_by, updated_at
+top_up_requests: id, account_id, wallet_id, bank_account_id, amount_minor,
+                 transaction_reference, normalized_reference, receipt_document_id,
+                 status, submitted_at, reviewed_by nullable, decided_at nullable,
+                 rejection_reason nullable, credit_ledger_entry_id nullable, timestamps
+```
+
+أضف unique `(bank_account_id,normalized_reference)`، وchecks للمبلغ والحالة. لا تعيد رسالة التفرد مالك المرجع السابق.
+
+- [ ] **Step 4: نفذ SubmitTopUp**
+
+تحقق من بنك active، والمبلغ `>=5000_00` أوالإعداد الحالي، والreceipt clean وowned، ثم أضف request بحالة `under_review` واربط المستند بـattach. تعطيل البنك يمنع الطلبات الجديدة ويترك التاريخ.
+
+Run: `php artisan test packages/Rehla/TopUps/tests`
+
+Expected: PASS للبنوك والإرسال والملكية والحد الأدنى.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add packages/Rehla/TopUps docs/requirements/rehla-phase-1-acceptance.csv
+git commit -m "feat(topups): add banks and transfer submission"
+```
+
+### Task 3: Atomic Approval and Rejection
+
+**Files:**
+- Create: `packages/Rehla/TopUps/src/Data/{ApproveTopUpData,RejectTopUpData}.php`
+- Create: `packages/Rehla/TopUps/src/Actions/{ApproveTopUp,RejectTopUp}.php`
+- Create: `packages/Rehla/TopUps/src/Events/{TopUpApproved,TopUpRejected}.php`
+- Test: `packages/Rehla/TopUps/tests/Integration/ApproveTopUpTest.php`
+- Test: `packages/Rehla/TopUps/tests/Integration/ConcurrentApprovalTest.php`
+- Test: `packages/Rehla/TopUps/tests/Feature/RejectTopUpTest.php`
+
+**Interfaces:**
+- Consumes: `WalletCreditor`, `AuditWriter`, `OutboxWriter`, `AuthorizesActor`.
+- Produces: approved/rejected `TopUpData`؛ replay المطابق يعيد النتيجة نفسها.
+
+- [ ] **Step 1: اكتب اختبار atomic approval**
+
+```php
+it('credits, approves, audits and enqueues atomically', function (): void {
+    $topUp = underReviewTopUp(amountMinor: 5_000_00);
+    approveTopUp($reviewer, $topUp);
+
+    expect(topUp($topUp)->status)->toBe(TopUpStatus::Approved)
+        ->and(walletBalanceFor($topUp->accountId))->toBe(5_000_00)
+        ->and(creditEntriesFor($topUp))->toHaveCount(1)
+        ->and(auditEntriesFor($topUp))->toHaveCount(1)
+        ->and(outboxFor($topUp, 'top_up.approved'))->toHaveCount(1);
+});
+```
+
+- [ ] **Step 2: شغل RED**
+
+Run: `php artisan test packages/Rehla/TopUps/tests/Integration/ApproveTopUpTest.php`
+
+Expected: FAIL قبل ApproveTopUp.
+
+- [ ] **Step 3: نفذ ترتيب القفل والمعاملة**
+
+```php
+return DB::transaction(function () use ($data): TopUpData {
+    $topUp = $this->topUps->lockForUpdate($data->topUpId);
+    $this->authorization->assert($data->actor, AbilityName::TopUpsReview);
+    if ($topUp->isApproved()) return $topUp->toData();
+    if (! $topUp->isUnderReview()) throw InvalidTopUpTransition::from($topUp);
+
+    $credit = $this->wallets->credit(CreditWalletData::forTopUp($topUp));
+    $topUp->approve($data->actor->id, $credit->entryId, $this->clock->now());
+    $this->audit->append(AppendAuditData::topUpApproved($data, $topUp, $credit));
+    $this->outbox->append(OutboxMessageData::topUpApproved($topUp));
+    return $topUp->toData();
+});
+```
+
+يلتزم Wallet بالاتصال والمعاملة الحاليين. لا ترسل notification مباشرة.
+
+- [ ] **Step 4: أثبت التكرار والتزامن والفشل**
+
+شغل اعتمادين باتصالين وتوقع Credit واحدًا. حقن exception بعد credit وقبل تحديث request، وبعد Audit وقبل Outbox؛ توقع rollback كامل في الحالتين. إعادة approve بعد نجاحه تعيد approved بلا أثر جديد.
+
+Run: `php artisan test packages/Rehla/TopUps/tests/Integration/ConcurrentApprovalTest.php`
+
+Expected: PASS.
+
+- [ ] **Step 5: نفذ الرفض**
+
+يتطلب الرفض سببًا غير فارغ، يقفل request، يغير `under_review→rejected`، يسجل reviewer/time/reason وAudit وOutbox، ولا يستدعي Wallet. replay يعيد النتيجة بلا سجل جديد.
+
+Run: `php artisan test packages/Rehla/TopUps/tests/Feature/RejectTopUpTest.php`
+
+Expected: PASS ورصيد ثابت.
+
+- [ ] **Step 6: بوابة الخطة وCommit**
+
+Run: `composer verify && git diff --check`
+
+Expected: PASS لكل اختبارات PostgreSQL والتزامن.
+
+```bash
+git add packages/Rehla/TopUps docs/requirements/rehla-phase-1-acceptance.csv
+git commit -m "feat(topups): make transfer decisions atomic and idempotent"
+```

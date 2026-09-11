@@ -4,6 +4,8 @@
 
 حالة الوثيقة: **تصميم مستهدف؛ لم تُنشأ الحزم أو قاعدة التطبيق بعد**.
 
+خطة البناء التنفيذية الكاملة: [Rehla Platform Implementation Plan](superpowers/plans/2026-09-11-rehla-platform-build.md)، ومنها سبع خطط مرتبة و34مهمة ذات دورات RED/GREEN وبوابات تحقق.
+
 ## 1. القرار المعماري
 
 يبنى رحلة كتطبيق **Modular Monolith** واحد فوق Laravel، بقاعدة PostgreSQL واحدة، وتوضع مجالات العمل والواجهات في حزم Composer محلية مستقلة تحت:

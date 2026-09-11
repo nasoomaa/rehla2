@@ -2,6 +2,8 @@
 
 مرجع البنية: [REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md](../REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md). مرجع المنتج: [REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md](../REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md). خريطة الاعتمادات: [rehla-package-map.json](../architecture/rehla-package-map.json).
 
+الخطة التنفيذية التفصيلية وفق Superpowers تبدأ من [Rehla Platform Implementation Plan](../superpowers/plans/2026-09-11-rehla-platform-build.md). يبقى هذا الملف خريطة مراحل مختصرة؛ الملفات السبعة المرتبطة من الخطة الرئيسية هي المرجع التنفيذي للملفات والعقود ودورات RED/GREEN وأوامر التحقق.
+
 حالة الخطة: جاهزة للتنفيذ بعد إغلاق قرارات S1. لا يحتوي المسار الحالي تطبيق Laravel أو مستودع Git صالحًا، لذلك الخطة تعمل بنمط تعديل مباشر ولا تفترض فروعًا أو PRs.
 
 ## ثوابت كل خطوة
