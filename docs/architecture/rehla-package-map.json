@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "meaning": "Each package may import only itself, Core, and the listed Rehla packages.",
+  "packages": {
+    "Core": [],
+    "Identity": ["Core"],
+    "Audit": ["Core"],
+    "Catalog": ["Core", "Documents", "Audit"],
+    "Forms": ["Core", "Catalog", "Audit"],
+    "Travelers": ["Core", "Identity", "Audit"],
+    "Documents": ["Core", "Identity", "Audit"],
+    "Wallet": ["Core", "Identity", "Audit"],
+    "Notifications": ["Core", "Identity"],
+    "TopUps": ["Core", "Identity", "Documents", "Wallet", "Audit", "Notifications"],
+    "Orders": ["Core"],
+    "Purchasing": ["Core", "Identity", "Catalog", "Forms", "Travelers", "Documents", "Wallet", "Orders", "Audit", "Notifications"],
+    "Fulfillment": ["Core", "Identity", "Orders", "Forms", "Documents", "Purchasing", "Audit", "Notifications"],
+    "Content": ["Core", "Identity", "Audit"],
+    "Integrations": ["Core", "Notifications", "Fulfillment"],
+    "Reporting": ["Core", "Identity", "Travelers", "Catalog", "TopUps", "Orders", "Fulfillment", "Notifications"],
+    "Web": ["Core", "Identity", "Catalog", "Forms", "Travelers", "Documents", "Wallet", "TopUps", "Orders", "Fulfillment", "Purchasing", "Notifications", "Content", "Integrations"],
+    "Api": ["Core", "Identity", "Catalog", "Forms", "Travelers", "Documents", "Wallet", "TopUps", "Orders", "Fulfillment", "Purchasing", "Notifications"],
+    "Admin": ["Core", "Identity", "Catalog", "Forms", "Travelers", "Documents", "Wallet", "TopUps", "Orders", "Fulfillment", "Notifications", "Content", "Audit", "Reporting"]
+  },
+  "rules": {
+    "business_packages_cannot_import": ["Web", "Api", "Admin"],
+    "presentation_packages_cannot_import_each_other": true,
+    "cross_package_models": "Only Contracts/ReadModels may cross into presentation packages; mutable Models never cross package boundaries.",
+    "cross_package_writes": "Only public Actions or Contracts; direct table and mutable-model writes are forbidden."
+  }
+}
