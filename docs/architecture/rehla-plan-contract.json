@@ -160,7 +160,7 @@
     },
     "Identity": {
       "owner_plan": "02-identity-platform-services",
-      "owner_task": "Task 1",
+      "owner_task": "Task 2",
       "mandatory_artifacts": [
         "composer.json",
         "README.md",
@@ -187,7 +187,7 @@
     },
     "Audit": {
       "owner_plan": "02-identity-platform-services",
-      "owner_task": "Task 2",
+      "owner_task": "Task 1",
       "mandatory_artifacts": [
         "composer.json",
         "README.md",
@@ -1100,13 +1100,13 @@
     "abilities": {
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
-      "migration_task": "Task 1",
+      "migration_task": "Task 2",
       "migration_path": "packages/Rehla/Identity/src/database/migrations/*_abilities.php"
     },
     "audit_entries": {
       "owner": "Audit",
       "migration_plan": "02-identity-platform-services",
-      "migration_task": "Task 2",
+      "migration_task": "Task 1",
       "migration_path": "packages/Rehla/Audit/src/database/migrations/*_audit_entries.php"
     },
     "bank_accounts": {
@@ -1226,7 +1226,7 @@
     "personal_access_tokens": {
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
-      "migration_task": "Task 1",
+      "migration_task": "Task 2",
       "migration_path": "packages/Rehla/Identity/src/database/migrations/*_personal_access_tokens.php"
     },
     "purchase_attempts": {
@@ -1238,13 +1238,13 @@
     "role_ability": {
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
-      "migration_task": "Task 1",
+      "migration_task": "Task 2",
       "migration_path": "packages/Rehla/Identity/src/database/migrations/*_role_ability.php"
     },
     "roles": {
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
-      "migration_task": "Task 1",
+      "migration_task": "Task 2",
       "migration_path": "packages/Rehla/Identity/src/database/migrations/*_roles.php"
     },
     "service_executions": {
@@ -1280,7 +1280,7 @@
     "staff_profiles": {
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
-      "migration_task": "Task 1",
+      "migration_task": "Task 2",
       "migration_path": "packages/Rehla/Identity/src/database/migrations/*_staff_profiles.php"
     },
     "top_up_requests": {
@@ -1310,13 +1310,13 @@
     "user_role": {
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
-      "migration_task": "Task 1",
+      "migration_task": "Task 2",
       "migration_path": "packages/Rehla/Identity/src/database/migrations/*_user_role.php"
     },
     "users": {
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
-      "migration_task": "Task 1",
+      "migration_task": "Task 2",
       "migration_path": "packages/Rehla/Identity/src/database/migrations/*_users.php"
     },
     "wallet_ledger_entries": {

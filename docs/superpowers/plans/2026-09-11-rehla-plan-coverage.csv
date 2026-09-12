@@ -44,8 +44,8 @@ R42,2026-09-11-rehla-03-catalog-forms-content.md,Task 2: Draft and Published For
 R43,2026-09-11-rehla-09-admin-control-panel.md,Task 2: Complete Operational Resource Matrix,AdminCapabilityMatrixTest
 R44,2026-09-11-rehla-04-wallet-topups.md,Task 3: Atomic Approval and Rejection,ApproveTopUpTest
 R45,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 3: Fulfillment State Machine and Execution Creation,ExecutionStateMachineTest
-R46,2026-09-11-rehla-02-identity-platform-services.md,Task 2: Append-only Audit Trail,AuditImmutabilityTest
-R47,2026-09-11-rehla-02-identity-platform-services.md,"Task 1: Identity, Sessions and Capabilities",AuthorizationTest
+R46,2026-09-11-rehla-02-identity-platform-services.md,Task 1: Append-only Audit Trail,AuditImmutabilityTest
+R47,2026-09-11-rehla-02-identity-platform-services.md,"Task 2: Identity, Sessions and Capabilities",AuthorizationTest
 R48,2026-09-11-rehla-02-identity-platform-services.md,Task 3: Private Document Lifecycle,DocumentLifecycleTest
 R49,2026-09-11-rehla-03-catalog-forms-content.md,Task 1: Service Catalog and Price History,ServiceLifecycleTest
 R50,2026-09-11-rehla-08-customer-api.md,"Task 1: API Foundation, Customer Authentication and Problem Details",ProblemDetailsTest

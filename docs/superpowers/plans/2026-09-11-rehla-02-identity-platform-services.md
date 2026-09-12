@@ -21,7 +21,99 @@
 
 ---
 
-### Task 1: Identity, Sessions and Capabilities
+### Task 1: Append-only Audit Trail
+
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Audit. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R46`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
+
+**Files:**
+- Create: `packages/Rehla/Audit/src/database/migrations/*_create_audit_entries_table.php`
+- Create: `packages/Rehla/Audit/src/database/migrations/*_protect_audit_entries.php`
+- Create: `packages/Rehla/Audit/src/Data/AppendAuditData.php`
+- Create: `packages/Rehla/Audit/src/Contracts/AuditWriter.php`
+- Create: `packages/Rehla/Audit/src/Actions/AppendAuditEntry.php`
+- Create: `packages/Rehla/Audit/src/Models/AuditEntry.php`
+- Test: `packages/Rehla/Audit/tests/Integration/AuditImmutabilityTest.php`
+
+**Mandatory Package Contract — Audit:**
+- Create/verify: `packages/Rehla/Audit/composer.json` and `packages/Rehla/Audit/README.md`.
+- Create/verify: `packages/Rehla/Audit/src/Providers/AuditServiceProvider.php`.
+- Create/verify: `packages/Rehla/Audit/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Audit/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Audit/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-audit`; `AuditServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-audit')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Audit/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
+
+**Interfaces:**
+- Consumes: Core IDs وClock فقط.
+- Produces: `AuditWriter::append(AppendAuditData): string` يعيد audit UUID.
+
+- [ ] **Step 1: اكتب اختبار append والحماية المباشرة**
+
+```php
+it('cannot update or delete an audit entry even with direct SQL', function (): void {
+    $id = app(AuditWriter::class)->append(new AppendAuditData(
+        actorType: 'staff', actorId: fakeUuid(), action: 'top_up.approved',
+        subjectType: 'top_up', subjectId: fakeUuid(), metadata: ['amount_minor' => 500000]
+    ));
+
+    expect(fn () => DB::table('audit_entries')->where('id', $id)->update(['action' => 'changed']))
+        ->toThrow(QueryException::class);
+    expect(fn () => DB::table('audit_entries')->where('id', $id)->delete())
+        ->toThrow(QueryException::class);
+});
+```
+
+- [ ] **Step 2: شغل RED على PostgreSQL**
+
+Run: `php artisan test packages/Rehla/Audit/tests/Integration/AuditImmutabilityTest.php`
+
+Expected: FAIL قبل وجود الجدول/trigger.
+
+- [ ] **Step 3: نفذ append-only storage**
+
+أنشئ `audit_entries(id uuid, actor_type, actor_id nullable, action, subject_type, subject_id, metadata jsonb, ip_hash nullable, user_agent_hash nullable, occurred_at)` بلا `updated_at`. أضف PostgreSQL function واحدة ترفع exception على UPDATE أوDELETE وtrigger يستدعيها.
+
+```php
+interface AuditWriter
+{
+    public function append(AppendAuditData $data): string;
+}
+```
+
+لا تخزن passwords أوtokens أومحتوى مستندات داخل metadata.
+
+- [ ] **Step 4: شغل الاختبارات وراجع migration fresh**
+
+Run: `php artisan migrate:fresh --env=testing && php artisan test packages/Rehla/Audit`
+
+Expected: INSERT ينجح وUPDATE/DELETE يفشلان.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add packages/Rehla/Audit
+git commit -m "feat(audit): add immutable audit trail"
+```
+
+### Task 2: Identity, Sessions and Capabilities
 
 **Task Completeness Contract:**
 - **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
@@ -117,7 +209,7 @@ interface RegistrationNotificationRecorder
 }
 ```
 
-ينفذ `RegisterCustomer` إدخال المستخدم ثم `AuditWriter` ثم المنفذين داخل `DB::transaction` واحدة وعلى الاتصال نفسه. لا يلتقط استثناءات المشاركين ولا يسمح لهم بـcommit مستقل. تستخدم اختبارات Task 1 fakes للمنفذين؛ يبقى مسار التسجيل الفعلي fail-closed حتى تسجل Notifications ثم Wallet التنفيذين. `CustomerRegistered`، إن أضيف، يطلق بعد commit للتحليلات فقط.
+ينفذ `RegisterCustomer` إدخال المستخدم ثم `AuditWriter` ثم المنفذين داخل `DB::transaction` واحدة وعلى الاتصال نفسه. لا يلتقط استثناءات المشاركين ولا يسمح لهم بـcommit مستقل. تستخدم اختبارات Task 2 fakes للمنفذين؛ يبقى مسار التسجيل الفعلي fail-closed حتى تسجل Notifications ثم Wallet التنفيذين. `CustomerRegistered`، إن أضيف، يطلق بعد commit للتحليلات فقط.
 
 - [ ] **Step 4: أثبت عزل customer/admin guards وMFA policy**
 
@@ -132,98 +224,6 @@ Expected: PASS.
 ```bash
 git add packages/Rehla/Identity config/auth.php
 git commit -m "feat(identity): add accounts roles and deny-by-default abilities"
-```
-
-### Task 2: Append-only Audit Trail
-
-**Task Completeness Contract:**
-- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
-- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
-- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Audit. لا migration أوكتابة خارج المالك.
-- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
-- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
-- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
-- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
-- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
-- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
-- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
-- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
-- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
-- **Acceptance IDs:** `R46`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
-- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
-- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
-
-
-**Files:**
-- Create: `packages/Rehla/Audit/src/database/migrations/*_create_audit_entries_table.php`
-- Create: `packages/Rehla/Audit/src/database/migrations/*_protect_audit_entries.php`
-- Create: `packages/Rehla/Audit/src/Data/AppendAuditData.php`
-- Create: `packages/Rehla/Audit/src/Contracts/AuditWriter.php`
-- Create: `packages/Rehla/Audit/src/Actions/AppendAuditEntry.php`
-- Create: `packages/Rehla/Audit/src/Models/AuditEntry.php`
-- Test: `packages/Rehla/Audit/tests/Integration/AuditImmutabilityTest.php`
-
-**Mandatory Package Contract — Audit:**
-- Create/verify: `packages/Rehla/Audit/composer.json` and `packages/Rehla/Audit/README.md`.
-- Create/verify: `packages/Rehla/Audit/src/Providers/AuditServiceProvider.php`.
-- Create/verify: `packages/Rehla/Audit/src/resources/lang/en/messages.php`.
-- Create/verify: `packages/Rehla/Audit/src/resources/lang/ar/messages.php`.
-- Create/verify: `packages/Rehla/Audit/tests/Architecture/TranslationCompletenessTest.php`.
-- Translation namespace: `rehla-audit`; `AuditServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-audit')`.
-- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
-- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
-- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Audit/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
-
-**Interfaces:**
-- Consumes: Core IDs وClock فقط.
-- Produces: `AuditWriter::append(AppendAuditData): string` يعيد audit UUID.
-
-- [ ] **Step 1: اكتب اختبار append والحماية المباشرة**
-
-```php
-it('cannot update or delete an audit entry even with direct SQL', function (): void {
-    $id = app(AuditWriter::class)->append(new AppendAuditData(
-        actorType: 'staff', actorId: fakeUuid(), action: 'top_up.approved',
-        subjectType: 'top_up', subjectId: fakeUuid(), metadata: ['amount_minor' => 500000]
-    ));
-
-    expect(fn () => DB::table('audit_entries')->where('id', $id)->update(['action' => 'changed']))
-        ->toThrow(QueryException::class);
-    expect(fn () => DB::table('audit_entries')->where('id', $id)->delete())
-        ->toThrow(QueryException::class);
-});
-```
-
-- [ ] **Step 2: شغل RED على PostgreSQL**
-
-Run: `php artisan test packages/Rehla/Audit/tests/Integration/AuditImmutabilityTest.php`
-
-Expected: FAIL قبل وجود الجدول/trigger.
-
-- [ ] **Step 3: نفذ append-only storage**
-
-أنشئ `audit_entries(id uuid, actor_type, actor_id nullable, action, subject_type, subject_id, metadata jsonb, ip_hash nullable, user_agent_hash nullable, occurred_at)` بلا `updated_at`. أضف PostgreSQL function واحدة ترفع exception على UPDATE أوDELETE وtrigger يستدعيها.
-
-```php
-interface AuditWriter
-{
-    public function append(AppendAuditData $data): string;
-}
-```
-
-لا تخزن passwords أوtokens أومحتوى مستندات داخل metadata.
-
-- [ ] **Step 4: شغل الاختبارات وراجع migration fresh**
-
-Run: `php artisan migrate:fresh --env=testing && php artisan test packages/Rehla/Audit`
-
-Expected: INSERT ينجح وUPDATE/DELETE يفشلان.
-
-- [ ] **Step 5: Commit**
-
-```bash
-git add packages/Rehla/Audit
-git commit -m "feat(audit): add immutable audit trail"
 ```
 
 ### Task 3: Private Document Lifecycle
