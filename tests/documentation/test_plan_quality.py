@@ -7,6 +7,7 @@ from scripts.docs_checks.plan_quality import (
     validate_package_owners,
     validate_package_task,
     validate_package_tasks,
+    validate_no_duplicate_tasks,
     validate_plan_sequence,
     validate_requirement_coverage,
 )
@@ -102,6 +103,15 @@ loadTranslationsFrom and rehla-core
 
         with self.assertRaisesRegex(CheckFailure, "Core.*README.md"):
             validate_package_tasks(contract, {"01-foundation-core": text})
+
+    def test_duplicate_executable_task_titles_are_rejected(self) -> None:
+        with self.assertRaisesRegex(CheckFailure, "duplicate executable task"):
+            validate_no_duplicate_tasks(
+                {
+                    "07-customer-web": "### Task 1: Shared task\n",
+                    "08-customer-api": "### Task 3: Shared  task\n",
+                }
+            )
 
     def test_requirements_are_exactly_r01_through_r65(self) -> None:
         contract = fixture_contract()

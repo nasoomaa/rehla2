@@ -45,12 +45,16 @@ S10 Reporting contracts + minimal read models
   ↓
 S11A Notification workers + Integrations
   ↓
-S11B Web + API + Admin
+S11B Web
+  ↓
+S11C REST API
+  ↓
+S11D Admin
   ↓
 S12 Operations, full acceptance and launch gate
 ```
 
-S4A وS4B وS4C متوازية بعد S3. يمكن بدء S6A بالتوازي مع S5A بعد S3، لكن S6B ينتظر S4A وS4C. داخل المراحل المرقمة، الحروف وترتيب الأسهم إلزامية: S5A قبل S5B، وS6A قبل S6B، وS7A قبل S7B، وS11A قبل S11B. لا يبدأ `SubmitOrder` قبل وجود تنفيذ حقيقي لكل المشاركين. يتحقق CI من أن كل substep لا يخالف dependency graph المستخرج من `composer.json` وملف الخريطة.
+S4A وS4B وS4C متوازية بعد S3. يمكن بدء S6A بالتوازي مع S5A بعد S3، لكن S6B ينتظر S4A وS4C. داخل المراحل المرقمة، الحروف وترتيب الأسهم إلزامية: S5A قبل S5B، وS6A قبل S6B، وS7A قبل S7B، وS11A قبل S11B ثم S11C ثم S11D. لا يبدأ `SubmitOrder` قبل وجود تنفيذ حقيقي لكل المشاركين. يتحقق CI من أن كل substep لا يخالف dependency graph المستخرج من `composer.json` وملف الخريطة.
 
 ## S1 — إغلاق قرارات المنتج والبيانات
 
@@ -222,15 +226,35 @@ S4A وS4B وS4C متوازية بعد S3. يمكن بدء S6A بالتوازي �
 
 **التراجع:** تعطيل adapter مع بقاء Outbox للـreplay.
 
-## S11B — Web وREST API وAdmin
+## S11B — Customer Web
 
 **السياق:** جميع حزم الأعمال وReporting وIntegrations موجودة؛ الواجهات الثلاث تستدعي use cases وQueries نفسها.
 
-**العمل:** صفحات الاكتشاف والحساب؛ Route Contract Matrix وOpenAPI؛ Filament read-only projections وcustom command actions؛ localization/RTL/error mapping.
+**العمل:** صفحات الاكتشاف والحساب والشحن والشراء والتتبع وإجراءات العميل والمستندات والإشعارات، عبر sessions وعقود المجال مباشرة مع localization/RTL.
 
-**التحقق:** OpenAPI contract و401/403/404 لكل object، rate limits، token/session policy، حسابان، Admin capability/field matrix، منع write APIs في Admin، Filament tests، private download، Idempotency-Key، وbrowser journeys مع keyboard/RTL.
+**التحقق:** حسابان معزولان، CSRF/session policy، private download، استبدال الإيصال، وbrowser journey مع keyboard/RTL.
 
 **التراجع:** تعطيل route group أوpanel؛ لا rollback لبيانات أعمال ناجحة.
+
+## S11C — Customer REST API
+
+**السياق:** استقرت رحلة Web وعقود المجالات، ويضاف ناقل API مستقل لا تستعمله Web داخليًا.
+
+**العمل:** تنفيذ العمليات الـ28 وRoute Contract Matrix وOpenAPI وSanctum customer-only tokens وProblem Details وrate limits وidempotency والuploads.
+
+**التحقق:** مساواة OpenAPI والroutes والoperation IDs، و401/403/404/409/422 لكل object ومسار، وإبطال token وعزل الحسابات.
+
+**التراجع:** تعطيل `/api/v1` أوقدرة token؛ لا تغيير لبيانات أعمال ناجحة.
+
+## S11D — Admin Control Panel
+
+**السياق:** Reporting وعقود الإدارة وواجهات العميل مكتملة، ويمكن بناء لوحة العمليات من Queries وCommands المالكة.
+
+**العمل:** Filament shell وMFA ومصفوفة Overview وServices/Policies وForms وContent وCustomers وTravelers وWallets وBank Accounts وTop-Ups وOrders وExecutions/Actions/Documents وNotifications/Dead Letters وRoles/Abilities وAudit.
+
+**التحقق:** Admin capability/field matrix، منع DB وModels والrelationship mutation، الموظف المحدود، الحقول الحساسة والتصدير، ورحلة browser باللغتين وRTL.
+
+**التراجع:** تعطيل panel أوقدرة بعينها؛ لا rollback لبيانات أعمال ناجحة.
 
 ## S12 — التشغيل وبوابة قبول الإصدار الأول
 

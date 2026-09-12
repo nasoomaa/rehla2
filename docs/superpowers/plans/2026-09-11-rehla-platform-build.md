@@ -52,7 +52,10 @@
 | 4 | [Wallet and Top-ups](2026-09-11-rehla-04-wallet-topups.md) | Ledger ومحفظة وشحن بنكي ذري قابل للمراجعة |
 | 5 | [Orders, Purchasing and Fulfillment](2026-09-11-rehla-05-orders-purchasing-fulfillment.md) | شراء ذري وOrder ثابت وExecution مستقل |
 | 6 | [Reporting and Integrations](2026-09-11-rehla-06-reporting-integrations.md) | 12مؤشرًا، عامل Outbox، الإشعارات والتكاملات |
-| 7 | [Interfaces, Operations and Release](2026-09-11-rehla-07-interfaces-operations-release.md) | Web وREST API وAdmin والتشغيل وبوابة قبول R01–R65 |
+| 7 | [Customer Web](2026-09-11-rehla-07-customer-web.md) | رحلة العميل الكاملة عبر Web وsession مع EN/AR وRTL |
+| 8 | [Customer REST API](2026-09-11-rehla-08-customer-api.md) | عقد `/api/v1` للعمليات الثماني والعشرين وOpenAPI |
+| 9 | [Admin Control Panel](2026-09-11-rehla-09-admin-control-panel.md) | لوحة Filament كاملة بصلاحيات وCommands مالكة |
+| 10 | [Operations, Security and Release](2026-09-11-rehla-10-operations-security-release.md) | التشغيل والاستعادة والأمان وبوابة قبول R01–R65 |
 
 لا يبدأ ملف إلا بعد نجاح بوابة الملف السابق. يمكن تنفيذ `Documents` و`Travelers` و`Notifications` بالتوازي بعد Identity/Audit داخل الخطة الثانية، ويمكن تنفيذ `Catalog` و`Content` بالتوازي داخل الخطة الثالثة. لا يدمج التنفيذ المتوازي قبل مراجعة كل فرع مهمة على حدة.
 
@@ -77,8 +80,10 @@ flowchart TD
   X --> S[Atomic SubmitOrder]
   TU --> R[06 Reporting + Integrations]
   S --> R
-  R --> UI[07 Web + API + Admin]
-  UI --> OPS[Operations + Release]
+  R --> WEB[07 Customer Web]
+  WEB --> API[08 Customer REST API]
+  API --> ADMIN[09 Admin Control Panel]
+  ADMIN --> OPS[10 Operations + Security + Release]
 ```
 
 ## 3. قرار الإصدار الأول الذي تنفذه الخطط

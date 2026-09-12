@@ -107,6 +107,18 @@ def validate_package_tasks(contract: dict[str, object], plan_texts: dict[str, st
         require("loadTranslationsFrom" in task, f"{package}: package task missing provider translation load")
 
 
+def validate_no_duplicate_tasks(plan_texts: dict[str, str]) -> None:
+    owners: dict[str, str] = {}
+    for plan_id, text in plan_texts.items():
+        for title in re.findall(r"(?m)^### Task \d+:\s*(.+?)\s*$", text):
+            normalized = " ".join(title.casefold().split())
+            require(
+                normalized not in owners,
+                f"duplicate executable task '{title}' in {owners.get(normalized)} and {plan_id}",
+            )
+            owners[normalized] = plan_id
+
+
 def validate_requirement_coverage(contract: dict[str, object]) -> None:
     rows = contract.get("requirements", [])
     require(isinstance(rows, list), "requirements must be a list")
@@ -198,6 +210,10 @@ def validate_live_paths(contract: dict[str, object]) -> None:
             }
         }
         validate_package_tasks(partial_contract, plan_texts)
+    validate_no_duplicate_tasks(plan_texts)
+    legacy = ROOT / "docs/superpowers/plans/2026-09-11-rehla-07-interfaces-operations-release.md"
+    legacy_text = read_text(legacy)
+    require("### Task" not in legacy_text, "deprecated interface plan contains executable tasks")
 
 
 def check() -> None:
@@ -212,4 +228,4 @@ def check() -> None:
     validate_architecture_order(contract)
     validate_table_schedule(contract)
     validate_live_paths(contract)
-    print("  10 plans, 19 package owners, 65 requirements, 40 owned tables")
+    print("  10 plans, 19 package owners, 65 requirements, 40 owned tables, 0 duplicate tasks")

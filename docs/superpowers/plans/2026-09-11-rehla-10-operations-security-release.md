@@ -1,0 +1,267 @@
+# Rehla Operations, Security and Release Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Spec:** `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`
+
+**Coverage:** `docs/superpowers/plans/2026-09-11-rehla-plan-coverage.csv`
+
+**Goal:** إثبات قابلية تشغيل رحلة وأمانها واستعادتها وإغلاق سجل قبول R01–R65 من artifact نظيف.
+
+**Architecture:** artifact واحد غير قابل للتغيير يشغل web وqueue وscheduler، وتغلق بوابات E2E ثم observability ثم deploy/restore ثم security/performance/final evidence بالتسلسل.
+
+**Tech Stack:** Laravel processes، PostgreSQL 18، Playwright، shell release scripts، CI.
+
+**Prerequisites:** إغلاق بوابات الخطط 01–09 وعدم استخدام هذه الخطة لتعويض feature أوintegration ناقص في خطة سابقة.
+
+## Global Constraints
+
+- التنفيذ host-native وفق متطلبات المشروع، مع PostgreSQL حقيقي لا SQLite لإثبات التزامن والمال.
+- لا إطلاق دون restore rehearsal وRPO 15 دقيقة وRTO 4 ساعات وتناسق DB/private blobs.
+- لا يغلق صف قبول بلا command وtest result وartifact path، ولا يبقى critical/high finding غير محسوم.
+- كل مرحلة تستهلك دليلاً ناجحًا من المرحلة السابقة ولا تعيد تعريف عقود الأعمال.
+
+---
+
+### Task 1: Localization, RTL, Accessibility and Browser Journeys
+
+**Files:**
+- Modify: `resources/css/app.css`, `resources/js/app.js`
+- Create: `tests/EndToEnd/customer-journey.spec.ts`
+- Create: `tests/EndToEnd/admin-journey.spec.ts`
+- Create: `tests/EndToEnd/accessibility.spec.ts`
+- Create: `playwright.config.ts`
+- Modify: `package.json`
+
+**Interfaces:**
+- Consumes: واجهات Web/Admin المكتملة وfixtures آمنة.
+- Produces: رحلة R63 قابلة للتكرار بالإنجليزية والعربية/RTL ولوحة المفاتيح.
+
+- [ ] **Step 1: اكتب browser journey الأحمر للعميل**
+
+```ts
+test('customer completes Rehla phase one', async ({ page }) => {
+  await registerCustomer(page);
+  await addTraveler(page, { passport: 'P1234567' });
+  await submitTopUp(page, { amount: '5000.00', reference: 'E2E-001' });
+  await approveTopUpAsStaff(page, 'E2E-001');
+  await buyService(page, { service: 'UAE Visa', traveler: 'Ahmed Ali' });
+  await expect(page.getByText('Order Received')).toBeVisible();
+});
+```
+
+- [ ] **Step 2: شغل RED**
+
+Run: `npm run test:e2e -- customer-journey.spec.ts`
+
+Expected: FAIL عند أول واجهة أوselector غير مكتمل.
+
+- [ ] **Step 3: أكمل اللغة والاتجاه**
+
+كل صفحة تضع `lang` و`dir`، وتستخدم CSS logical properties، وتعرض الأرقام المالية بوضوح مع SDG دون تغيير قيمة minor. لا تخلط النص العربي والإنجليزي في المفتاح نفسه. locale fallback إنجليزي.
+
+- [ ] **Step 4: نفذ رحلة الإدارة والـaction required**
+
+تكمل admin journey إنشاء/نشر خدمة ونموذج، تفعيل بنك، اعتماد TopUp، فتح Execution، طلب وثيقة، استجابة العميل، نقل الحالة إلىcompleted، والتحقق من Audit.
+
+- [ ] **Step 5: أثبت الوصول**
+
+اختبر tab order، focus visible، labels،error association،dialog focus trap،contrast وaxe violations الجدية. نفذ الرحلتين في `en` ثم`ar` وتحقق من`dir=rtl`.
+
+Run: `npm run test:e2e`
+
+Expected: PASS بلا serious/critical accessibility violations.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add resources tests/EndToEnd playwright.config.ts package.json package-lock.json docs/requirements/rehla-phase-1-acceptance.csv
+git commit -m "test(e2e): prove bilingual customer and admin journeys"
+```
+
+### Task 2: Health, Workers, Scheduler and Observability
+
+**Files:**
+- Create: `app/Http/Controllers/{LivenessController,ReadinessController}.php`
+- Modify: `bootstrap/app.php`, `routes/console.php`
+- Create: `routes/health.php`
+- Create: `config/observability.php`
+- Create: `docs/operations/processes.md`
+- Create: `docs/operations/alerts.md`
+- Test: `tests/Feature/HealthEndpointsTest.php`
+- Test: `tests/Integration/SchedulerSingletonTest.php`
+
+**Interfaces:**
+- Produces: `/up` liveness بلا dependencies، و`/ready` يتحقق من PostgreSQL وstorage metadata؛ أوامر worker/scheduler موثقة.
+
+- [ ] **Step 1: اكتب اختبارات الصحة**
+
+```php
+it('separates liveness from readiness', function (): void {
+    get('/up')->assertOk()->assertJson(['status' => 'alive']);
+    Storage::fake('private');
+    get('/ready')->assertOk()->assertJsonPath('checks.database', 'ok');
+});
+```
+
+- [ ] **Step 2: شغل RED**
+
+Run: `php artisan test tests/Feature/HealthEndpointsTest.php`
+
+Expected: FAIL قبل endpoints.
+
+- [ ] **Step 3: نفذ health وprocess contracts**
+
+لا تفحص `/up` قاعدة البيانات. يفحص `/ready` `select 1` وقدرة disk الخاصة على metadata operation دون كتابة ملف عميل. وثق processes: web،`queue:work --timeout=90 --tries=1`،scheduler. اضبط `retry_after=120` ليكون أكبر منtimeout.
+
+- [ ] **Step 4: أضف metrics وalerts**
+
+سجل trace ID،HTTP latency/error rate،DB transaction retries،top-up review time،fulfillment time،queue depth،oldest outbox age،delivery failures،document scan failures وwallet reconciliation mismatch. عرف alerts بحدود: أي reconciliation mismatch؛ oldest outbox>5دقائق؛ dead letters>0؛ 5xx>2% خلال5دقائق.
+
+- [ ] **Step 5: أثبت scheduler singleton وworker restart**
+
+استخدم `onOneServer` وlock store موثوق لمهام cleanup/outbox، واختبر overlap. نفذ restart أثناء jobs صناعية وتحقق من lease recovery.
+
+Run: `php artisan test tests/Feature/HealthEndpointsTest.php tests/Integration/SchedulerSingletonTest.php`
+
+Expected: PASS.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add app bootstrap routes config/observability.php docs/operations tests/Feature/HealthEndpointsTest.php tests/Integration/SchedulerSingletonTest.php
+git commit -m "ops: add health process and observability contracts"
+```
+
+### Task 3: Deployment, Migration and Restore Proof
+
+**Files:**
+- Create: `scripts/release/verify-artifact.sh`
+- Create: `scripts/release/backup.sh`
+- Create: `scripts/release/restore-rehearsal.sh`
+- Create: `docs/operations/deployment.md`
+- Create: `docs/operations/backup-restore.md`
+- Create: `tests/Integration/UpgradeMigrationTest.php`
+
+**Interfaces:**
+- Produces: artifact immutable من commit واحد،سياسة expand/backfill/contract،backup/restore متناسق لـDB/private blobs.
+
+- [ ] **Step 1: اكتب اختبار upgrade migration**
+
+يحفظ fixture يمثل آخر schema منشورة، يشغل migrations الجديدة، ثم يتأكد أن Ledger/Audit/Orders/FormVersions وعدد الملفات وروابطها لم تتغير وأن التطبيق يقرأها.
+
+Run: `php artisan test tests/Integration/UpgradeMigrationTest.php`
+
+Expected: FAIL حتى يوجد fixture وسير الترقية.
+
+- [ ] **Step 2: نفذ artifact verification**
+
+يتحقق script من lockfiles،production install،config cache،route cache،view cache،Vite assets،migrations pending وصحة `/ready`. لا يبني dependencies على خادم الإنتاج.
+
+- [ ] **Step 3: وثق ونفذ expand/backfill/contract**
+
+كل تغيير غير متوافق يقسم إلى: إضافة schema متوافقة،نشر code مزدوج القراءة/الكتابة،backfill قابل للاستئناف بمؤشر،تحقق counts/checksums،ثم إزالة قديمة في إصدار لاحق. يمنع down migration مدمرًا بعد production data.
+
+- [ ] **Step 4: نفذ backup وrestore rehearsal**
+
+`backup.sh` يلتقط PostgreSQL snapshot/WAL position وmanifest للـprivate blobs مع timestamp واحد. `restore-rehearsal.sh` يعيدهما إلى بيئة معزولة،يشغل integrity queries وsample authorized downloads وwallet reconciliation،ويفشل إذا تجاوز RPO15دقيقة أوRTO4ساعات.
+
+- [ ] **Step 5: شغل proof**
+
+Run: `bash scripts/release/verify-artifact.sh && bash scripts/release/restore-rehearsal.sh`
+
+Expected: artifact سليم وrestore report ناجح بزمن وcounts/checksums.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add scripts/release docs/operations tests/Integration/UpgradeMigrationTest.php
+git commit -m "ops: prove deploy upgrade backup and restore paths"
+```
+
+### Task 4: Security, Performance and Final R01–R65 Release Gate
+
+**Files:**
+- Create: `tests/EndToEnd/phase-one-acceptance.spec.ts`
+- Create: `tests/Security/AuthorizationMatrixTest.php`
+- Create: `tests/Security/PrivateDocumentExposureTest.php`
+- Create: `tests/Performance/QueryBudgetTest.php`
+- Create: `scripts/verify-acceptance-register.php`
+- Create: `docs/releases/phase-1-readiness.md`
+- Modify: `composer.json`, `package.json`, `.github/workflows/ci.yml`
+
+**Interfaces:**
+- Consumes: كل متطلبات R01–R65 ونتائج الاختبارات والخدمات التشغيلية.
+- Produces: قرار إطلاق قابل للتدقيق؛ لا exit0 إذا بقي صف داخل النطاق بلادليل.
+
+- [ ] **Step 1: اكتب verifier السجل**
+
+```php
+foreach ($rows as $row) {
+    if ($row['status'] === 'verified' && ($row['evidence'] === '' || $row['test_file'] === '' || $row['test_name'] === '')) {
+        throw new RuntimeException("{$row['acceptance_id']} is verified without evidence");
+    }
+    if ($row['status'] === 'deferred' && $row['deferred_reason'] === '') {
+        throw new RuntimeException("{$row['acceptance_id']} is deferred without reason");
+    }
+    if (in_array($row['status'], ['planned', 'red', 'green'], true)) {
+        throw new RuntimeException("{$row['acceptance_id']} is not release-ready");
+    }
+}
+```
+
+- [ ] **Step 2: شغل RED على السجل غير المغلق**
+
+Run: `php scripts/verify-acceptance-register.php`
+
+Expected: FAIL ويطبع IDs غير verified/deferred.
+
+- [ ] **Step 3: أكمل مصفوفة الأمان**
+
+اختبر customer/staff-limited/staff-finance/staff-operations/admin لكل route وAdmin section. افحص IDOR وmass assignment وCSRF/session fixation وSanctum revocation وrate limits وupload content validation وlog redaction وsecurity headers. شغل `composer audit` و`npm audit --audit-level=high` وراجع تراخيص dependencies الإنتاجية.
+
+- [ ] **Step 4: ثبت ميزانيات الأداء**
+
+على fixture يضم100خدمة و1000Order و10000ledger entry: service list≤20queries وp95<500ms محليًا؛order detail≤15queries؛admin overview≤20queries وp95<1s؛API list يستخدم pagination ولايعيد أكثر من100عنصر. تفشل الاختبارات عند N+1 أوتجاوز query budget.
+
+- [ ] **Step 5: شغل رحلة القبول الكاملة**
+
+يشمل `phase-one-acceptance.spec.ts`: discovery→register→traveler→top-up→admin approval→checkout→debit/order/execution→status tracking→customer action response→completion، ثم family scenario بثلاثة Orders،price/form version change،duplicate transfer،duplicate approval،double submission وconcurrent purchase.
+
+Run: `npm run test:e2e -- phase-one-acceptance.spec.ts`
+
+Expected: PASS لكل R52–R59 وR63.
+
+- [ ] **Step 6: أغلق سجل القبول بالدليل**
+
+حدث كل صف داخل النطاق إلى`verified` مع `evidence` بصيغة `command :: test result :: artifact path`. أبق عناصر R60 وامتدادات R64 المؤجلة `deferred` بسبب واضح. شغل verifier حتى exit0.
+
+- [ ] **Step 7: شغل بوابة الإصدار من بيئة جديدة**
+
+```bash
+composer install --no-interaction --prefer-dist
+npm ci
+php artisan migrate:fresh --env=testing
+composer verify
+npm run build
+npm run test:e2e
+composer audit
+npm audit --audit-level=high
+php scripts/verify-acceptance-register.php
+git diff --check
+```
+
+Expected: كل الأوامر exit0، ولاصف داخل النطاق بلا دليل،ولا severe security finding غير محسوم.
+
+- [ ] **Step 8: اكتب readiness record وCommit**
+
+يسجل `phase-1-readiness.md` commit SHA،إصدارات PHP/Laravel/PostgreSQL،أوامر ونتائج التحقق،restore timing،المخاطر المقبولة،وهوية صاحب قرار الإطلاق. لا يصف النظام بالمكتمل قبل هذا السجل.
+
+```bash
+git add tests scripts/verify-acceptance-register.php docs/releases composer.json package.json .github/workflows/ci.yml docs/requirements/rehla-phase-1-acceptance.csv
+git commit -m "release: prove Rehla phase one acceptance"
+```
+
+## Final Release Gate
+
+تغلق الخطة artifact hash وبيئة التشغيل والمراقبة والترحيل والاستعادة والأمان والأداء والوصول، ثم تنفذ R01–R65 من checkout نظيف وتصدر readiness record قابلًا للتدقيق.
