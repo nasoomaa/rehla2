@@ -17,6 +17,8 @@
 - مرجع المنتج الملزم هو `docs/REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md` بأقسامه R01–R65.
 - خريطة الاعتماد المقروءة آليًا هي `docs/architecture/rehla-package-map.json`.
 - مسار الحزم حساس لحالة الأحرف: `packages/Rehla/<Package>`.
+- يبقى في جذر كل حزمة `composer.json` و`README.md` و`src/` و`tests/` فقط؛ توضع إعدادات الحزمة وترحيلاتها ومواردها ومساراتها وOpenAPI تحت `src/`، وتبقى الاختبارات في الجذر عبر `autoload-dev`.
+- يكون مزود كل حزمة في `src/Providers/<Package>ServiceProvider.php` ويحمل موارد الحزمة صراحة من مواضعها تحت `src/`.
 - `Core` لا يعتمد على أي حزمة Rehla، وحزم الأعمال لا تعتمد على `Web` أو`Api` أو`Admin`.
 - كل جدول له حزمة مالكة واحدة، ولا تعبر Eloquent Models القابلة للتعديل حدود الحزم.
 - قاعدة الاختبار PostgreSQL واسمها ينتهي بـ`_testing`؛ SQLite ممنوع في اختبارات التكامل والمال والتزامن.

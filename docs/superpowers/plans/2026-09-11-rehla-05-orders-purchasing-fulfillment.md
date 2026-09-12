@@ -23,8 +23,8 @@
 ### Task 1: Immutable Paid Order and Snapshots
 
 **Files:**
-- Create: `packages/Rehla/Orders/database/migrations/*_create_orders_tables.php`
-- Create: `packages/Rehla/Orders/database/migrations/*_protect_orders.php`
+- Create: `packages/Rehla/Orders/src/database/migrations/*_create_orders_tables.php`
+- Create: `packages/Rehla/Orders/src/database/migrations/*_protect_orders.php`
 - Create: `packages/Rehla/Orders/src/Data/{CreatePaidOrderData,PaidOrderData,OrderSummary}.php`
 - Create: `packages/Rehla/Orders/src/Contracts/OrderWriter.php`
 - Create: `packages/Rehla/Orders/src/Actions/CreatePaidOrder.php`
@@ -90,7 +90,7 @@ git commit -m "feat(orders): add immutable paid order snapshots"
 ### Task 2: Purchasing Contracts and Idempotency Store
 
 **Files:**
-- Create: `packages/Rehla/Purchasing/database/migrations/*_create_purchase_attempts.php`
+- Create: `packages/Rehla/Purchasing/src/database/migrations/*_create_purchase_attempts.php`
 - Create: `packages/Rehla/Purchasing/src/Data/{SubmitOrderData,SubmitOrderResult,CreateExecutionData,ExecutionData}.php`
 - Create: `packages/Rehla/Purchasing/src/Contracts/ExecutionCreator.php`
 - Create: `packages/Rehla/Purchasing/src/Enums/PurchaseAttemptStatus.php`
@@ -144,13 +144,13 @@ git commit -m "feat(purchasing): define purchase contracts and idempotency"
 ### Task 3: Fulfillment State Machine and Execution Creation
 
 **Files:**
-- Create: `packages/Rehla/Fulfillment/database/migrations/*_create_fulfillment_tables.php`
-- Create: `packages/Rehla/Fulfillment/database/migrations/*_protect_execution_history.php`
+- Create: `packages/Rehla/Fulfillment/src/database/migrations/*_create_fulfillment_tables.php`
+- Create: `packages/Rehla/Fulfillment/src/database/migrations/*_protect_execution_history.php`
 - Create: `packages/Rehla/Fulfillment/src/Enums/ExecutionStatus.php`
 - Create: `packages/Rehla/Fulfillment/src/Data/{ExecutionDetails,TransitionExecutionData}.php`
 - Create: `packages/Rehla/Fulfillment/src/Actions/{CreateExecution,TransitionExecution,AddInternalNote,RequestCustomerAction}.php`
 - Create: `packages/Rehla/Fulfillment/src/Queries/{GetOwnedExecution,GetExecutionForOperations}.php`
-- Modify: `packages/Rehla/Fulfillment/src/FulfillmentServiceProvider.php`
+- Modify: `packages/Rehla/Fulfillment/src/Providers/FulfillmentServiceProvider.php`
 - Test: `packages/Rehla/Fulfillment/tests/Unit/ExecutionStateMachineTest.php`
 - Test: `packages/Rehla/Fulfillment/tests/Integration/CreateExecutionTest.php`
 
@@ -240,7 +240,7 @@ git commit -m "feat(fulfillment): add execution lifecycle and history"
 - Create: `packages/Rehla/Fulfillment/src/Data/RespondToCustomerActionData.php`
 - Create: `packages/Rehla/Fulfillment/src/Actions/RespondToCustomerAction.php`
 - Create: `packages/Rehla/Fulfillment/src/Models/CustomerActionResponse.php`
-- Create: `packages/Rehla/Fulfillment/database/migrations/*_create_customer_action_responses.php`
+- Create: `packages/Rehla/Fulfillment/src/database/migrations/*_create_customer_action_responses.php`
 - Test: `packages/Rehla/Fulfillment/tests/Feature/CustomerActionResponseTest.php`
 
 **Interfaces:**
@@ -290,7 +290,7 @@ git commit -m "feat(fulfillment): add customer action responses"
 **Files:**
 - Create: `packages/Rehla/Purchasing/src/Actions/SubmitOrder.php`
 - Create: `packages/Rehla/Purchasing/src/Exceptions/{PriceChanged,FormVersionChanged,FulfillmentPolicyMissing,IdempotencyKeyReused,OperationInProgress}.php`
-- Modify: `packages/Rehla/Purchasing/src/PurchasingServiceProvider.php`
+- Modify: `packages/Rehla/Purchasing/src/Providers/PurchasingServiceProvider.php`
 - Test: `packages/Rehla/Purchasing/tests/Integration/SubmitOrderTest.php`
 - Test: `packages/Rehla/Purchasing/tests/Integration/SubmitOrderConcurrencyTest.php`
 - Test: `packages/Rehla/Purchasing/tests/Integration/SubmitOrderRollbackTest.php`

@@ -149,7 +149,7 @@ git commit -m "docs: lock phase one product decisions"
 - Modify: `composer.json`
 - Create: `scripts/create-rehla-packages.php`
 - Create: `packages/Rehla/{Core,Identity,Catalog,Forms,Travelers,Documents,Wallet,TopUps,Orders,Fulfillment,Purchasing,Notifications,Content,Audit,Reporting,Integrations,Web,Api,Admin}/composer.json`
-- Create: `packages/Rehla/<Package>/src/<Package>ServiceProvider.php`
+- Create: `packages/Rehla/<Package>/src/Providers/<Package>ServiceProvider.php`
 - Create: `packages/Rehla/<Package>/README.md`
 - Create: `packages/Rehla/<Package>/tests/Unit/PackageBootTest.php`
 - Create: `tests/Architecture/PackageDiscoveryTest.php`
@@ -167,7 +167,7 @@ it('discovers every declared Rehla package provider', function (): void {
     $map = json_decode(file_get_contents(base_path('docs/architecture/rehla-package-map.json')), true, flags: JSON_THROW_ON_ERROR);
 
     foreach (array_keys($map['packages']) as $package) {
-        $provider = "Rehla\\{$package}\\{$package}ServiceProvider";
+        $provider = "Rehla\\{$package}\\Providers\\{$package}ServiceProvider";
         expect(class_exists($provider))->toBeTrue();
         expect(app()->getProvider($provider))->not->toBeNull();
     }
@@ -190,7 +190,7 @@ Expected: FAIL على أول provider غير موجود.
   "type": "library",
   "autoload": {"psr-4": {"Rehla\\Core\\": "src/"}},
   "autoload-dev": {"psr-4": {"Rehla\\Core\\Tests\\": "tests/"}},
-  "extra": {"laravel": {"providers": ["Rehla\\Core\\CoreServiceProvider"]}}
+  "extra": {"laravel": {"providers": ["Rehla\\Core\\Providers\\CoreServiceProvider"]}}
 }
 ```
 

@@ -26,7 +26,7 @@
 - Create: `packages/Rehla/Reporting/src/Enums/MetricName.php`
 - Create: `packages/Rehla/Reporting/src/Data/{MetricFilter,MetricValue,ProductMetrics}.php`
 - Create: `packages/Rehla/Reporting/src/Queries/GetProductMetrics.php`
-- Create: `packages/Rehla/Reporting/database/migrations/*_create_reporting_views.php`
+- Create: `packages/Rehla/Reporting/src/database/migrations/*_create_reporting_views.php`
 - Create: `packages/Rehla/Reporting/README.md`
 - Test: `packages/Rehla/Reporting/tests/Integration/ProductMetricsTest.php`
 - Test: `packages/Rehla/Reporting/tests/Architecture/ReadOnlyReportingTest.php`

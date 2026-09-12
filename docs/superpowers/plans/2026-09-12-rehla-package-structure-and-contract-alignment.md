@@ -248,7 +248,7 @@ class PackageLayoutTest(TestCase):
 
 - [ ] **Step 2: Implement the narrow layout check and prove current RED**
 
-استخدم regex الآتي على وثيقة المعمارية والخطط فقط، مع الإبلاغ عن الملف والسطر والنص:
+استخدم regex الآتي على وثيقة المعمارية والخطة المختصرة وخطط البناء `2026-09-11-*.md` فقط، مع الإبلاغ عن الملف والسطر والنص. استبعد وثيقة التصميم وخطة المحاذاة الحالية لأنهما تعرضان المسار القديم ضمن وصف الفجوة والتحويل ولا يمثلانه كهدف تنفيذ:
 
 ```python
 FORBIDDEN_PACKAGE_ROOT = re.compile(
@@ -310,7 +310,7 @@ Run: `python3 -m scripts.docs_checks.run --group package`
 
 Expected: PASS لقسم layout، مع صفر package-owned runtime paths خارج `src/`.
 
-Run: `rg -n 'packages/Rehla/.+/(config|database|resources|routes|openapi)/' docs/superpowers/plans docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`
+Run: `rg -n 'packages/Rehla/.+/(config|database|resources|routes|openapi)/' docs/superpowers/plans/2026-09-11-*.md docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`
 
 Expected: كل نتيجة تحتوي `/src/` قبل اسم المجلد.
 

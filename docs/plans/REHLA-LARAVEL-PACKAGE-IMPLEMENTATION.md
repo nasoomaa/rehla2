@@ -15,6 +15,7 @@
 - لا حزم Cart/Inventory/Shipping/MultiCurrency/Refunds في الإصدار الأول.
 - كل خطوة تحدث سجل R01–R65؛ عبارة «مكتمل» تحتاج دليل اختبار فعلي.
 - يجب أن تطابق اعتمادات Composer خريطة الحزم، ويجب أن يكون ترتيب التنفيذ topological order صالحًا لها.
+- يحتوي جذر الحزمة ملفات metadata و`src/` و`tests/` فقط؛ تقع `config/database/resources/routes/openapi` الخاصة بها تحت `src/`، ويقع Service Provider تحت `src/Providers/`.
 
 ## شبكة التنفيذ المصححة
 

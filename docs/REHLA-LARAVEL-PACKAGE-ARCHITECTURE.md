@@ -156,37 +156,44 @@ rehla3/
 packages/Rehla/TopUps/
 ├── composer.json
 ├── README.md
-├── config/
-├── database/
-│   ├── factories/
-│   ├── migrations/
-│   └── seeders/
-├── resources/
-│   └── lang/
-│       ├── en/
-│       └── ar/
 ├── src/
+│   ├── Providers/
+│   │   └── TopUpsServiceProvider.php
 │   ├── Actions/                   # حالات استخدام الكتابة
 │   │   ├── SubmitTopUp.php
 │   │   ├── ApproveTopUp.php
 │   │   └── RejectTopUp.php
 │   ├── Queries/                   # قراءات بلا أثر جانبي
+│   ├── Contracts/                 # السطح المسموح للحزم الأخرى
 │   ├── Data/                      # DTOs للمدخلات والنتائج
+│   ├── Domain/                    # قواعد خالصة عند الحاجة
 │   ├── Models/                    # Eloquent داخل مالك الجدول
 │   ├── Enums/
-│   ├── Policies/
 │   ├── Events/
 │   ├── Exceptions/
-│   ├── Contracts/                 # السطح المسموح للحزم الأخرى
+│   ├── Policies/
 │   ├── Infrastructure/            # storage/provider adapters عند الحاجة
-│   └── TopUpsServiceProvider.php
+│   ├── config/
+│   ├── database/
+│   │   ├── factories/
+│   │   ├── migrations/
+│   │   └── seeders/
+│   └── resources/
+│       └── lang/
+│           ├── en/
+│           └── ar/
 └── tests/
     ├── Unit/
     ├── Feature/
-    └── Integration/
+    ├── Integration/
+    └── Architecture/
 ```
 
 القواعد المعقدة الخالصة، مثل انتقالات الحالة أو `Money`، يمكن وضعها في `Domain/` داخل الحزمة. لا يضاف `Repository Interface` لكل Model تلقائيًا؛ يضاف عندما تعبر العملية حد حزمة أو يوجد أكثر من تنفيذ أو يحتاج الاختبار إلى عزل اعتماد خارجي.
+
+يبقى جذر الحزمة محصورًا في `composer.json` و`README.md` و`src/` و`tests/`. توضع إعدادات الحزمة وترحيلاتها ومواردها ومساراتها وOpenAPI تحت `src/`، ولا ينشأ أي مجلد منها إن لم تحتجه الحزمة. تبقى `tests/` في الجذر ويشير إليها `autoload-dev`.
+
+يحمل Service Provider موارد الحزمة من مواضعها الفعلية تحت `src/`: يستخدم `mergeConfigFrom` للإعدادات، و`loadMigrationsFrom` للترحيلات، و`loadRoutesFrom` للمسارات، و`loadViewsFrom` للقوالب، و`loadTranslationsFrom` للترجمات. يقتصر النشر إلى تطبيق المضيف على الموارد القابلة للتخصيص، ولا يغير ملكيتها داخل الحزمة.
 
 كل `README.md` للحزمة يحدد:
 
@@ -297,15 +304,19 @@ flowchart TD
 ```text
 packages/Rehla/Web/
 ├── src/
+│   ├── Providers/
+│   │   └── WebServiceProvider.php
 │   ├── Http/Controllers/
 │   ├── Http/Requests/
 │   ├── Livewire/PublicSite/
 │   ├── Livewire/Account/
 │   ├── ViewModels/
-│   └── WebServiceProvider.php
-├── routes/web.php
-├── resources/views/
-├── resources/lang/{en,ar}/
+│   ├── routes/web.php
+│   └── resources/
+│       ├── views/
+│       ├── lang/{en,ar}/
+│       ├── css/
+│       └── js/
 └── tests/Feature/
 ```
 
@@ -315,15 +326,17 @@ packages/Rehla/Web/
 
 ```text
 packages/Rehla/Api/
-├── openapi/rehla-v1.yaml
-├── routes/api_v1.php
 ├── src/
+│   ├── Providers/
+│   │   └── ApiServiceProvider.php
 │   ├── Http/Controllers/V1/
 │   ├── Http/Requests/V1/
 │   ├── Http/Resources/V1/
 │   ├── Http/Middleware/
 │   ├── Errors/ProblemDetailsFactory.php
-│   └── ApiServiceProvider.php
+│   ├── routes/api_v1.php
+│   ├── openapi/rehla-v1.yaml
+│   └── resources/lang/{en,ar}/
 └── tests/
     ├── Contract/
     └── Feature/
@@ -403,13 +416,14 @@ POST   /api/v1/notifications/{notification}/read
 ```text
 packages/Rehla/Admin/
 ├── src/
+│   ├── Providers/
+│   │   └── AdminServiceProvider.php
 │   ├── Panel/AdminPanelProvider.php
 │   ├── Resources/
 │   ├── Pages/
 │   ├── Widgets/
 │   ├── Actions/
-│   └── AdminServiceProvider.php
-├── resources/lang/{en,ar}/
+│   └── resources/lang/{en,ar}/
 └── tests/Feature/
 ```
 

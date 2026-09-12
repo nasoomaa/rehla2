@@ -22,8 +22,8 @@
 ### Task 1: Wallet and Append-only Ledger
 
 **Files:**
-- Create: `packages/Rehla/Wallet/database/migrations/*_create_wallet_tables.php`
-- Create: `packages/Rehla/Wallet/database/migrations/*_protect_wallet_ledger.php`
+- Create: `packages/Rehla/Wallet/src/database/migrations/*_create_wallet_tables.php`
+- Create: `packages/Rehla/Wallet/src/database/migrations/*_protect_wallet_ledger.php`
 - Create: `packages/Rehla/Wallet/src/Enums/LedgerEntryType.php`
 - Create: `packages/Rehla/Wallet/src/Data/{WalletBalance,WalletEntryData,DebitResult,CreditResult}.php`
 - Create: `packages/Rehla/Wallet/src/Contracts/{WalletReader,WalletCreditor,WalletDebitor}.php`
@@ -97,7 +97,7 @@ git commit -m "feat(wallet): add locked append-only wallet ledger"
 ### Task 2: Bank Accounts and Top-up Submission
 
 **Files:**
-- Create: `packages/Rehla/TopUps/database/migrations/*_create_top_up_tables.php`
+- Create: `packages/Rehla/TopUps/src/database/migrations/*_create_top_up_tables.php`
 - Create: `packages/Rehla/TopUps/src/Enums/TopUpStatus.php`
 - Create: `packages/Rehla/TopUps/src/Data/{BankAccountData,SubmitTopUpData,TopUpData}.php`
 - Create: `packages/Rehla/TopUps/src/Actions/{CreateBankAccount,UpdateBankAccount,DeactivateBankAccount,SubmitTopUp}.php`

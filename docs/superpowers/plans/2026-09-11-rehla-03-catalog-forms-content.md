@@ -22,7 +22,7 @@
 ### Task 1: Service Catalog and Price History
 
 **Files:**
-- Create: `packages/Rehla/Catalog/database/migrations/*_create_catalog_tables.php`
+- Create: `packages/Rehla/Catalog/src/database/migrations/*_create_catalog_tables.php`
 - Create: `packages/Rehla/Catalog/src/Enums/ServiceStatus.php`
 - Create: `packages/Rehla/Catalog/src/Data/{ServiceData,ServiceQuote,ServiceSnapshot}.php`
 - Create: `packages/Rehla/Catalog/src/Actions/{CreateService,UpdateServiceContent,ChangeServicePrice,PublishService,DeactivateService,ReorderServices}.php`
@@ -92,8 +92,8 @@ git commit -m "feat(catalog): add service lifecycle prices and requirements"
 ### Task 2: Draft and Published Form Versions
 
 **Files:**
-- Create: `packages/Rehla/Forms/database/migrations/*_create_form_tables.php`
-- Create: `packages/Rehla/Forms/database/migrations/*_protect_published_form_versions.php`
+- Create: `packages/Rehla/Forms/src/database/migrations/*_create_form_tables.php`
+- Create: `packages/Rehla/Forms/src/database/migrations/*_protect_published_form_versions.php`
 - Create: `packages/Rehla/Forms/src/Enums/{FieldType,FormVersionStatus}.php`
 - Create: `packages/Rehla/Forms/src/Data/{FormFieldData,PublishedFormData,ValidatedSubmission}.php`
 - Create: `packages/Rehla/Forms/src/Actions/{CreateFormDraft,UpdateFormDraft,PublishFormVersion}.php`
@@ -175,7 +175,7 @@ git commit -m "feat(forms): add immutable service form versions"
 ### Task 3: Localized Public Content
 
 **Files:**
-- Create: `packages/Rehla/Content/database/migrations/*_create_content_pages.php`
+- Create: `packages/Rehla/Content/src/database/migrations/*_create_content_pages.php`
 - Create: `packages/Rehla/Content/src/Enums/PageStatus.php`
 - Create: `packages/Rehla/Content/src/Data/PageData.php`
 - Create: `packages/Rehla/Content/src/Actions/{CreatePage,UpdatePage,PublishPage}.php`

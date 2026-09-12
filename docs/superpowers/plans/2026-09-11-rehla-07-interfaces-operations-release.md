@@ -23,12 +23,12 @@
 ### Task 1: Public Web, Authentication and Account Shell
 
 **Files:**
-- Create: `packages/Rehla/Web/routes/web.php`
+- Create: `packages/Rehla/Web/src/routes/web.php`
 - Create: `packages/Rehla/Web/src/Http/Controllers/{HomeController,ServiceController,LocaleController}.php`
 - Create: `packages/Rehla/Web/src/Livewire/Auth/{Register,Login}.php`
 - Create: `packages/Rehla/Web/src/Livewire/Account/{Profile,TravelerIndex,TravelerForm,WalletOverview,TopUpIndex,OrderIndex,NotificationIndex}.php`
-- Create: `packages/Rehla/Web/resources/views/{layouts,public,livewire}/**/*.blade.php`
-- Create: `packages/Rehla/Web/resources/lang/{en,ar}/messages.php`
+- Create: `packages/Rehla/Web/src/resources/views/{layouts,public,livewire}/**/*.blade.php`
+- Create: `packages/Rehla/Web/src/resources/lang/{en,ar}/messages.php`
 - Test: `packages/Rehla/Web/tests/Feature/PublicWebTest.php`
 - Test: `packages/Rehla/Web/tests/Feature/AccountIsolationTest.php`
 
@@ -84,7 +84,7 @@ git commit -m "feat(web): add public catalog and customer account shell"
 
 **Files:**
 - Create: `packages/Rehla/Web/src/Livewire/Account/{TopUpCreate,OrderCheckout,OrderShow,CustomerActionResponse}.php`
-- Create: `packages/Rehla/Web/resources/views/livewire/account/{top-up-create,order-checkout,order-show,customer-action-response}.blade.php`
+- Create: `packages/Rehla/Web/src/resources/views/livewire/account/{top-up-create,order-checkout,order-show,customer-action-response}.blade.php`
 - Test: `packages/Rehla/Web/tests/Feature/TopUpJourneyTest.php`
 - Test: `packages/Rehla/Web/tests/Feature/PurchaseJourneyTest.php`
 - Test: `packages/Rehla/Web/tests/Feature/CustomerActionJourneyTest.php`
@@ -146,8 +146,8 @@ git commit -m "feat(web): add top-up purchase and fulfillment journeys"
 ### Task 3: API Foundation, Authentication and Problem Details
 
 **Files:**
-- Create: `packages/Rehla/Api/routes/api_v1.php`
-- Create: `packages/Rehla/Api/openapi/rehla-v1.yaml`
+- Create: `packages/Rehla/Api/src/routes/api_v1.php`
+- Create: `packages/Rehla/Api/src/openapi/rehla-v1.yaml`
 - Create: `packages/Rehla/Api/src/Http/Controllers/V1/Auth/{RegisterController,LoginController,LogoutController}.php`
 - Create: `packages/Rehla/Api/src/Http/Middleware/{RequireJson,ResolveApiLocale}.php`
 - Create: `packages/Rehla/Api/src/Errors/ProblemDetailsFactory.php`
@@ -206,7 +206,7 @@ git commit -m "feat(api): establish v1 auth and problem details contract"
 - Create: `packages/Rehla/Api/src/Http/Controllers/V1/{MeController,ServiceController,TravelerController,WalletController,BankAccountController,TopUpController,UploadController,DocumentController,OrderSubmissionController,OrderController,ExecutionActionController,NotificationController}.php`
 - Create: `packages/Rehla/Api/src/Http/Requests/V1/{UpdateMeRequest,StoreTravelerRequest,UpdateTravelerRequest,StoreTopUpRequest,StoreUploadRequest,SubmitOrderRequest,RespondToActionRequest}.php`
 - Create: `packages/Rehla/Api/src/Http/Resources/V1/{ServiceResource,TravelerResource,WalletResource,WalletEntryResource,BankAccountResource,TopUpResource,OrderResource,NotificationResource}.php`
-- Modify: `packages/Rehla/Api/openapi/rehla-v1.yaml`
+- Modify: `packages/Rehla/Api/src/openapi/rehla-v1.yaml`
 - Test: `packages/Rehla/Api/tests/Feature/ApiResourceAuthorizationTest.php`
 - Test: `packages/Rehla/Api/tests/Feature/ApiMutationTest.php`
 - Test: `packages/Rehla/Api/tests/Contract/OpenApiExamplesTest.php`

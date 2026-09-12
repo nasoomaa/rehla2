@@ -22,7 +22,7 @@
 ### Task 1: Identity, Sessions and Capabilities
 
 **Files:**
-- Create: `packages/Rehla/Identity/database/migrations/*_create_identity_tables.php`
+- Create: `packages/Rehla/Identity/src/database/migrations/*_create_identity_tables.php`
 - Create: `packages/Rehla/Identity/src/Models/{User,StaffProfile,Role,Ability}.php`
 - Create: `packages/Rehla/Identity/src/Enums/{AccountStatus,AbilityName}.php`
 - Create: `packages/Rehla/Identity/src/Data/{ActorData,ResourceRef,RegisterCustomerData,UserData}.php`
@@ -85,8 +85,8 @@ git commit -m "feat(identity): add accounts roles and deny-by-default abilities"
 ### Task 2: Append-only Audit Trail
 
 **Files:**
-- Create: `packages/Rehla/Audit/database/migrations/*_create_audit_entries_table.php`
-- Create: `packages/Rehla/Audit/database/migrations/*_protect_audit_entries.php`
+- Create: `packages/Rehla/Audit/src/database/migrations/*_create_audit_entries_table.php`
+- Create: `packages/Rehla/Audit/src/database/migrations/*_protect_audit_entries.php`
 - Create: `packages/Rehla/Audit/src/Data/AppendAuditData.php`
 - Create: `packages/Rehla/Audit/src/Contracts/AuditWriter.php`
 - Create: `packages/Rehla/Audit/src/Actions/AppendAuditEntry.php`
@@ -148,7 +148,7 @@ git commit -m "feat(audit): add immutable audit trail"
 ### Task 3: Private Document Lifecycle
 
 **Files:**
-- Create: `packages/Rehla/Documents/database/migrations/*_create_documents_tables.php`
+- Create: `packages/Rehla/Documents/src/database/migrations/*_create_documents_tables.php`
 - Create: `packages/Rehla/Documents/src/Enums/{DocumentStatus,DocumentPurpose}.php`
 - Create: `packages/Rehla/Documents/src/Data/{BeginUploadData,DocumentRef}.php`
 - Create: `packages/Rehla/Documents/src/Contracts/{DocumentScanner,OwnedDocuments}.php`
@@ -206,7 +206,7 @@ git commit -m "feat(documents): secure private upload lifecycle"
 ### Task 4: Travelers and Passport Uniqueness
 
 **Files:**
-- Create: `packages/Rehla/Travelers/database/migrations/*_create_travelers_table.php`
+- Create: `packages/Rehla/Travelers/src/database/migrations/*_create_travelers_table.php`
 - Create: `packages/Rehla/Travelers/src/Enums/Gender.php`
 - Create: `packages/Rehla/Travelers/src/Data/{TravelerData,TravelerSnapshot}.php`
 - Create: `packages/Rehla/Travelers/src/Actions/{CreateTraveler,UpdateTraveler}.php`
@@ -261,7 +261,7 @@ git commit -m "feat(travelers): add owned traveler profiles and passport uniquen
 ### Task 5: Transactional Outbox and In-app Notifications
 
 **Files:**
-- Create: `packages/Rehla/Notifications/database/migrations/*_create_notification_tables.php`
+- Create: `packages/Rehla/Notifications/src/database/migrations/*_create_notification_tables.php`
 - Create: `packages/Rehla/Notifications/src/Data/OutboxMessageData.php`
 - Create: `packages/Rehla/Notifications/src/Contracts/OutboxWriter.php`
 - Create: `packages/Rehla/Notifications/src/Actions/{AppendOutboxMessage,ClaimOutboxBatch,MarkDelivered,MarkFailed,CreateInAppNotification,MarkNotificationRead}.php`
