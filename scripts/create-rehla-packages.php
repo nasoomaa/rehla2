@@ -277,6 +277,11 @@ foreach ($packageMap['packages'] as $package => $dependencies) {
     if ($package === 'Audit') {
         $requires['illuminate/database'] = '^13.0';
     }
+    if ($package === 'Identity') {
+        $requires['illuminate/auth'] = '^13.0';
+        $requires['illuminate/database'] = '^13.0';
+        $requires['illuminate/hashing'] = '^13.0';
+    }
     foreach ($dependencies as $dependency) {
         $requires['rehla/'.strtolower($dependency)] = '@dev';
     }

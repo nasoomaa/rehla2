@@ -142,7 +142,7 @@ git commit -m "feat(audit): add immutable audit trail"
 - Create: `packages/Rehla/Identity/src/database/migrations/*_create_identity_tables.php`
 - Create: `packages/Rehla/Identity/src/database/migrations/*_create_personal_access_tokens_table.php`
 - Create: `packages/Rehla/Identity/src/Models/{User,StaffProfile,Role,Ability}.php`
-- Create: `packages/Rehla/Identity/src/Auth/StaffEloquentUserProvider.php`
+- Create: `packages/Rehla/Identity/src/Auth/{CustomerEloquentUserProvider,StaffEloquentUserProvider}.php`
 - Create: `packages/Rehla/Identity/src/Enums/{AccountStatus,AbilityName}.php`
 - Create: `packages/Rehla/Identity/src/Data/{ActorData,ResourceRef,RegisterCustomerData,UserData}.php`
 - Create: `packages/Rehla/Identity/src/Actions/{RegisterCustomer,AssignRole,RevokeRole,AuthorizeActor}.php`
@@ -173,7 +173,7 @@ git commit -m "feat(audit): add immutable audit trail"
 - Produces: `RegistrationWalletInitializer::initialize(string $accountId): void` و`RegistrationNotificationRecorder::recordWelcome(string $accountId, string $locale, string $correlationId): void`؛ Identity يملك المنفذين وتوفر Wallet وNotifications التنفيذين.
 - Produces the exact canonical registry in `specs/cross-cutting/security-and-privacy.md`; tests reject every undeclared alias.
 
-- [ ] **Step 1: اكتب اختبارات التسجيل والمنع الافتراضي**
+- [x] **Step 1: اكتب اختبارات التسجيل والمنع الافتراضي**
 
 ```php
 it('registers a customer without staff powers', function (): void {
@@ -193,13 +193,13 @@ it('rolls registration back when a required collaborator fails', function (): vo
 });
 ```
 
-- [ ] **Step 2: شغل RED**
+- [x] **Step 2: شغل RED**
 
 Run: `php artisan test packages/Rehla/Identity/tests`
 
 Expected: FAIL لأن الجداول والأنواع غير موجودة.
 
-- [ ] **Step 3: أنشئ schema والعقود**
+- [x] **Step 3: أنشئ schema والعقود**
 
 أنشئ `users(id uuid, name, email citext unique, password, status, preferred_locale, email_verified_at, timestamps)`، و`staff_profiles(user_id unique, department, is_active, mfa_confirmed_at)`، و`roles`, `abilities`, `role_ability`, `user_role`, و`personal_access_tokens` المتوافق مع Sanctum والمملوك لـIdentity والمستخدم حصريًا لرموز العميل. تضيف خطة API اعتماد Sanctum وسلوك إصدار وإلغاء الرموز عند بناء الناقل؛ لا تضف اعتمادًا خاملًا هنا. لا تستخدم عمود `is_admin`. اربط الصلاحيات بالسجل الحرفي ذي الثلاثين اسمًا في `AbilityName` وارفض أي alias، واحفظ passwords عبر Laravel Hash فقط.
 
@@ -222,15 +222,15 @@ interface RegistrationNotificationRecorder
 
 ينفذ `RegisterCustomer` إدخال المستخدم ثم `AuditWriter` ثم المنفذين داخل `DB::transaction` واحدة وعلى الاتصال نفسه. لا يلتقط استثناءات المشاركين ولا يسمح لهم بـcommit مستقل. تستخدم اختبارات Task 2 fakes للمنفذين؛ يبقى مسار التسجيل الفعلي fail-closed حتى تسجل Notifications ثم Wallet التنفيذين. `CustomerRegistered`، إن أضيف، يطلق بعد commit للتحليلات فقط.
 
-- [ ] **Step 4: أثبت عزل customer/admin guards وMFA policy**
+- [x] **Step 4: أثبت عزل customer/admin guards وMFA policy**
 
-سجل provider مستقلًا باسم `rehla-staff` لا يعيد إلا مستخدمًا active له `staff_profile` active، واربط guard `admin` به؛ يظل cookie/session middleware المستقل ضمن مهمة Admin التي تملك سطح HTTP. اختبر أن بيانات customer لا تنجح عبر admin guard، وأن staff بلا قدرة يُمنع، وأن قدرات `topups.review`, `topups.settings.manage`, `access.manage`, `audit.view` تتطلب `mfa_confirmed_at` حديثة وفق نافذة أربع ساعات.
+سجل provider باسم `rehla-customer` لا يعيد إلا مستخدمًا active بلا `staff_profile`، وprovider مستقلًا باسم `rehla-staff` لا يعيد إلا مستخدمًا active له `staff_profile` active، ثم اربط `web` بالأول و`admin` بالثاني؛ يظل cookie/session middleware المستقل ضمن مهمة Admin التي تملك سطح HTTP. اختبر العزل في الاتجاهين، وأن staff بلا قدرة يُمنع، وأن قدرات `topups.review`, `topups.settings.manage`, `access.manage`, `audit.view` تتطلب دليل `mfa_confirmed_at` خادميًا حديثًا وسياق تحدٍ حديثًا خاصًا بالجلسة داخل `ActorData` وفق نافذة أربع ساعات؛ لا يمنح تحقق جلسة صلاحية لجلسة أخرى.
 
 Run: `php artisan test packages/Rehla/Identity/tests`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/Rehla/Identity config/auth.php
