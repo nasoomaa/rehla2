@@ -117,19 +117,21 @@ git add packages/Rehla/Admin && git commit -m "feat(admin): add staff shell MFA 
 | Area | View ability | Mutation ability | Sensitive-field ability | Query/ReadModel | Allowed named commands | Forbidden |
 |---|---|---|---|---|---|---|
 | Overview | `admin.overview.view` | none | none | `ProductMetricsReader` | none | edit/export raw cohorts |
-| Services & Policies | `services.view` | `services.manage`, `services.publish` | none | `ServiceAdminReader` | `CreateService`, `UpdateServiceContent`, `ChangeServicePrice`, `PublishService`, `DeactivateService`, `PublishFulfillmentPolicy` | edit published versions/delete history |
+| Services & Policies | `services.view` | `services.manage` | none | `ServiceAdminReader` | `CreateService`, `UpdateServiceContent`, `ChangeServicePrice`, `PublishService`, `DeactivateService`, `PublishFulfillmentPolicy` | edit published versions/delete history |
 | Forms | `forms.view` | `forms.draft`, `forms.publish` | none | `FormAdminReader` | `CreateFormDraft`, `UpdateFormDraft`, `PublishFormVersion` | edit/delete published version |
-| Content | `content.view` | `content.manage`, `content.publish` | none | `ContentAdminReader` | `CreatePage`, `UpdatePage`, `PublishPage` | unsanitized markup/direct update |
-| Customers | `customers.view` | `customers.manage` | `customers.view_sensitive` | `CustomerAdminReader` | `SuspendCustomer`, `ReactivateCustomer` | password/token/role mutation |
+| Content | `content.view` | `content.manage` | none | `ContentAdminReader` | `CreatePage`, `UpdatePage`, `PublishPage` | unsanitized markup/direct update |
+| Customers | `customers.view` | `customers.manage_status` | `customers.view_sensitive` | `CustomerAdminReader` | `SuspendCustomer`, `ReactivateCustomer` | password/token/role mutation |
 | Travelers | `travelers.view` | none | `travelers.view_sensitive` | `TravelerAdminReader` | none | staff profile edit/raw passport by default |
-| Wallets & Ledger | `wallets.view` | none | `wallets.view_sensitive` | `WalletAdminReader` | none in Phase 1 | credit/debit/edit/delete/export unrestricted |
+| Wallets & Ledger | `wallets.view` | none | none | `WalletAdminReader` | none in Phase 1 | credit/debit/edit/delete/export unrestricted |
 | Bank Accounts | `banks.view` | `banks.manage` | `banks.manage` | `BankAccountAdminReader` | `CreateBankAccount`, `UpdateBankAccount`, `ToggleBankAccountStatus` | delete referenced bank/direct model save |
 | Top-Ups | `topups.view` | `topups.review`, `topups.settings.manage` | `documents.view_sensitive` | `TopUpAdminReader` | `ApproveTopUp`, `RejectTopUp`, `ConfigureMinimumTopUp` | manual wallet write/edit terminal decision |
-| Orders | `orders.view` | none | `orders.view_sensitive` | `OrderAdminReader` | none | edit/delete order orsnapshots |
-| Executions, Actions & Documents | `executions.view` | `executions.transition`, `executions.note` | `documents.view_sensitive` | `ExecutionAdminReader` | `TransitionExecution`, `RequestCustomerAction`, `CompleteExecution`, `CancelExecution`, `AddInternalNote` | invalid policy jump/public file URL |
-| Notifications & Dead Letters | `notifications.view` | `notifications.replay` | `notifications.view_sensitive` | `NotificationAdminReader` | `ReplayOutboxMessage` | payload edit/unreasoned replay/raw recipient PII |
+| Orders | `orders.view` | none | none | `OrderAdminReader` | none | edit/delete order orsnapshots |
+| Executions, Actions & Documents | `executions.view` | `executions.transition`, `executions.note` | `executions.view_sensitive`, `documents.view_sensitive` | `ExecutionAdminReader` | `TransitionExecution`, `RequestCustomerAction`, `CompleteExecution`, `CancelExecution`, `AddInternalNote` | invalid policy jump/public file URL |
+| Notifications & Dead Letters | `notifications.view` | `notifications.replay` | none | `NotificationAdminReader` | `ReplayOutboxMessage` | payload edit/unreasoned replay/raw recipient PII |
 | Roles & Abilities | `access.view` | `access.manage` | `access.manage` | `AccessAdminReader` | `AssignRole`, `RevokeRole`, `UpdateAbilities` | self-lockout/undeclared ability alias |
-| Audit | `audit.view` | none | `audit.view_sensitive` | `AuditLogReader` | none | update/delete/raw metadata export |
+| Audit | `audit.view` | none | none | `AuditLogReader` | none | update/delete/raw metadata export |
+
+كل ability في هذه المصفوفة تنتمي حرفيًا إلى السجل الكامل في `specs/cross-cutting/security-and-privacy.md`. تبقى حقول الإشعارات وAudit التي لا يعرّف لها السجل قدرة كشف مستقلة masked دائمًا؛ لا تخترع الواجهة ability لتجاوز ذلك.
 
 
 - [ ] **Step 1: Write RED proof**

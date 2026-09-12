@@ -319,6 +319,38 @@ def validate_plan_coverage_rows(contract: dict[str, object], rows: list[dict[str
         require(bool(row.get("verification")), f"{requirement_id}: verification missing")
 
 
+def canonical_staff_abilities(text: str) -> set[str]:
+    match = re.search(
+        r"The complete Phase 1 ability registry is:\n\n```text\n(?P<abilities>.*?)\n```",
+        text,
+        flags=re.DOTALL,
+    )
+    require(match is not None, "canonical staff ability registry missing")
+    abilities = {line.strip() for line in match.group("abilities").splitlines() if line.strip()}
+    require(len(abilities) == 30, f"expected 30 canonical staff abilities, got {len(abilities)}")
+    return abilities
+
+
+def validate_admin_ability_matrix(text: str, canonical: set[str]) -> None:
+    match = re.search(
+        r"\| Area \| View ability .*?\n\|---.*?\n(?P<rows>(?:\|.*\n)+)",
+        text,
+    )
+    require(match is not None, "Admin ability matrix missing")
+    used = set(re.findall(r"`([a-z][a-z0-9_]*(?:\.[a-z][a-z0-9_]*)+)`", match.group("rows")))
+    unknown = sorted(used - canonical)
+    require(not unknown, f"Admin matrix uses undeclared abilities: {unknown}")
+
+
+def validate_acceptance_abilities(rows: list[dict[str, str]], canonical: set[str]) -> None:
+    actual = {
+        row.get("interface", "").removeprefix("Ability::")
+        for row in rows
+        if row.get("source_requirement") == "R47"
+    }
+    require(actual == canonical, "R47 acceptance abilities differ from the canonical registry")
+
+
 def validate_program_ownership(contract: dict[str, object]) -> None:
     plans = contract["implementation_plans"]
     packages = contract["packages"]
@@ -486,6 +518,14 @@ def check() -> None:
     coverage_path = ROOT / "docs/superpowers/plans/2026-09-11-rehla-plan-coverage.csv"
     with coverage_path.open(encoding="utf-8", newline="") as stream:
         validate_plan_coverage_rows(contract, list(csv.DictReader(stream)))
+    canonical = canonical_staff_abilities(read_text(ROOT / "specs/cross-cutting/security-and-privacy.md"))
+    validate_admin_ability_matrix(
+        read_text(ROOT / "docs/superpowers/plans/2026-09-11-rehla-09-admin-control-panel.md"),
+        canonical,
+    )
+    acceptance_path = ROOT / "docs/requirements/rehla-phase-1-acceptance.csv"
+    with acceptance_path.open(encoding="utf-8", newline="") as stream:
+        validate_acceptance_abilities(list(csv.DictReader(stream)), canonical)
     validate_program_ownership(contract)
     validate_architecture_order(contract)
     validate_table_schedule(contract)

@@ -12,7 +12,7 @@ docs/architecture/table-ownership.json,machine-map,332,reviewed,package-and-cont
 docs/plans/REHLA-LARAVEL-PACKAGE-IMPLEMENTATION.md,plan,285,reviewed,implementation-plans
 docs/requirements/rehla-phase-1-acceptance.csv,acceptance-register,209,reviewed,audit-evidence
 docs/reviews/2026-09-11-rehla-specs-completeness-audit.md,review,74,reviewed,audit-evidence
-docs/reviews/2026-09-12-rehla-build-plans-and-agent-skills-audit.md,review,182,reviewed,audit-evidence
+docs/reviews/2026-09-12-rehla-build-plans-and-agent-skills-audit.md,review,183,reviewed,audit-evidence
 docs/reviews/2026-09-12-rehla-package-contract-alignment-audit.md,review,95,reviewed,audit-evidence
 docs/superpowers/plans/2026-09-11-rehla-01-foundation-core.md,plan,538,reviewed,implementation-plans
 docs/superpowers/plans/2026-09-11-rehla-02-identity-platform-services.md,plan,508,reviewed,implementation-plans
@@ -23,7 +23,7 @@ docs/superpowers/plans/2026-09-11-rehla-06-reporting-integrations.md,plan,286,re
 docs/superpowers/plans/2026-09-11-rehla-07-customer-web.md,plan,426,reviewed,implementation-plans
 docs/superpowers/plans/2026-09-11-rehla-07-interfaces-operations-release.md,plan,12,reviewed,implementation-plans
 docs/superpowers/plans/2026-09-11-rehla-08-customer-api.md,plan,429,reviewed,implementation-plans
-docs/superpowers/plans/2026-09-11-rehla-09-admin-control-panel.md,plan,347,reviewed,implementation-plans
+docs/superpowers/plans/2026-09-11-rehla-09-admin-control-panel.md,plan,349,reviewed,implementation-plans
 docs/superpowers/plans/2026-09-11-rehla-10-operations-security-release.md,plan,344,reviewed,implementation-plans
 docs/superpowers/plans/2026-09-11-rehla-plan-coverage.csv,plan,66,reviewed,implementation-plans
 docs/superpowers/plans/2026-09-11-rehla-platform-build.md,plan,203,reviewed,implementation-plans

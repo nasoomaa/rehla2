@@ -7,6 +7,9 @@ from scripts.docs_checks.plan_quality import (
     NON_IMPLEMENTATION_PLAN_METADATA,
     EXPECTED_PLAN_IDS,
     RELEASE_PROOF_FRAGMENTS,
+    canonical_staff_abilities,
+    validate_acceptance_abilities,
+    validate_admin_ability_matrix,
     validate_package_owners,
     validate_package_task,
     validate_package_tasks,
@@ -50,6 +53,20 @@ def fixture_contract() -> dict[str, object]:
 
 
 class PlanContractTest(TestCase):
+    def test_admin_and_acceptance_abilities_must_use_canonical_registry(self) -> None:
+        canonical = canonical_staff_abilities(
+            "The complete Phase 1 ability registry is:\n\n```text\n" +
+            "\n".join(f"area.ability_{number}" for number in range(30)) +
+            "\n```",
+        )
+        matrix = "| Area | View ability | Mutation ability |\n|---|---|---|\n| Users | `area.unknown` | none |\n"
+        with self.assertRaisesRegex(CheckFailure, "undeclared abilities"):
+            validate_admin_ability_matrix(matrix, canonical)
+
+        rows = [{"source_requirement": "R47", "interface": "Ability::area.unknown"}]
+        with self.assertRaisesRegex(CheckFailure, "differ from the canonical"):
+            validate_acceptance_abilities(rows, canonical)
+
     def test_non_implementation_plan_set_is_explicit(self) -> None:
         self.assertEqual(
             set(NON_IMPLEMENTATION_PLAN_METADATA),

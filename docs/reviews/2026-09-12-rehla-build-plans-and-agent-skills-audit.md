@@ -16,9 +16,9 @@
 
 | النطاق | الملفات | الأسطر | طريقة الإثبات |
 |---|---:|---:|---|
-| `docs/` و`specs/` عدا manifest الوثائق نفسه | 74 | 18057 | توليد ديناميكي ومقارنة set/line count |
+| `docs/` و`specs/` عدا manifest الوثائق نفسه | 74 | 18060 | توليد ديناميكي ومقارنة set/line count |
 | `.agents/README.md` والمهارات التسع | 10 | 380 | فهرس مساوي للمجلد + validator رسمي ومحلي |
-| الإجمالي المراجع في هذا التدقيق | 84 | 18437 | لا توجد قراءة بالعينة |
+| الإجمالي المراجع في هذا التدقيق | 84 | 18440 | لا توجد قراءة بالعينة |
 
 يحصر [documentation manifest](2026-09-12-rehla-documentation-manifest.csv) كل ملف Markdown/CSV/JSON في `docs/` و`specs/` عدا نفسه. ويحصر manifest الخطط كل ملف Markdown داخل `docs/superpowers/plans`، بينما يثبت مدقق المهارات المجموعة الدقيقة تحت `.agents/skills`.
 
@@ -128,6 +128,7 @@
 | مسارات Web/API واسعة وغير قابلة للمراجعة | 8 مهام Web و8 مهام API مع ملفات وعقود واختبارات | مغلقة |
 | API plan لا يثبت المجموعة نفسها | مدقق set equality يثبت 28/28 في ثلاثة مصادر | مغلقة |
 | Admin resource واحد عام | 6 مهام ومصفوفة 14 منطقة وحراس command-only/sensitive/E2E | مغلقة |
+| مصفوفة Admin استخدمت abilities غير موجودة في السجل الرسمي | ربط المصفوفة وصفوف R47 آليًا بالسجل القانوني ذي 30 قدرة | مغلقة |
 | release gate غير محدد بما يكفي | fresh directory، empty PostgreSQL، artifact hash، encrypted restore، scans/budgets | مغلقة |
 | لا مهارات محلية صارمة | 9 مهارات وفهرس ومدقق رسمي ومحلي | مغلقة |
 | ادعاء الاكتمال بلا manifest | manifests ديناميكية للوثائق والخطط وتقرير أدلة | مغلقة |
