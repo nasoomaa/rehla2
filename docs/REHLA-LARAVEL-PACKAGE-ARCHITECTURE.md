@@ -354,40 +354,49 @@ GET    /api/v1/me
 PATCH  /api/v1/me
 
 GET    /api/v1/services
-GET    /api/v1/services/{service}
-GET    /api/v1/services/{service}/application-form
+GET    /api/v1/services/{service_slug}
+GET    /api/v1/services/{service_slug}/application-form
 
 GET    /api/v1/travelers
 POST   /api/v1/travelers
-GET    /api/v1/travelers/{traveler}
-PATCH  /api/v1/travelers/{traveler}
+GET    /api/v1/travelers/{traveler_id}
+PATCH  /api/v1/travelers/{traveler_id}
 
 GET    /api/v1/wallet
 GET    /api/v1/wallet/entries
 GET    /api/v1/bank-accounts
 GET    /api/v1/top-ups
 POST   /api/v1/top-ups
-GET    /api/v1/top-ups/{topUp}
+GET    /api/v1/top-ups/{top_up_id}
+PUT    /api/v1/top-ups/{top_up_id}/receipt
 
 POST   /api/v1/uploads
-GET    /api/v1/documents/{document}/content
+GET    /api/v1/uploads/{document_id}
+GET    /api/v1/documents/{document_id}/content
 
 POST   /api/v1/order-submissions
 GET    /api/v1/orders
-GET    /api/v1/orders/{order}
-POST   /api/v1/executions/{execution}/actions/{actionRequest}/responses
+GET    /api/v1/orders/{order_reference}
+POST   /api/v1/executions/{execution_id}/actions/{action_request_id}/responses
 
 GET    /api/v1/notifications
-POST   /api/v1/notifications/{notification}/read
+POST   /api/v1/notifications/{notification_id}/read
 ```
 
 `POST /order-submissions` يتطلب `Idempotency-Key`. يحفظ `Purchasing` بصمة الحمولة مع الحساب والمفتاح. تكرار المفتاح والحمولة يعيد النتيجة السابقة؛ المفتاح نفسه بحمولة مختلفة يعيد `409` برمز ثابت.
 
 يتضمن طلب الإرسال `service_id` و`traveler_id` و`accepted_price` و`form_version_id` و`answers` ومعرفات uploads. كلها claims من العميل يعاد التحقق منها؛ لا يصبح السعر أو الإصدار أو الملكية صحيحًا لمجرد وجوده في الطلب. يعيد الإنشاء الأول `201`، ويمكن لإعادة ناجحة مطابقة أن تعيد `200` مع Order نفسه.
 
-مسارات التسجيل والدخول تخضع لآلية المصادقة التي تعتمد قبل التنفيذ. عند استعمال Sanctum، يحدد OpenAPI بوضوح هل العميل first-party cookie client أم token client؛ لا يقبل التطبيق أكثر من آلية مبهمة في المسار نفسه. تطبق rate limits أشد على التسجيل والدخول ورفع الملفات وإرسال الطلب.
+مسارات التسجيل والدخول تخضع لآلية المصادقة التي تعتمد قبل التنفيذ. تصدر Api رموز Sanctum للعملاء فقط، ولا تحمل staff abilities ولا تدخل Admin. تستخدم Web sessions وتستدعي عقود المجالات داخل العملية؛ لا تستدعي REST داخليًا. تطبق rate limits أشد على التسجيل والدخول ورفع الملفات وإرسال الطلب.
 
-استجابات الخطأ تستخدم `application/problem+json` أو عقدًا مكافئًا ثابتًا، وتحتوي على `code` غير مترجم و`message` مترجمة و`errors` للحقول و`trace_id`. لا تكشف رسالة تكرار الجواز هوية مالكه. تستخدم القوائم cursor pagination عندما يكبر التاريخ. API موثق ومختبر مقابل OpenAPI، ولا يقرأ Controllers قاعدة البيانات مباشرة.
+استجابات الخطأ تستخدم `application/problem+json` وتحتوي على `code` غير مترجم و`message` مترجمة و`errors` للحقول و`trace_id` و`correlation_id`. تقبل المنصة `X-Correlation-ID` صالحًا أوتنشئه، وتنشئ trace جديدًا لكل محاولة ولا تثق بقيمة trace من العميل. التعريفان الملزمان:
+
+```text
+trace_id: unique identifier for one HTTP request or one queued-job attempt; changes on retry.
+correlation_id: stable identifier for one logical business operation across retries, audit, notifications, and outbox.
+```
+
+لا تكشف رسالة تكرار الجواز هوية مالكه. تستخدم القوائم cursor pagination عندما يكبر التاريخ. API موثق ومختبر مقابل OpenAPI، ولا يقرأ Controllers قاعدة البيانات مباشرة. يطابق `code` التعبير `^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$`، وتعارض إعادة استعمال المفتاح هو `idempotency.key_reused`.
 
 مصفوفة عقد المسارات الملزمة:
 
@@ -403,7 +412,9 @@ POST   /api/v1/notifications/{notification}/read
 | `GET wallet*` | Customer | محفظة الحساب الحالي | read-only، لا account ID من العميل |
 | `GET bank-accounts` | Customer | البنوك الفعالة فقط | لا بيانات داخلية، locale |
 | `GET/POST top-ups*` | Customer | TopUp الحساب الحالي | upload `clean`، unique reference، write rate limit |
+| `PUT top-ups/*/receipt` | Customer | طلب `under_review` للحساب الحالي | يحتفظ بالطلب والبنك والمرجع، ويستبدل clean receipt فقط |
 | `POST uploads` | Customer | ينسب للهوية الحالية | size/type quota، scan، rate limit |
+| `GET uploads/*` | Customer | upload للهوية الحالية | حالة scan آمنة، 404 لغير المالك، polling rate limit |
 | `GET documents/*/content` | Customer/staff | Policy للغرض والسجل المتصل | audit حساس، no-store، nosniff، URL قصير فقط |
 | `POST order-submissions` | Customer | traveler/files/wallet للحساب الحالي | `Idempotency-Key`، accepted price، transaction، strict rate limit |
 | `GET orders*` | Customer | Orders الحساب الحالي | authorized nested documents، cursor pagination |

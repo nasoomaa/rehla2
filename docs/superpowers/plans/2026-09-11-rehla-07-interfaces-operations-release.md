@@ -166,8 +166,8 @@ it('returns stable problem details independent of locale', function (): void {
     postJson('/api/v1/order-submissions', [])->assertUnauthorized()
         ->assertHeader('Content-Type', 'application/problem+json')
         ->assertJsonPath('type', 'https://rehla.example/problems/unauthenticated')
-        ->assertJsonPath('code', 'UNAUTHENTICATED')
-        ->assertJsonStructure(['type', 'title', 'status', 'code', 'trace_id']);
+        ->assertJsonPath('code', 'auth.unauthenticated')
+        ->assertJsonStructure(['type', 'title', 'status', 'code', 'trace_id', 'correlation_id']);
 });
 ```
 
@@ -179,11 +179,11 @@ Expected: FAIL قبل API provider/routes.
 
 - [ ] **Step 3: نفذ auth وmiddleware**
 
-`POST /auth/register` يستدعي RegisterCustomer ثم يصدر token باسم الجهاز وبـabilities customer فقط. `POST /auth/login` يتحقق من password/status ويعمل rate limit 5/minute لكل email+IP. `POST /auth/logout` يلغي token الحالي. لا تعيد token في logs أوerrors.
+`POST /auth/register` يستدعي RegisterCustomer ثم يصدر token باسم الجهاز وبـabilities customer فقط. لا يمكن لـSanctum customer token حمل staff abilities أوالدخول إلى Admin. `POST /auth/login` يتحقق من password/status ويعمل rate limit 5/minute لكل email+IP. `POST /auth/logout` يلغي token الحالي. لا تعيد token في logs أوerrors.
 
 - [ ] **Step 4: نفذ ProblemDetails mapping**
 
-اربط رموز Core بـHTTP: unauthenticated401، forbidden403، not found404، price/form/idempotency conflict409، validation422، rate limit429. `title/detail` مترجمان وفق `Accept-Language` و`code` ثابت غير مترجم. أخف stack traces في production.
+اربط رموز Core بـHTTP: unauthenticated401، forbidden403، not found404، price/form/idempotency conflict409، validation422، rate limit429. تطابق القيم المنشورة lower dot notation ويكون تعارض المفتاح `idempotency.key_reused`. `title/detail` مترجمان وفق `Accept-Language` و`code` ثابت غير مترجم. أخف stack traces في production. تقبل middleware قيمة `X-Correlation-ID` صالحة أوتنشئها، وتنشئ `trace_id` جديدًا لكل HTTP request أوjob attempt ولا تثق بقيمة trace من العميل.
 
 - [ ] **Step 5: اكتب OpenAPI الأساس واختبره**
 
@@ -204,7 +204,7 @@ git commit -m "feat(api): establish v1 auth and problem details contract"
 
 **Files:**
 - Create: `packages/Rehla/Api/src/Http/Controllers/V1/{MeController,ServiceController,TravelerController,WalletController,BankAccountController,TopUpController,UploadController,DocumentController,OrderSubmissionController,OrderController,ExecutionActionController,NotificationController}.php`
-- Create: `packages/Rehla/Api/src/Http/Requests/V1/{UpdateMeRequest,StoreTravelerRequest,UpdateTravelerRequest,StoreTopUpRequest,StoreUploadRequest,SubmitOrderRequest,RespondToActionRequest}.php`
+- Create: `packages/Rehla/Api/src/Http/Requests/V1/{UpdateMeRequest,StoreTravelerRequest,UpdateTravelerRequest,StoreTopUpRequest,ReplaceTopUpReceiptRequest,StoreUploadRequest,SubmitOrderRequest,RespondToActionRequest}.php`
 - Create: `packages/Rehla/Api/src/Http/Resources/V1/{ServiceResource,TravelerResource,WalletResource,WalletEntryResource,BankAccountResource,TopUpResource,OrderResource,NotificationResource}.php`
 - Modify: `packages/Rehla/Api/src/openapi/rehla-v1.yaml`
 - Test: `packages/Rehla/Api/tests/Feature/ApiResourceAuthorizationTest.php`
@@ -223,23 +223,25 @@ POST auth/login                        public 5/min
 POST auth/logout                       auth
 GET|PATCH me                           auth owner
 GET services                           public
-GET services/{service}                 public
-GET services/{service}/application-form public
+GET services/{service_slug}            public
+GET services/{service_slug}/application-form public
 GET|POST travelers                     auth owner
-GET|PATCH travelers/{traveler}         auth owner
+GET|PATCH travelers/{traveler_id}      auth owner
 GET wallet                             auth owner
 GET wallet/entries                     auth owner
 GET bank-accounts                      auth
 GET|POST top-ups                       auth owner; POST 10/hour
-GET top-ups/{topUp}                    auth owner
+GET top-ups/{top_up_id}                auth owner
+PUT top-ups/{top_up_id}/receipt        auth owner; under_review only
 POST uploads                           auth owner 20/hour
-GET documents/{document}/content       auth owner/policy
+GET uploads/{document_id}              auth owner; scan status
+GET documents/{document_id}/content    auth owner/policy
 POST order-submissions                 auth owner 10/min + Idempotency-Key
 GET orders                             auth owner
-GET orders/{order}                     auth owner
-POST executions/{execution}/actions/{actionRequest}/responses auth owner
+GET orders/{order_reference}           auth owner
+POST executions/{execution_id}/actions/{action_request_id}/responses auth owner
 GET notifications                      auth owner
-POST notifications/{notification}/read auth owner
+POST notifications/{notification_id}/read auth owner
 ```
 
 لكل owner route شغل dataset: guest→401، authenticated بلا ملكية→404، المالك→success، actor غير مخول إداريًا→403 حيث يوجد role gate.
@@ -256,7 +258,7 @@ Expected: FAIL للمسارات غير المنفذة.
 
 - [ ] **Step 4: نفذ mutations وIdempotency-Key**
 
-Form Requests تحول payload إلى DTO. `OrderSubmissionController` يرفض header غائبًا بـ422، ويمرر المفتاح إلى SubmitOrder؛ الإنشاء الأول201، replay المطابق200 مع `Idempotency-Replayed: true`، التعارض409. Upload لا يتجاوز حدود النوع والحجم، وTopUp لا يقبل document غيرclean.
+Form Requests تحول payload إلى DTO. `OrderSubmissionController` يرفض header غائبًا بـ422، ويمرر المفتاح إلى SubmitOrder؛ الإنشاء الأول201، replay المطابق200 مع `Idempotency-Replayed: true`، التعارض409. يعرض `UploadController@show` حالة الفحص مع ownership و404 لغير المالك. يستدعي `TopUpController@replaceReceipt` أمر `ReplaceTopUpReceipt` ليحافظ على الطلب نفسه والبنك والمرجع في `under_review`. Upload لا يتجاوز حدود النوع والحجم، وTopUp لا يقبل document غيرclean.
 
 - [ ] **Step 5: أكمل OpenAPI واختبر الأمثلة**
 

@@ -128,7 +128,7 @@ Expected: FAIL قبل الأنواع والجدول.
 
 - [ ] **Step 4: اختبر scoping والتعارض**
 
-أثبت أن حسابين يمكنهما استخدام المفتاح نفسه، وأن الحساب نفسه لا يملك سجلين بالمفتاح نفسه، وأن fingerprint المختلف ينتج `IDEMPOTENCY_KEY_REUSED`.
+أثبت أن حسابين يمكنهما استخدام المفتاح نفسه، وأن الحساب نفسه لا يملك سجلين بالمفتاح نفسه، وأن fingerprint المختلف ينتج public code `idempotency.key_reused`.
 
 Run: `php artisan test packages/Rehla/Purchasing/tests`
 

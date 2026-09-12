@@ -9,7 +9,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 ## 2. Producer and Consumer
 
 - **Producer**: Rehla Backend Application (`packages/Rehla/Api`).
-- **Consumers**: Rehla's customer Web client and first-party native mobile applications.
+- **Consumers**: First-party native applications and explicitly authorized API clients. The Rehla Web package uses customer sessions and calls domain contracts in-process; it does not call the REST API internally.
 
 ---
 
@@ -19,9 +19,14 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 - **Content-Type**: `application/json` (except `/uploads` which accepts `multipart/form-data`).
 - **Accept**: `application/json`
 - **Authorization**: `Authorization: Bearer <token>` for all protected endpoints.
+- **Token Scope**: Sanctum tokens issued by this customer API carry customer capabilities only and can never carry staff abilities or authenticate Admin routes.
 - **Idempotency**: `Idempotency-Key: <unique-uuid-or-string>` required on `POST /order-submissions`.
 - **Locale Header**: `Accept-Language: en` or `Accept-Language: ar` (controls error and content localization).
+- **Correlation Header**: A valid `X-Correlation-ID` is accepted and propagated; otherwise the server creates one. The server always creates its own `trace_id` and never trusts a client-supplied trace identifier.
 - **Identifiers**: Every ID in a request or response is an opaque JSON string.
+- **Identifier Semantics**:
+  - trace_id: unique identifier for one HTTP request or one queued-job attempt; changes on retry.
+  - correlation_id: stable identifier for one logical business operation across retries, audit, notifications, and outbox.
 - **Standard Error Response**: `application/problem+json` format:
   ```json
   {
@@ -33,7 +38,8 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
     "errors": {
       "answers.mother_name": ["The mother name field is required."]
     },
-    "correlation_id": "req-8f4b2a9e-10c3"
+    "trace_id": "trace-392f7ce1",
+    "correlation_id": "corr-8f4b2a9e-10c3"
   }
   ```
 
@@ -149,7 +155,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 - **Auth**: Bearer token (Customer).
 - **Outputs**: Paginated array of travelers belonging to calling account.
 
-#### `GET /api/v1/travelers/{id}`
+#### `GET /api/v1/travelers/{traveler_id}`
 - **Auth**: Bearer token (Customer ownership enforced).
 - **Outputs**: One owned traveler. A missing or foreign ID returns HTTP 404.
 
@@ -172,7 +178,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 - **Outputs** (HTTP 201 Created): Created traveler profile.
 - **Errors**: HTTP 422 `traveler.passport_conflict`.
 
-#### `PATCH /api/v1/travelers/{id}`
+#### `PATCH /api/v1/travelers/{traveler_id}`
 - **Auth**: Bearer token (Customer ownership enforced).
 - **Outputs**: HTTP 200 OK. If non-owner: HTTP 404 Not Found.
 
@@ -199,7 +205,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 - **Auth**: Bearer token (Customer).
 - **Outputs**: Active platform bank accounts plus the current `minimum_top_up_minor` setting used by submission validation.
 
-#### `GET /api/v1/top-ups` and `GET /api/v1/top-ups/{id}`
+#### `GET /api/v1/top-ups` and `GET /api/v1/top-ups/{top_up_id}`
 - **Auth**: Bearer token (Customer ownership enforced).
 - **Outputs**: Paginated owned requests or one request including captured minimum, current receipt status, review status, and decision reason. A foreign ID returns HTTP 404.
 
@@ -229,7 +235,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
   ```
 - **Errors**: HTTP 422 `top_up.below_minimum`, HTTP 422 `top_up.reference_used`.
 
-#### `PUT /api/v1/top-ups/{id}/receipt`
+#### `PUT /api/v1/top-ups/{top_up_id}/receipt`
 - **Auth**: Bearer token (Customer ownership enforced).
 - **Inputs**: `receipt_document_id` referencing an owned clean `bank_receipt`.
 - **Behavior**: Replaces the receipt on the same `under_review` request without changing its bank/reference pair. Decided requests return HTTP 409 `top_up.already_decided`.
@@ -258,7 +264,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 - **Auth**: Bearer token (Customer ownership enforced).
 - **Outputs**: Scan status (`pending_scan`, `quarantined`, `clean`, or `rejected`) and a safe rejection code when terminal. Clients poll this route before attaching the document.
 
-#### `GET /api/v1/documents/{id}/content`
+#### `GET /api/v1/documents/{document_id}/content`
 - **Auth**: Bearer token (Owning customer).
 - **Outputs**: Streamed binary file with `X-Content-Type-Options: nosniff`.
 
@@ -301,15 +307,15 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 - **Errors**:
   - HTTP 409 `service.price_changed` (if database price != `accepted_price_minor`).
   - HTTP 422 `wallet.insufficient_balance`.
-  - HTTP 409 `order.idempotency_conflict` (if key reused with different payload).
+  - HTTP 409 `idempotency.key_reused` (if key reused with different payload).
   - HTTP 409 `form.version_outdated`.
   - HTTP 422 `service.fulfillment_policy_missing`.
   - HTTP 422 `request.idempotency_key_required` when the header is absent.
 
-#### `GET /api/v1/orders` & `GET /api/v1/orders/{order_ref}`
+#### `GET /api/v1/orders` & `GET /api/v1/orders/{order_reference}`
 - **Auth**: Bearer token (Customer). Returns order summary, frozen snapshots, and execution progress.
 
-#### `POST /api/v1/executions/{execution_id}/actions/{action_id}/responses`
+#### `POST /api/v1/executions/{execution_id}/actions/{action_request_id}/responses`
 - **Auth**: Bearer token (Customer).
 - **Inputs**: `customer_notes`, `document_ids` (array of clean documents).
 - **Behavior**: Transitions execution from `action_required` to `action_received`.
@@ -321,7 +327,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 #### `GET /api/v1/notifications`
 - **Auth**: Bearer token (Customer). Paginated notifications with unread count.
 
-#### `POST /api/v1/notifications/{id}/read`
+#### `POST /api/v1/notifications/{notification_id}/read`
 - **Auth**: Bearer token (Customer). Marks notification read.
 
 ---
@@ -331,7 +337,7 @@ This contract defines the public and customer-facing REST API surface (`/api/v1`
 Clients must supply an `Idempotency-Key` (UUIDv4 recommended) on `POST /order-submissions`.
 1. **Network Timeout / Client Drop**: If a client times out waiting for response, it resends the exact request with the same `Idempotency-Key`.
 2. **Matching Payload**: Returns HTTP 200 OK with the original order outcome. Zero additional debits.
-3. **Mismatched Payload**: If the client alters `traveler_id` or `service_id` using the same key, server returns HTTP 409 Conflict with code `order.idempotency_conflict`.
+3. **Mismatched Payload**: If the client alters `traveler_id` or `service_id` using the same key, server returns HTTP 409 Conflict with code `idempotency.key_reused`.
 
 ---
 

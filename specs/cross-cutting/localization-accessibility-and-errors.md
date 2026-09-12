@@ -12,7 +12,10 @@ Customer and Admin interfaces target WCAG 2.2 AA. All actions are keyboard opera
 
 ## 3. Problem details
 
-API errors use one stable envelope containing `code`, localized `message`, optional field `errors`, and `correlation_id`. The following shared cases are canonical:
+API errors use one stable envelope containing `code`, localized `message`, optional field `errors`, `trace_id`, and `correlation_id`. Public codes match `^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$`. The following shared cases are canonical:
+
+- trace_id: unique identifier for one HTTP request or one queued-job attempt; changes on retry.
+- correlation_id: stable identifier for one logical business operation across retries, audit, notifications, and outbox.
 
 | HTTP | Code | Meaning |
 |---:|---|---|

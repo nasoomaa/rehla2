@@ -235,6 +235,8 @@ S4A وS4B وS4C متوازية بعد S3. يمكن بدء S6A بالتوازي �
 
 **العمل:** immutable artifact، expand/backfill/contract، readiness/health، graceful worker restart، scheduler singleton، tracing/alerts، RPO/RTO، restore متناسق لـDB/blobs، performance/accessibility budgets، مراجعة الأمان والتراخيص، ومصفوفة R01–R65.
 
+تعرض Api العمليات الـ28 المحددة في عقد REST للعملاء native والمستهلكين المصرح لهم؛ Web تستعمل sessions وعقود المجالات مباشرة. تحمل Problem Details `trace_id` للمحاولة و`correlation_id` للعملية، وتستخدم public error codes بصيغة lower dot notation.
+
 **التحقق:** fresh migration والترقية من آخر إصدار، restore rehearsal، alerts صناعية، كامل رحلتي العميل والإدارة، وجميع شروط قبول العقد. لا صف «مكتمل» بلا رابط اختبار أو قرار تأجيل معلل.
 
 **التراجع:** عدم الإطلاق أو feature flags أوإعادة artifact المتوافق؛ لا عكس migration مدمرة ولا حذف تاريخ مالي.

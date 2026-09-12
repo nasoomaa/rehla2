@@ -107,7 +107,7 @@ The platform deterministically handles complex concurrent submissions, network r
    - Computes SHA-256 fingerprint of new payload; detects mismatch with stored fingerprint.
    - Transaction rolls back immediately.
 3. **Observable Outcome**:
-   - Server returns HTTP 409 Conflict with code `order.idempotency_conflict`.
+   - Server returns HTTP 409 Conflict with code `idempotency.key_reused`.
    - Message: `"The idempotency key has already been used with a different request payload."`
    - No debit occurs; no order is created.
 

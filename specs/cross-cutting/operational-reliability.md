@@ -10,7 +10,10 @@ The Phase 1 targets are RPO 15 minutes and RTO 4 hours. A recovery exercise is s
 
 ## 3. Telemetry and alerts
 
-Structured telemetry includes a correlation ID and records checkout latency/conflicts, top-up review age, wallet invariant failures, execution age by state, document scan failures, outbox available/locked/dead-letter depth, delivery attempts, and authorization failures. Alerts must cover wallet inconsistency, repeated review conflicts, expired outbox leases, dead letters, restore failure, and sustained performance-budget breaches without exposing sensitive payloads.
+- trace_id: unique identifier for one HTTP request or one queued-job attempt; changes on retry.
+- correlation_id: stable identifier for one logical business operation across retries, audit, notifications, and outbox.
+
+Structured telemetry records both identifiers where applicable, plus checkout latency/conflicts, top-up review age, wallet invariant failures, execution age by state, document scan failures, outbox available/locked/dead-letter depth, delivery attempts, and authorization failures. Alerts must cover wallet inconsistency, repeated review conflicts, expired outbox leases, dead letters, restore failure, and sustained performance-budget breaches without exposing sensitive payloads.
 
 ## 4. Performance and compatibility
 

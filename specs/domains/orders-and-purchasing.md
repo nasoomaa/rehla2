@@ -45,7 +45,7 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
 5. **Strict Ownership Validation**: The selected traveler profile and all attached document IDs must belong strictly to the authenticated customer account submitting the order.
 6. **Idempotency Guarantee**:
    - Resubmitting with the same idempotency key and identical payload returns the existing order result (HTTP 200/201).
-   - Resubmitting with the same idempotency key but a different payload returns HTTP 409 Conflict with code `order.idempotency_conflict`.
+   - Resubmitting with the same idempotency key but a different payload returns HTTP 409 Conflict with code `idempotency.key_reused`.
 
 ---
 
@@ -135,7 +135,7 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
 
 - **Price Changed**: HTTP 409 Conflict, code `service.price_changed`.
 - **Insufficient Balance**: HTTP 422, code `wallet.insufficient_balance`.
-- **Idempotency Key Conflict**: HTTP 409 Conflict, code `order.idempotency_conflict`. Message: `"The idempotency key has already been used with a different request payload."`
+- **Idempotency Key Conflict**: HTTP 409 Conflict, code `idempotency.key_reused`. Message: `"The idempotency key has already been used with a different request payload."`
 - **Form Version Outdated**: HTTP 409 Conflict, code `form.version_outdated`.
 - **Fulfillment Policy Missing**: HTTP 422, code `service.fulfillment_policy_missing`.
 - **Traveler Ownership Violation**: HTTP 404 Not Found, code `traveler.not_found`.

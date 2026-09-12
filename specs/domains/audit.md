@@ -77,8 +77,9 @@ Audit entries are immutable chronological facts:
 
 ## 7. Business Rules
 
-1. **Correlation Tracing**: Every incoming HTTP request or queued job carries an `X-Correlation-ID`. All audit entries triggered by that request inherit this correlation ID, enabling end-to-end tracing of multi-step operations.
-2. **Actor Accountability**: When an administrative action is triggered, the audit entry captures the specific staff member's ID (`actor_id`), completely prohibiting generic or anonymous administrative writes.
+1. **Trace Attempt**: trace_id: unique identifier for one HTTP request or one queued-job attempt; changes on retry. It belongs in telemetry and bounded diagnostics and is never copied from an untrusted client header.
+2. **Business Correlation**: correlation_id: stable identifier for one logical business operation across retries, audit, notifications, and outbox. HTTP accepts a valid `X-Correlation-ID` or creates one; queued jobs restore it from their envelope. Every related audit entry stores it.
+3. **Actor Accountability**: When an administrative action is triggered, the audit entry captures the specific staff member's ID (`actor_id`), completely prohibiting generic or anonymous administrative writes.
 
 ---
 
