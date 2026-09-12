@@ -6,6 +6,7 @@ from pathlib import Path
 from scripts.docs_checks.common import ROOT, read_csv, read_text, relative_markdown_links, require
 
 MANIFEST = ROOT / "docs/reviews/2026-09-12-rehla-documentation-manifest.csv"
+FINAL_AUDIT = ROOT / "docs/reviews/2026-09-12-rehla-build-plans-and-agent-skills-audit.md"
 
 
 def documentation_files() -> list[Path]:
@@ -134,10 +135,45 @@ def validate_manifest(paths: list[Path]) -> None:
     require(actual == expected, "documentation manifest differs from the discovered corpus; regenerate it")
 
 
+def validate_audit_summary(
+    text: str,
+    documentation_count: int,
+    documentation_lines: int,
+    skill_count: int,
+    skill_lines: int,
+) -> None:
+    expected_rows = [
+        f"| `docs/` و`specs/` عدا manifest الوثائق نفسه | {documentation_count} | {documentation_lines} |",
+        f"| `.agents/README.md` والمهارات التسع | {skill_count} | {skill_lines} |",
+        f"| الإجمالي المراجع في هذا التدقيق | {documentation_count + skill_count} | {documentation_lines + skill_lines} |",
+    ]
+    for row in expected_rows:
+        require(row in text, f"final audit has stale or missing coverage row: {row}")
+    for fragment in ("19 package", "28/28", "65/65", "9 skills", "`planned`", "لم يُنشأ"):
+        require(fragment in text, f"final audit missing scope or status evidence: {fragment}")
+
+
+def validate_final_audit(paths: list[Path]) -> None:
+    require(FINAL_AUDIT.is_file(), f"missing final audit: {FINAL_AUDIT.relative_to(ROOT)}")
+    skill_paths = [
+        ROOT / ".agents/README.md",
+        *sorted((ROOT / ".agents/skills").glob("*/SKILL.md")),
+    ]
+    require(all(path.is_file() for path in skill_paths), "final audit skill corpus is incomplete")
+    validate_audit_summary(
+        read_text(FINAL_AUDIT),
+        len(paths),
+        sum(len(read_text(path).splitlines()) for path in paths),
+        len(skill_paths),
+        sum(len(read_text(path).splitlines()) for path in skill_paths),
+    )
+
+
 def check() -> None:
     paths = documentation_files()
     validate_relative_links(ROOT, [path for path in paths if path.suffix == ".md"])
     validate_spec_coverage()
     validate_plan_coverage()
     validate_manifest(paths)
+    validate_final_audit(paths)
     print(f"  {len(paths)} documentation files, 65 specs rows, 65 plan rows, 0 broken links")

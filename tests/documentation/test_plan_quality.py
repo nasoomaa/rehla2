@@ -4,6 +4,7 @@ from unittest.mock import patch
 
 from scripts.docs_checks.common import CheckFailure
 from scripts.docs_checks.plan_quality import (
+    NON_IMPLEMENTATION_PLAN_METADATA,
     EXPECTED_PLAN_IDS,
     RELEASE_PROOF_FRAGMENTS,
     validate_package_owners,
@@ -15,6 +16,7 @@ from scripts.docs_checks.plan_quality import (
     validate_table_task_schedule,
     validate_interface_task_sets,
     validate_release_proof,
+    validate_plan_coverage_rows,
     validate_plan_sequence,
     validate_requirement_coverage,
 )
@@ -48,6 +50,17 @@ def fixture_contract() -> dict[str, object]:
 
 
 class PlanContractTest(TestCase):
+    def test_non_implementation_plan_set_is_explicit(self) -> None:
+        self.assertEqual(
+            set(NON_IMPLEMENTATION_PLAN_METADATA),
+            {
+                "2026-09-11-rehla-platform-build.md",
+                "2026-09-11-rehla-07-interfaces-operations-release.md",
+                "2026-09-12-rehla-package-structure-and-contract-alignment.md",
+                "2026-09-12-rehla-plan-governance-and-agent-skills.md",
+            },
+        )
+
     def test_sequence_requires_exactly_ten_unique_ordered_plans(self) -> None:
         contract = fixture_contract()
         contract["implementation_plans"] = contract["implementation_plans"][:-1]
@@ -177,6 +190,21 @@ loadTranslationsFrom and rehla-core
             validate_release_proof(
                 "\n".join(fragment for fragment in RELEASE_PROOF_FRAGMENTS if fragment != "empty PostgreSQL")
             )
+
+    def test_plan_coverage_rejects_generic_task_reference(self) -> None:
+        contract = fixture_contract()
+        contract["requirements"] = [{
+            "requirement_id": "R01",
+            "owner_plan": "01-foundation-core",
+        }]
+        rows = [{
+            "requirement_id": f"R{number:02d}",
+            "primary_plan": "01.md",
+            "task": "Program baseline",
+            "verification": "proof",
+        } for number in range(1, 66)]
+        with self.assertRaisesRegex(CheckFailure, "generic task reference"):
+            validate_plan_coverage_rows(contract, rows)
 
     def test_requirements_are_exactly_r01_through_r65(self) -> None:
         contract = fixture_contract()

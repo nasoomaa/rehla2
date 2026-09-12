@@ -1,0 +1,15 @@
+path,kind,execution_order,task_count,package_owners,prerequisite_plan_ids,requirement_ids,status,verification_command
+docs/superpowers/plans/2026-09-11-rehla-01-foundation-core.md,implementation,1,6,Core,,R04;R60;R64,planned,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-11-rehla-02-identity-platform-services.md,implementation,2,5,Identity;Audit;Documents;Travelers;Notifications,01-foundation-core,R11;R12;R46;R47;R48,planned,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-11-rehla-03-catalog-forms-content.md,implementation,3,3,Catalog;Forms;Content,02-identity-platform-services,R07;R08;R09;R27;R41;R42;R49,planned,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-11-rehla-04-wallet-topups.md,implementation,4,3,Wallet;TopUps,03-catalog-forms-content,R15;R16;R17;R18;R19;R20;R21;R44;R56;R57,planned,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-11-rehla-05-orders-purchasing-fulfillment.md,implementation,5,5,Orders;Purchasing;Fulfillment,04-wallet-topups,R13;R14;R22;R29;R30;R31;R32;R33;R34;R35;R36;R37;R45;R51;R54;R55;R58;R59,planned,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-11-rehla-06-reporting-integrations.md,implementation,6,3,Reporting;Integrations,05-orders-purchasing-fulfillment,R24;R39;R62,planned,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-11-rehla-07-customer-web.md,implementation,7,8,Web,06-reporting-integrations,R10;R23;R25;R26;R28;R38,planned,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-11-rehla-07-interfaces-operations-release.md,redirect,,0,,,,deprecated,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-11-rehla-08-customer-api.md,implementation,8,8,Api,07-customer-web,R50,planned,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-11-rehla-09-admin-control-panel.md,implementation,9,6,Admin,08-customer-api,R05;R40;R43,planned,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-11-rehla-10-operations-security-release.md,implementation,10,4,,09-admin-control-panel,R01;R02;R03;R06;R52;R53;R61;R63;R65,planned,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-11-rehla-platform-build.md,master,,0,Core;Audit;Identity;Documents;Travelers;Wallet;Notifications;Catalog;Forms;Content;TopUps;Orders;Purchasing;Fulfillment;Integrations;Reporting;Web;Api;Admin,,R01-R65,governing,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-12-rehla-package-structure-and-contract-alignment.md,maintenance,,9,,,,completed,python3 -m scripts.docs_checks.run --group plans
+docs/superpowers/plans/2026-09-12-rehla-plan-governance-and-agent-skills.md,maintenance,,10,,,,completed,python3 -m scripts.docs_checks.run --group plans

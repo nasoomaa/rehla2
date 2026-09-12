@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import csv
 from pathlib import Path
 import re
 
@@ -119,6 +120,14 @@ RELEASE_PROOF_FRAGMENTS = [
     "all 19 package suites",
     "restore-rehearsal.sh",
 ]
+
+PLAN_MANIFEST = ROOT / "docs/superpowers/plans/2026-09-12-rehla-plan-manifest.csv"
+NON_IMPLEMENTATION_PLAN_METADATA = {
+    "2026-09-11-rehla-platform-build.md": ("master", "governing"),
+    "2026-09-11-rehla-07-interfaces-operations-release.md": ("redirect", "deprecated"),
+    "2026-09-12-rehla-package-structure-and-contract-alignment.md": ("maintenance", "completed"),
+    "2026-09-12-rehla-plan-governance-and-agent-skills.md": ("maintenance", "completed"),
+}
 
 
 def validate_plan_sequence(contract: dict[str, object]) -> None:
@@ -295,6 +304,21 @@ def validate_requirement_coverage(contract: dict[str, object]) -> None:
         )
 
 
+def validate_plan_coverage_rows(contract: dict[str, object], rows: list[dict[str, str]]) -> None:
+    require(len(rows) == 65, f"expected 65 plan coverage rows, got {len(rows)}")
+    by_requirement = {row["requirement_id"]: row for row in rows}
+    require(len(by_requirement) == 65, "duplicate plan coverage requirement")
+    plans = {str(row["id"]): row for row in contract["implementation_plans"]}
+    for requirement in contract["requirements"]:
+        requirement_id = str(requirement["requirement_id"])
+        require(requirement_id in by_requirement, f"{requirement_id}: missing plan coverage row")
+        row = by_requirement[requirement_id]
+        expected_path = Path(str(plans[str(requirement["owner_plan"])]["path"])).name
+        require(row.get("primary_plan") == expected_path, f"{requirement_id}: primary plan differs from contract")
+        require(row.get("task", "").startswith("Task "), f"{requirement_id}: generic task reference")
+        require(bool(row.get("verification")), f"{requirement_id}: verification missing")
+
+
 def validate_program_ownership(contract: dict[str, object]) -> None:
     plans = contract["implementation_plans"]
     packages = contract["packages"]
@@ -366,6 +390,63 @@ def validate_table_task_schedule(
         )
 
 
+def expected_plan_manifest_rows(contract: dict[str, object]) -> list[dict[str, str]]:
+    plans_root = ROOT / "docs/superpowers/plans"
+    implementation = {str(row["path"]): row for row in contract["implementation_plans"]}
+    requirements_by_plan: dict[str, list[str]] = {plan_id: [] for plan_id in EXPECTED_PLAN_IDS}
+    for requirement in contract["requirements"]:
+        requirements_by_plan[str(requirement["owner_plan"])].append(str(requirement["requirement_id"]))
+    rows: list[dict[str, str]] = []
+    for path in sorted(plans_root.glob("*.md")):
+        relative = path.relative_to(ROOT).as_posix()
+        text = read_text(path)
+        task_count = len(re.findall(r"(?m)^### Task \d+:\s", text))
+        if relative in implementation:
+            record = implementation[relative]
+            kind = "implementation"
+            order = str(record["order"])
+            owners = ";".join(record["owned_packages"])
+            prerequisites = ";".join(record["depends_on"])
+            requirement_ids = ";".join(requirements_by_plan[str(record["id"])])
+            status = "planned"
+        else:
+            require(
+                path.name in NON_IMPLEMENTATION_PLAN_METADATA,
+                f"unregistered plan document: {relative}",
+            )
+            kind, status = NON_IMPLEMENTATION_PLAN_METADATA[path.name]
+            order, prerequisites = "", ""
+            owners = ";".join(EXPECTED_PACKAGES) if kind == "master" else ""
+            requirement_ids = "R01-R65" if kind == "master" else ""
+        rows.append({
+            "path": relative,
+            "kind": kind,
+            "execution_order": order,
+            "task_count": str(task_count),
+            "package_owners": owners,
+            "prerequisite_plan_ids": prerequisites,
+            "requirement_ids": requirement_ids,
+            "status": status,
+            "verification_command": "python3 -m scripts.docs_checks.run --group plans",
+        })
+    return rows
+
+
+def write_plan_manifest(contract: dict[str, object]) -> None:
+    rows = expected_plan_manifest_rows(contract)
+    with PLAN_MANIFEST.open("w", encoding="utf-8", newline="") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator="\n")
+        writer.writeheader()
+        writer.writerows(rows)
+
+
+def validate_plan_manifest(contract: dict[str, object]) -> None:
+    require(PLAN_MANIFEST.is_file(), f"missing plan manifest: {PLAN_MANIFEST.relative_to(ROOT)}")
+    with PLAN_MANIFEST.open(encoding="utf-8", newline="") as stream:
+        actual = list(csv.DictReader(stream))
+    require(actual == expected_plan_manifest_rows(contract), "plan manifest differs from live plan files")
+
+
 def validate_live_paths(contract: dict[str, object]) -> None:
     plan_texts: dict[str, str] = {}
     for row in contract["implementation_plans"]:
@@ -401,9 +482,13 @@ def check() -> None:
     validate_plan_sequence(contract)
     validate_package_owners(contract)
     validate_requirement_coverage(contract)
+    coverage_path = ROOT / "docs/superpowers/plans/2026-09-11-rehla-plan-coverage.csv"
+    with coverage_path.open(encoding="utf-8", newline="") as stream:
+        validate_plan_coverage_rows(contract, list(csv.DictReader(stream)))
     validate_program_ownership(contract)
     validate_architecture_order(contract)
     validate_table_schedule(contract)
     validate_cross_plan_gates(contract)
     validate_live_paths(contract)
+    validate_plan_manifest(contract)
     print("  10 plans, 19 package owners, 65 requirements, 40 owned tables, 0 duplicate tasks")

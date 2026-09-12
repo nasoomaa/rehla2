@@ -3,7 +3,11 @@ from tempfile import TemporaryDirectory
 from unittest import TestCase
 
 from scripts.docs_checks.common import CheckFailure
-from scripts.docs_checks.inventory import validate_relative_links, validate_requirement_ids
+from scripts.docs_checks.inventory import (
+    validate_audit_summary,
+    validate_relative_links,
+    validate_requirement_ids,
+)
 
 
 class InventoryTest(TestCase):
@@ -32,3 +36,14 @@ class InventoryTest(TestCase):
             source.write_text("[escape](../../outside.md)", encoding="utf-8")
             with self.assertRaisesRegex(CheckFailure, "escapes repository"):
                 validate_relative_links(root, [source])
+
+    def test_final_audit_must_report_exact_corpus_and_status(self) -> None:
+        text = "\n".join([
+            "| `docs/` و`specs/` عدا manifest الوثائق نفسه | 69 | 17750 |",
+            "| `.agents/README.md` والمهارات التسع | 10 | 380 |",
+            "| الإجمالي المراجع في هذا التدقيق | 79 | 18130 |",
+            "19 package; 28/28; 65/65; 9 skills; `planned`; لم يُنشأ",
+        ])
+        validate_audit_summary(text, 69, 17750, 10, 380)
+        with self.assertRaisesRegex(CheckFailure, "scope or status evidence"):
+            validate_audit_summary(text.replace("`planned`", "completed"), 69, 17750, 10, 380)
