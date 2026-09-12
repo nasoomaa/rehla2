@@ -10,6 +10,8 @@
 
 **Spec:** `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`
 
+**Prerequisites:** إغلاق بوابة الخطة 04 وتوفر Catalog policy/form versions وTraveler/Documents/Wallet/Notifications وعقودها.
+
 ## Global Constraints
 
 - طلب واحد = خدمة واحدة + مسافر واحد + debit واحد + execution واحد.
@@ -21,6 +23,24 @@
 ---
 
 ### Task 1: Immutable Paid Order and Snapshots
+
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Orders. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R13, R33, R35, R51, R54, R55`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
 
 **Files:**
 - Create: `packages/Rehla/Orders/src/database/migrations/*_create_orders_tables.php`
@@ -100,6 +120,24 @@ git commit -m "feat(orders): add immutable paid order snapshots"
 
 ### Task 2: Purchasing Contracts and Idempotency Store
 
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Purchasing. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R13, R14, R22, R29, R30, R31, R32, R33, R34, R35, R36, R37, R45, R51, R54, R55, R58, R59 (supporting evidence)`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
+
 **Files:**
 - Create: `packages/Rehla/Purchasing/src/database/migrations/*_create_purchase_attempts.php`
 - Create: `packages/Rehla/Purchasing/src/Data/{SubmitOrderData,SubmitOrderResult,CreateExecutionData,ExecutionData}.php`
@@ -164,6 +202,24 @@ git commit -m "feat(purchasing): define purchase contracts and idempotency"
 ```
 
 ### Task 3: Fulfillment State Machine and Execution Creation
+
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Fulfillment. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R34, R35, R36, R45, R51`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
 
 **Files:**
 - Create: `packages/Rehla/Fulfillment/src/database/migrations/*_create_fulfillment_tables.php`
@@ -292,6 +348,24 @@ git commit -m "feat(fulfillment): add execution lifecycle and history"
 
 ### Task 4: Customer Action Requests and Responses
 
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Fulfillment. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R37`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
+
 **Files:**
 - Create: `packages/Rehla/Fulfillment/src/Data/RespondToCustomerActionData.php`
 - Create: `packages/Rehla/Fulfillment/src/Actions/RespondToCustomerAction.php`
@@ -342,6 +416,24 @@ git commit -m "feat(fulfillment): add customer action responses"
 ```
 
 ### Task 5: Atomic and Idempotent SubmitOrder
+
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Fulfillment, Orders, Purchasing. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R14, R22, R29, R30, R31, R32, R51, R55, R58, R59`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
 
 **Files:**
 - Create: `packages/Rehla/Purchasing/src/Actions/SubmitOrder.php`
@@ -440,3 +532,7 @@ Expected: PASS للـsnapshots والتزامن والفشل والاعتماد�
 git add packages/Rehla/Orders packages/Rehla/Purchasing packages/Rehla/Fulfillment docs/requirements/rehla-phase-1-acceptance.csv
 git commit -m "feat(purchasing): submit orders atomically and idempotently"
 ```
+
+## Plan Completion Gate
+
+تغلق الخطة `purchase-readiness` بإثبات PostgreSQL ذري للسعر والنموذج والسياسة والمستندات والخصم وOrder وExecution وAudit والإشعار وOutbox، مع idempotency والتزامن وfailure injection. تنتج Orders snapshots وFulfillment read sources التي تستهلكها Reporting والخطط 07–09.

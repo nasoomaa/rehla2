@@ -28,6 +28,24 @@ MANDATORY_PACKAGE_FRAGMENTS = [
     "tests/Architecture/TranslationCompletenessTest.php",
 ]
 
+TASK_COMPLETENESS_LABELS = [
+    "Files:",
+    "Contracts:",
+    "Database ownership:",
+    "Authorization:",
+    "Localization:",
+    "Error codes:",
+    "Transaction boundary:",
+    "External I/O:",
+    "Privacy:",
+    "RED:",
+    "GREEN:",
+    "Expanded verification:",
+    "Acceptance IDs:",
+    "Recovery:",
+    "Commit:",
+]
+
 
 def validate_plan_sequence(contract: dict[str, object]) -> None:
     plans = contract.get("implementation_plans", [])
@@ -119,6 +137,46 @@ def validate_no_duplicate_tasks(plan_texts: dict[str, str]) -> None:
             owners[normalized] = plan_id
 
 
+def validate_task_completeness(plan_id: str, text: str) -> None:
+    tasks = re.findall(r"(?ms)^### Task \d+:\s.*?(?=^### Task\s+\d+:|^## (?!#)|\Z)", text)
+    require(tasks, f"{plan_id}: no executable tasks")
+    for task in tasks:
+        heading = task.splitlines()[0]
+        for label in TASK_COMPLETENESS_LABELS:
+            require(label in task, f"{plan_id} {heading}: completeness gate missing {label}")
+
+
+def validate_requirement_task_references(
+    contract: dict[str, object], plan_texts: dict[str, str]
+) -> None:
+    for row in contract["requirements"]:
+        plan_id = str(row["owner_plan"])
+        reference = str(row["owner_task"])
+        numbers = [int(number) for number in re.findall(r"\d+", reference.split(":", 1)[0])]
+        require(numbers, f"{row['requirement_id']}: owner_task has no task number")
+        for number in numbers:
+            require(
+                re.search(rf"(?m)^### Task {number}:\s", plan_texts[plan_id]) is not None,
+                f"{row['requirement_id']}: missing {plan_id} Task {number}",
+            )
+
+
+def validate_cross_plan_gates(contract: dict[str, object]) -> None:
+    order = {str(row["id"]): int(row["order"]) for row in contract["implementation_plans"]}
+    gates = contract.get("cross_plan_gates", [])
+    require(isinstance(gates, list) and gates, "cross_plan_gates required")
+    seen: set[str] = set()
+    for gate in gates:
+        gate_id = str(gate.get("id", ""))
+        require(gate_id and gate_id not in seen, f"duplicate or empty cross-plan gate: {gate_id}")
+        seen.add(gate_id)
+        opened = str(gate.get("opened_by", ""))
+        closed = str(gate.get("closed_by", ""))
+        require(opened in order and closed in order, f"{gate_id}: unknown gate plan")
+        require(order[opened] <= order[closed], f"{gate_id}: closes before it opens")
+        require(bool(str(gate.get("evidence", ""))), f"{gate_id}: evidence required")
+
+
 def validate_requirement_coverage(contract: dict[str, object]) -> None:
     rows = contract.get("requirements", [])
     require(isinstance(rows, list), "requirements must be a list")
@@ -195,6 +253,28 @@ def validate_table_schedule(contract: dict[str, object]) -> None:
         )
 
 
+def validate_table_task_schedule(
+    contract: dict[str, object], plan_texts: dict[str, str]
+) -> None:
+    ownership = read_json(ROOT / "docs/architecture/table-ownership.json")["tables"]
+    schedule = contract.get("table_schedule", {})
+    require(isinstance(schedule, dict), "table_schedule must be an object")
+    require(set(schedule) == set(ownership), "table_schedule table set mismatch")
+    for table, record in schedule.items():
+        owner = str(ownership[table]["owner"])
+        require(record.get("owner") == owner, f"{table}: migration owner mismatch")
+        plan_id = str(record.get("migration_plan", ""))
+        task_reference = str(record.get("migration_task", ""))
+        require(plan_id in plan_texts, f"{table}: unknown migration plan {plan_id}")
+        task = extract_task(plan_texts[plan_id], task_reference)
+        require(table in task, f"{table}: missing from scheduled {plan_id} {task_reference}")
+        prefix = f"packages/Rehla/{owner}/src/database/migrations/"
+        require(
+            str(record.get("migration_path", "")).startswith(prefix),
+            f"{table}: migration path must belong to {owner}",
+        )
+
+
 def validate_live_paths(contract: dict[str, object]) -> None:
     plan_texts: dict[str, str] = {}
     for row in contract["implementation_plans"]:
@@ -202,6 +282,8 @@ def validate_live_paths(contract: dict[str, object]) -> None:
         require(path.is_file(), f"missing implementation plan: {path.relative_to(ROOT)}")
         content = read_text(path)
         require("### Task" in content, f"{path.relative_to(ROOT)}: no executable tasks")
+        require("**Prerequisites:**" in content, f"{row['id']}: prerequisites missing")
+        require(re.search(r"(?m)^## (?:Final .+|Plan Completion) Gate$", content) is not None, f"{row['id']}: final gate missing")
         plan_texts[str(row["id"])] = content
         partial_contract = {
             "packages": {
@@ -210,7 +292,10 @@ def validate_live_paths(contract: dict[str, object]) -> None:
             }
         }
         validate_package_tasks(partial_contract, plan_texts)
+        validate_task_completeness(str(row["id"]), content)
     validate_no_duplicate_tasks(plan_texts)
+    validate_requirement_task_references(contract, plan_texts)
+    validate_table_task_schedule(contract, plan_texts)
     legacy = ROOT / "docs/superpowers/plans/2026-09-11-rehla-07-interfaces-operations-release.md"
     legacy_text = read_text(legacy)
     require("### Task" not in legacy_text, "deprecated interface plan contains executable tasks")
@@ -227,5 +312,6 @@ def check() -> None:
     validate_program_ownership(contract)
     validate_architecture_order(contract)
     validate_table_schedule(contract)
+    validate_cross_plan_gates(contract)
     validate_live_paths(contract)
     print("  10 plans, 19 package owners, 65 requirements, 40 owned tables, 0 duplicate tasks")

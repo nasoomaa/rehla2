@@ -1,5 +1,6 @@
 from copy import deepcopy
 from unittest import TestCase
+from unittest.mock import patch
 
 from scripts.docs_checks.common import CheckFailure
 from scripts.docs_checks.plan_quality import (
@@ -8,6 +9,9 @@ from scripts.docs_checks.plan_quality import (
     validate_package_task,
     validate_package_tasks,
     validate_no_duplicate_tasks,
+    validate_task_completeness,
+    validate_cross_plan_gates,
+    validate_table_task_schedule,
     validate_plan_sequence,
     validate_requirement_coverage,
 )
@@ -112,6 +116,48 @@ loadTranslationsFrom and rehla-core
                     "08-customer-api": "### Task 3: Shared  task\n",
                 }
             )
+
+    def test_every_task_requires_the_full_completeness_contract(self) -> None:
+        with self.assertRaisesRegex(CheckFailure, "Recovery:"):
+            validate_task_completeness(
+                "01-foundation-core",
+                "### Task 1: Incomplete\n" + "\n".join([
+                    "Files:", "Contracts:", "Database ownership:", "Authorization:",
+                    "Localization:", "Error codes:", "Transaction boundary:",
+                    "External I/O:", "Privacy:", "RED:", "GREEN:",
+                    "Expanded verification:", "Acceptance IDs:", "Commit:",
+                ]),
+            )
+
+    def test_cross_plan_gate_cannot_close_before_it_opens(self) -> None:
+        contract = fixture_contract()
+        contract["cross_plan_gates"] = [{
+            "id": "broken",
+            "opened_by": "10-operations-security-release",
+            "closed_by": "01-foundation-core",
+            "evidence": "proof",
+        }]
+        with self.assertRaisesRegex(CheckFailure, "closes before"):
+            validate_cross_plan_gates(contract)
+
+    def test_table_schedule_requires_the_table_in_its_migration_task(self) -> None:
+        contract = {
+            "table_schedule": {
+                "users": {
+                    "owner": "Identity",
+                    "migration_plan": "02-identity-platform-services",
+                    "migration_task": "Task 1",
+                    "migration_path": "packages/Rehla/Identity/src/database/migrations/*_users.php",
+                }
+            }
+        }
+        fake_ownership = {"tables": {"users": {"owner": "Identity"}}}
+        with patch("scripts.docs_checks.plan_quality.read_json", return_value=fake_ownership):
+            with self.assertRaisesRegex(CheckFailure, "users.*missing"):
+                validate_table_task_schedule(
+                    contract,
+                    {"02-identity-platform-services": "### Task 1: Identity\nno table yet\n"},
+                )
 
     def test_requirements_are_exactly_r01_through_r65(self) -> None:
         contract = fixture_contract()

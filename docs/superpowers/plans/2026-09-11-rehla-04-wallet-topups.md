@@ -10,6 +10,8 @@
 
 **Spec:** `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`
 
+**Prerequisites:** إغلاق بوابة الخطة 03 وتوفر Identity وAudit وDocuments وNotifications foundation؛ تغلق Task 1 بوابة registration-atomicity المفتوحة من الخطة 02.
+
 ## Global Constraints
 
 - المبلغ integer minor units وعملة `SDG` فقط.
@@ -21,9 +23,28 @@
 
 ### Task 1: Wallet and Append-only Ledger
 
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Wallet. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R15`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
+
 **Files:**
 - Create: `packages/Rehla/Wallet/src/database/migrations/*_create_wallet_tables.php`
 - Create: `packages/Rehla/Wallet/src/database/migrations/*_protect_wallet_ledger.php`
+- Create: `packages/Rehla/Wallet/src/database/migrations/*_create_wallet_reconciliation_runs_table.php`
 - Create: `packages/Rehla/Wallet/src/Enums/LedgerEntryType.php`
 - Create: `packages/Rehla/Wallet/src/Data/{WalletBalance,WalletEntryData,DebitResult,CreditResult}.php`
 - Create: `packages/Rehla/Wallet/src/Contracts/{WalletReader,WalletCreditor,WalletDebitor}.php`
@@ -90,6 +111,8 @@ wallets: id uuid, account_id uuid unique, currency char(3), balance_minor bigint
 wallet_ledger_entries: id uuid, wallet_id, type, amount_minor bigint,
          balance_after_minor bigint, reference_type, reference_id,
          idempotency_key, reverses_entry_id nullable, created_at
+wallet_reconciliation_runs: id uuid, started_at, completed_at, checked_wallets,
+         mismatch_count, status, evidence_path
 ```
 
 أضف checks للعملة وamount الموجب وbalance غير السالب، وunique `(wallet_id,reference_type,reference_id,type)` و`(wallet_id,idempotency_key)`. يمنع trigger UPDATE وDELETE على ledger. تقفل Credit وDebit صف wallet بـ`FOR UPDATE` وتضيف ledger وتحدث balance في المعاملة الموجودة دون فتح commit مستقل. يطبق `IdentityRegistrationWalletInitializer` منفذ Identity ويستخدم `OpenWallet` idempotently ثم يربطه `WalletServiceProvider`. أثبت أن فشل wallet أوnotification أوaudit يرجع المستخدم والمحفظة والإشعار معًا.
@@ -118,6 +141,24 @@ git commit -m "feat(wallet): add locked append-only wallet ledger"
 ```
 
 ### Task 2: Bank Accounts and Top-up Submission
+
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: TopUps. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R16, R17, R18, R56`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
 
 **Files:**
 - Create: `packages/Rehla/TopUps/src/database/migrations/*_create_top_up_tables.php`
@@ -193,6 +234,24 @@ git commit -m "feat(topups): add banks and transfer submission"
 ```
 
 ### Task 3: Atomic Approval and Rejection
+
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: TopUps. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R19, R20, R21, R44, R57`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
 
 **Files:**
 - Create: `packages/Rehla/TopUps/src/Data/{ApproveTopUpData,RejectTopUpData}.php`
@@ -272,3 +331,7 @@ Expected: PASS لكل اختبارات PostgreSQL والتزامن.
 git add packages/Rehla/TopUps docs/requirements/rehla-phase-1-acceptance.csv
 git commit -m "feat(topups): make transfer decisions atomic and idempotent"
 ```
+
+## Plan Completion Gate
+
+تغلق الخطة Wallet ledger وTopUps submission/review. تغلق `registration-atomicity` باختبار تكامل حقيقي على PostgreSQL يثبت أن account وAudit وwallet وwelcome notification وOutbox تتراجع معًا عند فشل أي مشارك. تنتج عقود الرصيد والخصم والائتمان وقراءات الشحن للخطة 05.

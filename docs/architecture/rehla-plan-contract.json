@@ -1094,5 +1094,247 @@
     "Refunds",
     "MultiTravelerOrder",
     "OrderDrafts"
-  ]
+  ],
+  "table_schedule": {
+    "abilities": {
+      "owner": "Identity",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_abilities.php"
+    },
+    "audit_entries": {
+      "owner": "Audit",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 2",
+      "migration_path": "packages/Rehla/Audit/src/database/migrations/*_audit_entries.php"
+    },
+    "bank_accounts": {
+      "owner": "TopUps",
+      "migration_plan": "04-wallet-topups",
+      "migration_task": "Task 2",
+      "migration_path": "packages/Rehla/TopUps/src/database/migrations/*_bank_accounts.php"
+    },
+    "content_pages": {
+      "owner": "Content",
+      "migration_plan": "03-catalog-forms-content",
+      "migration_task": "Task 3",
+      "migration_path": "packages/Rehla/Content/src/database/migrations/*_content_pages.php"
+    },
+    "customer_action_requests": {
+      "owner": "Fulfillment",
+      "migration_plan": "05-orders-purchasing-fulfillment",
+      "migration_task": "Task 3",
+      "migration_path": "packages/Rehla/Fulfillment/src/database/migrations/*_customer_action_requests.php"
+    },
+    "customer_action_responses": {
+      "owner": "Fulfillment",
+      "migration_plan": "05-orders-purchasing-fulfillment",
+      "migration_task": "Task 4",
+      "migration_path": "packages/Rehla/Fulfillment/src/database/migrations/*_customer_action_responses.php"
+    },
+    "documents": {
+      "owner": "Documents",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 3",
+      "migration_path": "packages/Rehla/Documents/src/database/migrations/*_documents.php"
+    },
+    "execution_documents": {
+      "owner": "Fulfillment",
+      "migration_plan": "05-orders-purchasing-fulfillment",
+      "migration_task": "Task 3",
+      "migration_path": "packages/Rehla/Fulfillment/src/database/migrations/*_execution_documents.php"
+    },
+    "execution_internal_notes": {
+      "owner": "Fulfillment",
+      "migration_plan": "05-orders-purchasing-fulfillment",
+      "migration_task": "Task 3",
+      "migration_path": "packages/Rehla/Fulfillment/src/database/migrations/*_execution_internal_notes.php"
+    },
+    "execution_status_history": {
+      "owner": "Fulfillment",
+      "migration_plan": "05-orders-purchasing-fulfillment",
+      "migration_task": "Task 3",
+      "migration_path": "packages/Rehla/Fulfillment/src/database/migrations/*_execution_status_history.php"
+    },
+    "form_drafts": {
+      "owner": "Forms",
+      "migration_plan": "03-catalog-forms-content",
+      "migration_task": "Task 2",
+      "migration_path": "packages/Rehla/Forms/src/database/migrations/*_form_drafts.php"
+    },
+    "form_versions": {
+      "owner": "Forms",
+      "migration_plan": "03-catalog-forms-content",
+      "migration_task": "Task 2",
+      "migration_path": "packages/Rehla/Forms/src/database/migrations/*_form_versions.php"
+    },
+    "fulfillment_policy_drafts": {
+      "owner": "Catalog",
+      "migration_plan": "03-catalog-forms-content",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Catalog/src/database/migrations/*_fulfillment_policy_drafts.php"
+    },
+    "fulfillment_policy_versions": {
+      "owner": "Catalog",
+      "migration_plan": "03-catalog-forms-content",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Catalog/src/database/migrations/*_fulfillment_policy_versions.php"
+    },
+    "notifications": {
+      "owner": "Notifications",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 5",
+      "migration_path": "packages/Rehla/Notifications/src/database/migrations/*_notifications.php"
+    },
+    "order_form_snapshots": {
+      "owner": "Orders",
+      "migration_plan": "05-orders-purchasing-fulfillment",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Orders/src/database/migrations/*_order_form_snapshots.php"
+    },
+    "order_service_snapshots": {
+      "owner": "Orders",
+      "migration_plan": "05-orders-purchasing-fulfillment",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Orders/src/database/migrations/*_order_service_snapshots.php"
+    },
+    "order_traveler_snapshots": {
+      "owner": "Orders",
+      "migration_plan": "05-orders-purchasing-fulfillment",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Orders/src/database/migrations/*_order_traveler_snapshots.php"
+    },
+    "orders": {
+      "owner": "Orders",
+      "migration_plan": "05-orders-purchasing-fulfillment",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Orders/src/database/migrations/*_orders.php"
+    },
+    "outbox_delivery_attempts": {
+      "owner": "Notifications",
+      "migration_plan": "06-reporting-integrations",
+      "migration_task": "Task 2",
+      "migration_path": "packages/Rehla/Notifications/src/database/migrations/*_outbox_delivery_attempts.php"
+    },
+    "outbox_messages": {
+      "owner": "Notifications",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 5",
+      "migration_path": "packages/Rehla/Notifications/src/database/migrations/*_outbox_messages.php"
+    },
+    "personal_access_tokens": {
+      "owner": "Identity",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_personal_access_tokens.php"
+    },
+    "purchase_attempts": {
+      "owner": "Purchasing",
+      "migration_plan": "05-orders-purchasing-fulfillment",
+      "migration_task": "Task 2",
+      "migration_path": "packages/Rehla/Purchasing/src/database/migrations/*_purchase_attempts.php"
+    },
+    "role_ability": {
+      "owner": "Identity",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_role_ability.php"
+    },
+    "roles": {
+      "owner": "Identity",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_roles.php"
+    },
+    "service_executions": {
+      "owner": "Fulfillment",
+      "migration_plan": "05-orders-purchasing-fulfillment",
+      "migration_task": "Task 3",
+      "migration_path": "packages/Rehla/Fulfillment/src/database/migrations/*_service_executions.php"
+    },
+    "service_media": {
+      "owner": "Catalog",
+      "migration_plan": "03-catalog-forms-content",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Catalog/src/database/migrations/*_service_media.php"
+    },
+    "service_price_history": {
+      "owner": "Catalog",
+      "migration_plan": "03-catalog-forms-content",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Catalog/src/database/migrations/*_service_price_history.php"
+    },
+    "service_requirements": {
+      "owner": "Catalog",
+      "migration_plan": "03-catalog-forms-content",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Catalog/src/database/migrations/*_service_requirements.php"
+    },
+    "services": {
+      "owner": "Catalog",
+      "migration_plan": "03-catalog-forms-content",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Catalog/src/database/migrations/*_services.php"
+    },
+    "staff_profiles": {
+      "owner": "Identity",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_staff_profiles.php"
+    },
+    "top_up_requests": {
+      "owner": "TopUps",
+      "migration_plan": "04-wallet-topups",
+      "migration_task": "Task 2",
+      "migration_path": "packages/Rehla/TopUps/src/database/migrations/*_top_up_requests.php"
+    },
+    "top_up_settings": {
+      "owner": "TopUps",
+      "migration_plan": "04-wallet-topups",
+      "migration_task": "Task 2",
+      "migration_path": "packages/Rehla/TopUps/src/database/migrations/*_top_up_settings.php"
+    },
+    "travelers": {
+      "owner": "Travelers",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 4",
+      "migration_path": "packages/Rehla/Travelers/src/database/migrations/*_travelers.php"
+    },
+    "upload_sessions": {
+      "owner": "Documents",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 3",
+      "migration_path": "packages/Rehla/Documents/src/database/migrations/*_upload_sessions.php"
+    },
+    "user_role": {
+      "owner": "Identity",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_user_role.php"
+    },
+    "users": {
+      "owner": "Identity",
+      "migration_plan": "02-identity-platform-services",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_users.php"
+    },
+    "wallet_ledger_entries": {
+      "owner": "Wallet",
+      "migration_plan": "04-wallet-topups",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Wallet/src/database/migrations/*_wallet_ledger_entries.php"
+    },
+    "wallet_reconciliation_runs": {
+      "owner": "Wallet",
+      "migration_plan": "04-wallet-topups",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Wallet/src/database/migrations/*_wallet_reconciliation_runs.php"
+    },
+    "wallets": {
+      "owner": "Wallet",
+      "migration_plan": "04-wallet-topups",
+      "migration_task": "Task 1",
+      "migration_path": "packages/Rehla/Wallet/src/database/migrations/*_wallets.php"
+    }
+  }
 }

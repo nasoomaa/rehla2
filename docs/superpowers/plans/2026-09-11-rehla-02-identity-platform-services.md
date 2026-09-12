@@ -10,6 +10,8 @@
 
 **Spec:** `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`
 
+**Prerequisites:** إغلاق بوابة الخطة 01 وتوفر Laravel host وCore والحزم وحراس المعمارية وPostgreSQL testing.
+
 ## Global Constraints
 
 - أكمل خطة Foundation أولًا.
@@ -21,8 +23,27 @@
 
 ### Task 1: Identity, Sessions and Capabilities
 
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Identity. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R47`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
+
 **Files:**
 - Create: `packages/Rehla/Identity/src/database/migrations/*_create_identity_tables.php`
+- Create: `packages/Rehla/Identity/src/database/migrations/*_create_personal_access_tokens_table.php`
 - Create: `packages/Rehla/Identity/src/Models/{User,StaffProfile,Role,Ability}.php`
 - Create: `packages/Rehla/Identity/src/Enums/{AccountStatus,AbilityName}.php`
 - Create: `packages/Rehla/Identity/src/Data/{ActorData,ResourceRef,RegisterCustomerData,UserData}.php`
@@ -77,7 +98,7 @@ Expected: FAIL لأن الجداول والأنواع غير موجودة.
 
 - [ ] **Step 3: أنشئ schema والعقود**
 
-أنشئ `users(id uuid, name, email citext unique, password, status, email_verified_at, timestamps)`، و`staff_profiles(user_id unique, mfa_confirmed_at)`، و`roles`, `abilities`, `role_ability`, `user_role`. لا تستخدم عمود `is_admin`. اربط الصلاحيات بأسماء enum أعلاه، واحفظ passwords عبر Laravel Hash فقط.
+أنشئ `users(id uuid, name, email citext unique, password, status, email_verified_at, timestamps)`، و`staff_profiles(user_id unique, mfa_confirmed_at)`، و`roles`, `abilities`, `role_ability`, `user_role`, و`personal_access_tokens` المملوك لـIdentity والمستخدم حصريًا لرموز Sanctum العميل. لا تستخدم عمود `is_admin`. اربط الصلاحيات بأسماء enum أعلاه، واحفظ passwords عبر Laravel Hash فقط.
 
 ```php
 interface AuthorizesActor
@@ -114,6 +135,24 @@ git commit -m "feat(identity): add accounts roles and deny-by-default abilities"
 ```
 
 ### Task 2: Append-only Audit Trail
+
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Audit. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R46`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
 
 **Files:**
 - Create: `packages/Rehla/Audit/src/database/migrations/*_create_audit_entries_table.php`
@@ -189,6 +228,24 @@ git commit -m "feat(audit): add immutable audit trail"
 
 ### Task 3: Private Document Lifecycle
 
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Documents. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R48`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
+
 **Files:**
 - Create: `packages/Rehla/Documents/src/database/migrations/*_create_documents_tables.php`
 - Create: `packages/Rehla/Documents/src/Enums/{DocumentStatus,DocumentPurpose}.php`
@@ -258,6 +315,24 @@ git commit -m "feat(documents): secure private upload lifecycle"
 
 ### Task 4: Travelers and Passport Uniqueness
 
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Travelers. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R11, R12`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
+
 **Files:**
 - Create: `packages/Rehla/Travelers/src/database/migrations/*_create_travelers_table.php`
 - Create: `packages/Rehla/Travelers/src/Enums/Gender.php`
@@ -323,6 +398,24 @@ git commit -m "feat(travelers): add owned traveler profiles and passport uniquen
 ```
 
 ### Task 5: Transactional Outbox and In-app Notifications
+
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Notifications. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R11, R12, R46, R47, R48 (supporting evidence)`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
 
 **Files:**
 - Create: `packages/Rehla/Notifications/src/database/migrations/*_create_notification_tables.php`
@@ -409,3 +502,7 @@ Expected: PASS للهوية والتدقيق والوثائق والمسافري
 git add packages/Rehla/Notifications docs/requirements/rehla-phase-1-acceptance.csv
 git commit -m "feat(notifications): add transactional outbox foundation"
 ```
+
+## Plan Completion Gate
+
+تغلق الخطة Identity وAudit وDocuments وTravelers وNotifications/Outbox foundation وتنتج منافذ التسجيل وعقود الملفات والهوية. تبقى ميزة التسجيل الفعلية `partial` ولا توصف end-to-end مكتملة حتى تنفذ الخطة 04 `RegistrationWalletInitializer` وتثبت rollback للحساب وAudit والمحفظة والإشعار وOutbox معًا. تبقى بوابة `external-delivery` مفتوحة حتى العامل والـdead-letter replay في الخطة 06.

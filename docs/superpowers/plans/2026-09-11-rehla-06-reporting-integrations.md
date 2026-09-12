@@ -10,6 +10,8 @@
 
 **Spec:** `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`
 
+**Prerequisites:** إغلاق بوابة الخطة 05 وتوفر مصادر Identity/Travelers/TopUps/Orders/Fulfillment وOutbox الم fenced.
+
 ## Global Constraints
 
 - أكمل خطط 01–05 أولًا.
@@ -21,6 +23,24 @@
 ---
 
 ### Task 1: Product Metrics Contract and Read Models
+
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Reporting. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R62`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
 
 **Files:**
 - Create: `packages/Rehla/Reporting/src/Enums/MetricName.php`
@@ -106,11 +126,30 @@ git commit -m "feat(reporting): add twelve phase-one product metrics"
 
 ### Task 2: Outbox Worker, External Delivery and Dead Letters
 
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Notifications. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R39`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
+
 **Files:**
 - Create: `packages/Rehla/Notifications/src/Jobs/DeliverOutboxMessage.php`
 - Create: `packages/Rehla/Notifications/src/Console/{RunOutboxWorker,ReplayDeadLetter}.php`
 - Create: `packages/Rehla/Notifications/src/Contracts/NotificationChannel.php`
 - Create: `packages/Rehla/Notifications/src/Data/DeliveryResult.php`
+- Create: `packages/Rehla/Notifications/src/database/migrations/*_create_outbox_delivery_attempts_table.php`
 - Modify: `routes/console.php`
 - Test: `packages/Rehla/Notifications/tests/Integration/OutboxWorkerTest.php`
 
@@ -140,7 +179,7 @@ Expected: FAIL قبل worker وسياج lease.
 
 - [ ] **Step 3: نفذ dispatch والتسليم**
 
-يعمل command كل دقيقة، يطالب100 رسالة، ويولد `lock_token` و`lease_expires_at` ثم يدفع Job لكل واحدة. بعد نجاح القنوات المطلوبة ينفذ `MarkDelivered(id, worker_id, lock_token)`؛ وعند الفشل ينفذ `MarkFailed` بالسياج نفسه ويسجل error منظفًا وtrace ID ويحسب exponential backoff بحد60دقيقة. تحديث صفر صف يعني فقدان lease ويلزم تجاهل نتيجة العامل القديم.
+أنشئ `outbox_delivery_attempts(id, outbox_message_id, attempt_number, worker_id, lock_token, trace_id, outcome, redacted_response, error_code, started_at, finished_at)` المملوك لـNotifications. يعمل command كل دقيقة، يطالب100 رسالة، ويولد `lock_token` و`lease_expires_at` ثم يدفع Job لكل واحدة. بعد نجاح القنوات المطلوبة ينفذ `MarkDelivered(id, worker_id, lock_token)`؛ وعند الفشل ينفذ `MarkFailed` بالسياج نفسه ويسجل error منظفًا وtrace ID ويحسب exponential backoff بحد60دقيقة. تحديث صفر صف يعني فقدان lease ويلزم تجاهل نتيجة العامل القديم.
 
 - [ ] **Step 4: نفذ dead-letter replay المدقق**
 
@@ -158,6 +197,24 @@ git commit -m "feat(notifications): deliver and replay outbox messages"
 ```
 
 ### Task 3: Integration Adapters and WhatsApp Inquiry Contract
+
+**Task Completeness Contract:**
+- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
+- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Integrations. لا migration أوكتابة خارج المالك.
+- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
+- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
+- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
+- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
+- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
+- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
+- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
+- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
+- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
+- **Acceptance IDs:** `R24`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
+- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
+
 
 **Files:**
 - Create: `packages/Rehla/Integrations/src/Contracts/InquiryLinkBuilder.php`
@@ -223,3 +280,7 @@ Expected: PASS للمؤشرات وOutbox والتكاملات.
 git add packages/Rehla/Integrations config/rehla-integrations.php docs/requirements/rehla-phase-1-acceptance.csv
 git commit -m "feat(integrations): add side-effect-free WhatsApp inquiries"
 ```
+
+## Plan Completion Gate
+
+تغلق الخطة صيغ M01–M12 الحتمية و`external-delivery` عبر lock-token fencing وdead-letter replay مدقق، وتنتج `ProductMetricsReader`, notification delivery evidence, و`InquiryLinkBuilder`. هذه العقود هي شرط بوابات Web ثم API ثم Admin.
