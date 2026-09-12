@@ -31,6 +31,17 @@
 - Test: `packages/Rehla/Reporting/tests/Integration/ProductMetricsTest.php`
 - Test: `packages/Rehla/Reporting/tests/Architecture/ReadOnlyReportingTest.php`
 
+**Mandatory Package Contract — Reporting:**
+- Create/verify: `packages/Rehla/Reporting/composer.json` and `packages/Rehla/Reporting/README.md`.
+- Create/verify: `packages/Rehla/Reporting/src/Providers/ReportingServiceProvider.php`.
+- Create/verify: `packages/Rehla/Reporting/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Reporting/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Reporting/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-reporting`; `ReportingServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-reporting')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Reporting/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
+
 **Interfaces:**
 - Produces: `GetProductMetrics::handle(MetricFilter): ProductMetrics`.
 - `MetricFilter` يحمل `fromUtc`, `toUtc`, `displayTimezone='Africa/Khartoum'`.
@@ -153,6 +164,17 @@ git commit -m "feat(notifications): deliver and replay outbox messages"
 - Create: `config/rehla-integrations.php`
 - Test: `packages/Rehla/Integrations/tests/Unit/WhatsAppInquiryLinkTest.php`
 - Test: `packages/Rehla/Integrations/tests/Architecture/NoBusinessWritesTest.php`
+
+**Mandatory Package Contract — Integrations:**
+- Create/verify: `packages/Rehla/Integrations/composer.json` and `packages/Rehla/Integrations/README.md`.
+- Create/verify: `packages/Rehla/Integrations/src/Providers/IntegrationsServiceProvider.php`.
+- Create/verify: `packages/Rehla/Integrations/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Integrations/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Integrations/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-integrations`; `IntegrationsServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-integrations')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Integrations/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
 - Produces: `InquiryLinkBuilder::forService(string $serviceName, string $locale): InquiryLink`.

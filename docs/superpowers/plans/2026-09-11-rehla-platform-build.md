@@ -19,6 +19,10 @@
 - مسار الحزم حساس لحالة الأحرف: `packages/Rehla/<Package>`.
 - يبقى في جذر كل حزمة `composer.json` و`README.md` و`src/` و`tests/` فقط؛ توضع إعدادات الحزمة وترحيلاتها ومواردها ومساراتها وOpenAPI تحت `src/`، وتبقى الاختبارات في الجذر عبر `autoload-dev`.
 - يكون مزود كل حزمة في `src/Providers/<Package>ServiceProvider.php` ويحمل موارد الحزمة صراحة من مواضعها تحت `src/`.
+- تحتوي كل حزمة منذ إنشائها `src/resources/lang/en/messages.php` و`src/resources/lang/ar/messages.php` واختبار `tests/Architecture/TranslationCompletenessTest.php`؛ تبقى المصفوفتان موجودتين ومتطابقتين حتى إن لم توجد رسائل بعد.
+- يحمل provider اللغة عبر `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-<package>')`، ويتحقق حارس معماري من المسار والـnamespace لكل الحزم التسع عشرة.
+- يضاف مفتاحا EN وAR في الالتزام نفسه مع كل نص عام جديد. يمنع النص المرئي الصريح في Actions وControllers وJobs وPolicies وFilament definitions، وتستثنى فقط الثوابت التقنية وfixtures الاختبارية المعلنة.
+- تستخدم REST API رموز أخطاء محايدة لغويًا، ولا ترسل نصًا ثابتًا كهوية للخطأ. يتطلب نشر Service أوForm أوContent أوإعداد ظاهر اكتمال اللغتين، وتثبت E2E العرض العربي وRTL ولوحة المفاتيح.
 - `Core` لا يعتمد على أي حزمة Rehla، وحزم الأعمال لا تعتمد على `Web` أو`Api` أو`Admin`.
 - كل جدول له حزمة مالكة واحدة، ولا تعبر Eloquent Models القابلة للتعديل حدود الحزم.
 - قاعدة الاختبار PostgreSQL واسمها ينتهي بـ`_testing`؛ SQLite ممنوع في اختبارات التكامل والمال والتزامن.

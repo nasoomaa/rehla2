@@ -34,6 +34,17 @@
 - Test: `packages/Rehla/Wallet/tests/Integration/WalletLedgerTest.php`
 - Test: `packages/Rehla/Wallet/tests/Integration/ConcurrentDebitTest.php`
 
+**Mandatory Package Contract — Wallet:**
+- Create/verify: `packages/Rehla/Wallet/composer.json` and `packages/Rehla/Wallet/README.md`.
+- Create/verify: `packages/Rehla/Wallet/src/Providers/WalletServiceProvider.php`.
+- Create/verify: `packages/Rehla/Wallet/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Wallet/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Wallet/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-wallet`; `WalletServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-wallet')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Wallet/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
+
 **Interfaces:**
 - Implements: `Rehla\Identity\Contracts\RegistrationWalletInitializer`؛ ينشئ محفظة الحساب داخل معاملة التسجيل المستدعية.
 - Produces: `WalletCreditor::credit(CreditWalletData): CreditResult`.
@@ -118,6 +129,17 @@ git commit -m "feat(wallet): add locked append-only wallet ledger"
 - Create: `packages/Rehla/TopUps/src/Actions/{ReplaceTopUpReceipt,ConfigureMinimumTopUp}.php`
 - Test: `packages/Rehla/TopUps/tests/Feature/BankAccountTest.php`
 - Test: `packages/Rehla/TopUps/tests/Integration/SubmitTopUpTest.php`
+
+**Mandatory Package Contract — TopUps:**
+- Create/verify: `packages/Rehla/TopUps/composer.json` and `packages/Rehla/TopUps/README.md`.
+- Create/verify: `packages/Rehla/TopUps/src/Providers/TopUpsServiceProvider.php`.
+- Create/verify: `packages/Rehla/TopUps/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/TopUps/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/TopUps/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-topups`; `TopUpsServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-topups')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/TopUps/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
 - Produces: `SubmitTopUp::handle(SubmitTopUpData): TopUpData`.

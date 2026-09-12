@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import re
 
 from scripts.docs_checks.common import ROOT, read_json, read_text, require
 from scripts.docs_checks.package_architecture import EXPECTED_PACKAGES
@@ -86,6 +87,26 @@ def validate_package_task(text: str, package: str) -> None:
         require(fragment in text, f"{package}: package task missing {fragment}")
 
 
+def extract_task(text: str, task_reference: str) -> str:
+    match = re.search(
+        rf"(?ms)^### {re.escape(task_reference)}:\s.*?(?=^### Task\s+\d+:|\Z)",
+        text,
+    )
+    require(match is not None, f"missing task heading: {task_reference}")
+    return match.group(0)
+
+
+def validate_package_tasks(contract: dict[str, object], plan_texts: dict[str, str]) -> None:
+    for package, record in contract["packages"].items():
+        plan_id = str(record["owner_plan"])
+        require(plan_id in plan_texts, f"{package}: owner plan text missing: {plan_id}")
+        task = extract_task(plan_texts[plan_id], str(record["owner_task"]))
+        validate_package_task(task, package)
+        namespace = f"rehla-{package.lower()}"
+        require(namespace in task, f"{package}: package task missing translation namespace {namespace}")
+        require("loadTranslationsFrom" in task, f"{package}: package task missing provider translation load")
+
+
 def validate_requirement_coverage(contract: dict[str, object]) -> None:
     rows = contract.get("requirements", [])
     require(isinstance(rows, list), "requirements must be a list")
@@ -163,11 +184,20 @@ def validate_table_schedule(contract: dict[str, object]) -> None:
 
 
 def validate_live_paths(contract: dict[str, object]) -> None:
+    plan_texts: dict[str, str] = {}
     for row in contract["implementation_plans"]:
         path = ROOT / str(row["path"])
         require(path.is_file(), f"missing implementation plan: {path.relative_to(ROOT)}")
         content = read_text(path)
         require("### Task" in content, f"{path.relative_to(ROOT)}: no executable tasks")
+        plan_texts[str(row["id"])] = content
+        partial_contract = {
+            "packages": {
+                package: contract["packages"][package]
+                for package in row["owned_packages"]
+            }
+        }
+        validate_package_tasks(partial_contract, plan_texts)
 
 
 def check() -> None:

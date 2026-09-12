@@ -2,9 +2,9 @@
 
 مرجع البنية: [REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md](../REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md). مرجع المنتج: [REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md](../REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md). مصادر الحقيقة الآلية: [خريطة الاعتمادات](../architecture/rehla-package-map.json)، و[خريطة عقود الحواف](../architecture/rehla-package-contract-map.json)، و[ملكية الجداول](../architecture/table-ownership.json).
 
-الخطة التنفيذية التفصيلية وفق Superpowers تبدأ من [Rehla Platform Implementation Plan](../superpowers/plans/2026-09-11-rehla-platform-build.md). يبقى هذا الملف خريطة مراحل مختصرة؛ الملفات السبعة المرتبطة من الخطة الرئيسية هي المرجع التنفيذي للملفات والعقود ودورات RED/GREEN وأوامر التحقق.
+الخطة التنفيذية التفصيلية وفق Superpowers تبدأ من [Rehla Platform Implementation Plan](../superpowers/plans/2026-09-11-rehla-platform-build.md). يبقى هذا الملف خريطة مراحل مختصرة؛ الملفات العشرة المرتبطة من الخطة الرئيسية هي المرجع التنفيذي للملفات والعقود ودورات RED/GREEN وأوامر التحقق.
 
-حالة الخطة: جاهزة للتنفيذ بعد إغلاق قرارات S1. لا يحتوي المسار الحالي تطبيق Laravel أو مستودع Git صالحًا، لذلك الخطة تعمل بنمط تعديل مباشر ولا تفترض فروعًا أو PRs.
+حالة الخطة: جاهزة للتنفيذ بعد إغلاق قرارات S1. يبدأ إنشاء تطبيق Laravel والحزم في خطة Foundation ولا تفترض المراحل اللاحقة وجود أثر لم يثبته اختبار بوابة الخطة السابقة.
 
 ## ثوابت كل خطوة
 
@@ -17,6 +17,9 @@
 - يجب أن تطابق اعتمادات Composer خريطة الحزم ذات 19 حزمة و98 حافة، وأن يملك كل اعتماد سجل عقد مطابقًا، وأن يكون ترتيب التنفيذ topological order صالحًا لها.
 - كل جدول موجود في خريطة الملكية له كاتب واحد هو الحزمة المالكة؛ تعبر الكتابة الحدود بعقد أوAction عام للمالك فقط.
 - يحتوي جذر الحزمة ملفات metadata و`src/` و`tests/` فقط؛ تقع `config/database/resources/routes/openapi` الخاصة بها تحت `src/`، ويقع Service Provider تحت `src/Providers/`.
+- تنشأ كل حزمة مع `src/resources/lang/en/messages.php` و`src/resources/lang/ar/messages.php` واختبار `tests/Architecture/TranslationCompletenessTest.php`، ويحمل provider namespace `rehla-<package>` من `src/resources/lang`.
+- تبقى ملفات اللغتين موجودة ومتطابقة ولو كانت فارغة. يضاف EN وAR معًا لأي نص عام، وتمنع الحراس النصوص المرئية الصريحة في كود العرض أوالمجال، بينما تبقى رموز API محايدة لغويًا.
+- لا تغلق بوابة Web أوAdmin قبل إثبات العربية وRTL ولوحة المفاتيح، ولا ينشر المحتوى أوالخدمة أوالنموذج إذا كانت لغة مطلوبة ناقصة.
 
 ## شبكة التنفيذ المصححة
 

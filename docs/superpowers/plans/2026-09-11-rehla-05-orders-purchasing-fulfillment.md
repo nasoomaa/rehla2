@@ -32,6 +32,17 @@
 - Test: `packages/Rehla/Orders/tests/Integration/OrderImmutabilityTest.php`
 - Test: `packages/Rehla/Orders/tests/Feature/OrderOwnershipTest.php`
 
+**Mandatory Package Contract — Orders:**
+- Create/verify: `packages/Rehla/Orders/composer.json` and `packages/Rehla/Orders/README.md`.
+- Create/verify: `packages/Rehla/Orders/src/Providers/OrdersServiceProvider.php`.
+- Create/verify: `packages/Rehla/Orders/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Orders/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Orders/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-orders`; `OrdersServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-orders')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Orders/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
+
 **Interfaces:**
 - Produces: `OrderWriter::createPaid(CreatePaidOrderData): PaidOrderData`.
 - `CreatePaidOrderData` يحمل account/service/traveler IDs، price/paid/currency، debitEntryId، service/traveler/form snapshots.
@@ -99,6 +110,17 @@ git commit -m "feat(orders): add immutable paid order snapshots"
 - Test: `packages/Rehla/Purchasing/tests/Unit/CanonicalPurchaseFingerprintTest.php`
 - Test: `packages/Rehla/Purchasing/tests/Integration/PurchaseAttemptTest.php`
 
+**Mandatory Package Contract — Purchasing:**
+- Create/verify: `packages/Rehla/Purchasing/composer.json` and `packages/Rehla/Purchasing/README.md`.
+- Create/verify: `packages/Rehla/Purchasing/src/Providers/PurchasingServiceProvider.php`.
+- Create/verify: `packages/Rehla/Purchasing/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Purchasing/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Purchasing/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-purchasing`; `PurchasingServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-purchasing')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Purchasing/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
+
 **Interfaces:**
 - Produces: `ExecutionCreator::create(CreateExecutionData): ExecutionData`.
 - Produces: canonical SHA-256 fingerprint لنفس الحمولة بغض النظر عن ترتيب مفاتيح JSON.
@@ -154,6 +176,17 @@ git commit -m "feat(purchasing): define purchase contracts and idempotency"
 - Modify: `packages/Rehla/Fulfillment/src/Providers/FulfillmentServiceProvider.php`
 - Test: `packages/Rehla/Fulfillment/tests/Unit/ExecutionStateMachineTest.php`
 - Test: `packages/Rehla/Fulfillment/tests/Integration/CreateExecutionTest.php`
+
+**Mandatory Package Contract — Fulfillment:**
+- Create/verify: `packages/Rehla/Fulfillment/composer.json` and `packages/Rehla/Fulfillment/README.md`.
+- Create/verify: `packages/Rehla/Fulfillment/src/Providers/FulfillmentServiceProvider.php`.
+- Create/verify: `packages/Rehla/Fulfillment/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Fulfillment/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Fulfillment/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-fulfillment`; `FulfillmentServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-fulfillment')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Fulfillment/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
 - Implements: `Rehla\Purchasing\Contracts\ExecutionCreator`.

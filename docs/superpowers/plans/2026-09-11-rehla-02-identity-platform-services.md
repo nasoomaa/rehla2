@@ -33,6 +33,17 @@
 - Test: `packages/Rehla/Identity/tests/Feature/IdentityTest.php`
 - Test: `packages/Rehla/Identity/tests/Integration/AuthorizationTest.php`
 
+**Mandatory Package Contract — Identity:**
+- Create/verify: `packages/Rehla/Identity/composer.json` and `packages/Rehla/Identity/README.md`.
+- Create/verify: `packages/Rehla/Identity/src/Providers/IdentityServiceProvider.php`.
+- Create/verify: `packages/Rehla/Identity/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Identity/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Identity/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-identity`; `IdentityServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-identity')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Identity/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
+
 **Interfaces:**
 - Produces: `RegisterCustomer::handle(RegisterCustomerData): UserData`; `AuthorizesActor::allows(ActorData, AbilityName, ?ResourceRef): bool`.
 - Produces: `RegistrationWalletInitializer::initialize(string $accountId): void` و`RegistrationNotificationRecorder::recordWelcome(string $accountId, string $locale, string $correlationId): void`؛ Identity يملك المنفذين وتوفر Wallet وNotifications التنفيذين.
@@ -113,6 +124,17 @@ git commit -m "feat(identity): add accounts roles and deny-by-default abilities"
 - Create: `packages/Rehla/Audit/src/Models/AuditEntry.php`
 - Test: `packages/Rehla/Audit/tests/Integration/AuditImmutabilityTest.php`
 
+**Mandatory Package Contract — Audit:**
+- Create/verify: `packages/Rehla/Audit/composer.json` and `packages/Rehla/Audit/README.md`.
+- Create/verify: `packages/Rehla/Audit/src/Providers/AuditServiceProvider.php`.
+- Create/verify: `packages/Rehla/Audit/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Audit/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Audit/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-audit`; `AuditServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-audit')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Audit/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
+
 **Interfaces:**
 - Consumes: Core IDs وClock فقط.
 - Produces: `AuditWriter::append(AppendAuditData): string` يعيد audit UUID.
@@ -178,6 +200,17 @@ git commit -m "feat(audit): add immutable audit trail"
 - Test: `packages/Rehla/Documents/tests/Feature/DocumentLifecycleTest.php`
 - Test: `packages/Rehla/Documents/tests/Integration/DocumentRaceTest.php`
 
+**Mandatory Package Contract — Documents:**
+- Create/verify: `packages/Rehla/Documents/composer.json` and `packages/Rehla/Documents/README.md`.
+- Create/verify: `packages/Rehla/Documents/src/Providers/DocumentsServiceProvider.php`.
+- Create/verify: `packages/Rehla/Documents/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Documents/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Documents/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-documents`; `DocumentsServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-documents')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Documents/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
+
 **Interfaces:**
 - Produces: `OwnedDocuments::assertCleanOwned(array $documentIds, string $ownerId, DocumentPurpose $purpose): array<DocumentRef>`.
 - Produces: private download response بعد Policy؛ لا ينتج storage path أوpublic URL.
@@ -235,6 +268,17 @@ git commit -m "feat(documents): secure private upload lifecycle"
 - Test: `packages/Rehla/Travelers/tests/Feature/TravelerOwnershipTest.php`
 - Test: `packages/Rehla/Travelers/tests/Integration/PassportUniquenessTest.php`
 
+**Mandatory Package Contract — Travelers:**
+- Create/verify: `packages/Rehla/Travelers/composer.json` and `packages/Rehla/Travelers/README.md`.
+- Create/verify: `packages/Rehla/Travelers/src/Providers/TravelersServiceProvider.php`.
+- Create/verify: `packages/Rehla/Travelers/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Travelers/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Travelers/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-travelers`; `TravelersServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-travelers')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Travelers/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
+
 **Interfaces:**
 - Produces: `GetOwnedTravelerSnapshot::handle(string $accountId, string $travelerId): TravelerSnapshot`.
 - Produces snapshot: fullName،dateOfBirth،gender،passportNumber،passportIssuedAt،passportExpiresAt.
@@ -291,6 +335,17 @@ git commit -m "feat(travelers): add owned traveler profiles and passport uniquen
 - Test: `packages/Rehla/Notifications/tests/Integration/OutboxTransactionTest.php`
 - Test: `packages/Rehla/Notifications/tests/Integration/OutboxLeaseTest.php`
 - Test: `packages/Rehla/Notifications/tests/Feature/InAppNotificationTest.php`
+
+**Mandatory Package Contract — Notifications:**
+- Create/verify: `packages/Rehla/Notifications/composer.json` and `packages/Rehla/Notifications/README.md`.
+- Create/verify: `packages/Rehla/Notifications/src/Providers/NotificationsServiceProvider.php`.
+- Create/verify: `packages/Rehla/Notifications/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Notifications/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Notifications/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-notifications`; `NotificationsServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-notifications')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Notifications/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
 - Produces: `OutboxWriter::append(OutboxMessageData): string` يعمل على اتصال ومعاملة المستدعي.

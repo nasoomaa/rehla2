@@ -31,6 +31,17 @@
 - Test: `packages/Rehla/Catalog/tests/Feature/ServiceLifecycleTest.php`
 - Test: `packages/Rehla/Catalog/tests/Integration/PriceHistoryTest.php`
 
+**Mandatory Package Contract — Catalog:**
+- Create/verify: `packages/Rehla/Catalog/composer.json` and `packages/Rehla/Catalog/README.md`.
+- Create/verify: `packages/Rehla/Catalog/src/Providers/CatalogServiceProvider.php`.
+- Create/verify: `packages/Rehla/Catalog/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Catalog/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Catalog/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-catalog`; `CatalogServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-catalog')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Catalog/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
+
 **Interfaces:**
 - Produces: `ServiceCatalog::currentQuote(string $serviceId): ServiceQuote`.
 - Produces `ServiceQuote(serviceId, priceMinor, currency, quoteVersion, available)` و`ServiceSnapshot(name, descriptions, expectedDuration, notes, requirements)`.
@@ -106,6 +117,17 @@ git commit -m "feat(catalog): add service lifecycle prices and requirements"
 - Test: `packages/Rehla/Forms/tests/Feature/FormPublishingTest.php`
 - Test: `packages/Rehla/Forms/tests/Integration/PublishedFormImmutabilityTest.php`
 - Test: `packages/Rehla/Forms/tests/Unit/FieldValidationTest.php`
+
+**Mandatory Package Contract — Forms:**
+- Create/verify: `packages/Rehla/Forms/composer.json` and `packages/Rehla/Forms/README.md`.
+- Create/verify: `packages/Rehla/Forms/src/Providers/FormsServiceProvider.php`.
+- Create/verify: `packages/Rehla/Forms/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Forms/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Forms/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-forms`; `FormsServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-forms')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Forms/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
 - Produces: `GetPublishedForm::handle(string $serviceId): PublishedFormData`.
@@ -185,6 +207,17 @@ git commit -m "feat(forms): add immutable service form versions"
 - Create: `packages/Rehla/Content/src/Actions/{CreatePage,UpdatePage,PublishPage}.php`
 - Create: `packages/Rehla/Content/src/Queries/GetPublishedPage.php`
 - Test: `packages/Rehla/Content/tests/Feature/ContentPublishingTest.php`
+
+**Mandatory Package Contract — Content:**
+- Create/verify: `packages/Rehla/Content/composer.json` and `packages/Rehla/Content/README.md`.
+- Create/verify: `packages/Rehla/Content/src/Providers/ContentServiceProvider.php`.
+- Create/verify: `packages/Rehla/Content/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Content/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Content/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-content`; `ContentServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-content')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Content/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
 - Produces: `GetPublishedPage::handle(string $slug, string $locale): PageData` مع fallback إلى الإنجليزية.

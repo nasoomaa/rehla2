@@ -6,6 +6,7 @@ from scripts.docs_checks.plan_quality import (
     EXPECTED_PLAN_IDS,
     validate_package_owners,
     validate_package_task,
+    validate_package_tasks,
     validate_plan_sequence,
     validate_requirement_coverage,
 )
@@ -76,6 +77,31 @@ class PlanContractTest(TestCase):
                 ),
                 "Core",
             )
+
+    def test_package_artifacts_must_be_inside_the_owning_task(self) -> None:
+        contract = fixture_contract()
+        contract["packages"] = {
+            "Core": {
+                "owner_plan": "01-foundation-core",
+                "owner_task": "Task 1",
+            }
+        }
+        text = """### Task 1: Build Core
+
+packages/Rehla/Core/composer.json
+
+### Task 2: Add Missing Files
+
+README.md
+src/Providers/CoreServiceProvider.php
+src/resources/lang/en/messages.php
+src/resources/lang/ar/messages.php
+tests/Architecture/TranslationCompletenessTest.php
+loadTranslationsFrom and rehla-core
+"""
+
+        with self.assertRaisesRegex(CheckFailure, "Core.*README.md"):
+            validate_package_tasks(contract, {"01-foundation-core": text})
 
     def test_requirements_are_exactly_r01_through_r65(self) -> None:
         contract = fixture_contract()

@@ -150,9 +150,13 @@ git commit -m "docs: lock phase one product decisions"
 - Create: `scripts/create-rehla-packages.php`
 - Create: `packages/Rehla/{Core,Identity,Catalog,Forms,Travelers,Documents,Wallet,TopUps,Orders,Fulfillment,Purchasing,Notifications,Content,Audit,Reporting,Integrations,Web,Api,Admin}/composer.json`
 - Create: `packages/Rehla/<Package>/src/Providers/<Package>ServiceProvider.php`
+- Create: `packages/Rehla/<Package>/src/resources/lang/en/messages.php`
+- Create: `packages/Rehla/<Package>/src/resources/lang/ar/messages.php`
 - Create: `packages/Rehla/<Package>/README.md`
 - Create: `packages/Rehla/<Package>/tests/Unit/PackageBootTest.php`
+- Create: `packages/Rehla/<Package>/tests/Architecture/TranslationCompletenessTest.php`
 - Create: `tests/Architecture/PackageDiscoveryTest.php`
+- Create: `tests/Architecture/PackageTranslationContractTest.php`
 
 **Interfaces:**
 - Consumes: `docs/architecture/rehla-package-map.json` بإصدار schema 2، و`docs/architecture/rehla-package-contract-map.json`، و`docs/architecture/table-ownership.json`.
@@ -196,11 +200,19 @@ Expected: FAIL على أول provider غير موجود.
 
 يتحقق المولد من `schema_version == 2` ومن 19 حزمة و98 حافة ومن غياب الدورات، ثم يستبدل الاسم والnamespace لكل حزمة ويضيف `require` مساويًا تمامًا لقائمة المستهلك في الخريطة. يضيف الجذر repository من النوع `path` على `packages/Rehla/*` ويطلب `rehla/web`, `rehla/api`, `rehla/admin` بـ`@dev`؛ تسحب اعتمادياتها بقية الحزم وتسجل providers كلها. يفشل اختبار الاكتشاف إذا كان Composer manifest ينقص حافة أو يزيدها.
 
+ينشئ المولد لكل حزمة، بلا استثناء، `src/resources/lang/en/messages.php` و`src/resources/lang/ar/messages.php` كمصفوفتين متطابقتين ولو كانتا فارغتين، و`tests/Architecture/TranslationCompletenessTest.php`. يستدعي كل provider:
+
+```php
+$this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-'.strtolower($package));
+```
+
+يقرأ اختبار الحزمة ملفات اللغة recursively ويقارن مجموعة المفاتيح وشكل كل قيمة (`array` أوscalar). يقرأ `PackageTranslationContractTest` كل provider ويفشل إذا لم يحمل namespace الحزمة من `src/resources/lang`، أوغاب أحد ملفي اللغة، أووجد نص مرئي صريح في Actions أوControllers أوJobs أوPolicies أوFilament definitions خارج allowlist للثوابت التقنية وfixtures الاختبارية.
+
 - [ ] **Step 4: حدث autoload ونفذ الاختبار**
 
-Run: `php scripts/create-rehla-packages.php && composer update rehla/web rehla/api rehla/admin --with-all-dependencies && composer dump-autoload && php artisan test tests/Architecture/PackageDiscoveryTest.php`
+Run: `php scripts/create-rehla-packages.php && composer update rehla/web rehla/api rehla/admin --with-all-dependencies && composer dump-autoload && php artisan test tests/Architecture/PackageDiscoveryTest.php tests/Architecture/PackageTranslationContractTest.php`
 
-Expected: PASS لكل 19 provider.
+Expected: PASS لكل 19 provider و19 namespace وثنائي لغة متكافئ.
 
 - [ ] **Step 5: تحقق من اكتشاف اختبارات الحزم**
 
@@ -274,6 +286,17 @@ git commit -m "test: enforce package architecture boundaries"
 - Create: `packages/Rehla/Core/src/Errors/ErrorCode.php`
 - Test: `packages/Rehla/Core/tests/Unit/MoneyTest.php`
 - Test: `packages/Rehla/Core/tests/Unit/UuidTest.php`
+
+**Mandatory Package Contract — Core:**
+- Create/verify: `packages/Rehla/Core/composer.json` and `packages/Rehla/Core/README.md`.
+- Create/verify: `packages/Rehla/Core/src/Providers/CoreServiceProvider.php`.
+- Create/verify: `packages/Rehla/Core/src/resources/lang/en/messages.php`.
+- Create/verify: `packages/Rehla/Core/src/resources/lang/ar/messages.php`.
+- Create/verify: `packages/Rehla/Core/tests/Architecture/TranslationCompletenessTest.php`.
+- Translation namespace: `rehla-core`; `CoreServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-core')`.
+- يبدأ ملفا `messages.php` بمصفوفتين متطابقتين ولو كانتا فارغتين. يضيف أي نص عام مفتاحي EN/AR في الالتزام نفسه، ويمنع الاختبار اختلاف المفاتيح أوشكل scalar/array والنص المرئي الصريح في PHP.
+- يوثق README العقود العامة، التفويض deny-by-default، حدود المعاملة والـexternal I/O، error codes العامة، owned tables، وخطة الاستعادة. لا تعيد العقود Models قابلة للتعديل ولا تنفذ الحزمة commit داخليًا عند انضمامها إلى معاملة المالك.
+- Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Core/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
 - Produces: `Money::sdg(int $minor)`, `Money::add`, `Money::subtract`, `Money::isLessThan`; `Clock::now(): CarbonImmutable`; رموز أخطاء ثابتة.
