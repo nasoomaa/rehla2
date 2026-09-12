@@ -1,52 +1,52 @@
 # Laravel Package-Based Architecture for the "Rihla" Project
 
-هذه الوثيقة هي العقد المعماري المقترح لتنفيذ متطلبات [مفهوم مشروع رحلة ورحلة المستخدم](REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md) باستخدام Laravel. تغطي الإصدار الأول، واجهات Web وREST API ولوحة الإدارة، حدود الحزم، ملكية البيانات، المعاملات، الصلاحيات، التخزين، المهام، الاختبارات، والتوسع المستقبلي.
+This document is the proposed architectural contract for implementing the requirements defined in [Rihla Project Concept and User Journey](REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md) using Laravel. It covers the first release, the Web and REST API interfaces, the administration panel, package boundaries, data ownership, transactions, authorization, storage, jobs, testing, and future expansion.
 
-حالة الوثيقة: **تصميم مستهدف؛ لم تُنشأ الحزم أو قاعدة التطبيق بعد**.
+Document status: **Target design; the packages and application foundation have not yet been created.**
 
-خطة البناء التنفيذية الكاملة: [Rehla Platform Implementation Plan](superpowers/plans/2026-09-11-rehla-platform-build.md)، ومنها سبع خطط مرتبة و34مهمة ذات دورات RED/GREEN وبوابات تحقق.
+Full executable build plan: [Rehla Platform Implementation Plan](superpowers/plans/2026-09-11-rehla-platform-build.md), consisting of seven ordered plans and 34 tasks with RED/GREEN cycles and verification gates.
 
-## 1. القرار المعماري
+## 1. Architectural Decision
 
-يبنى رحلة كتطبيق **Modular Monolith** واحد فوق Laravel، بقاعدة PostgreSQL واحدة، وتوضع مجالات العمل والواجهات في حزم Composer محلية مستقلة تحت:
+Rihla is built as a single **Modular Monolith** application on Laravel, using one PostgreSQL database. Business domains and interfaces are placed in independent local Composer packages under:
 
 ```text
 packages/Rehla/<Package>
 ```
 
-الحزمة هي حد الملكية والفهم والاختبار. لا تعني الحزم Microservices، ولا تملك كل حزمة قاعدة بيانات أو عملية نشر منفصلة. تشترك الحزم في تطبيق Laravel ومعاملة قاعدة البيانات حين تتطلب قواعد رحلة ذلك.
+A package is the boundary of ownership, understanding, and testing. Packages do not imply Microservices, and each package does not own a separate database or deployment process. The packages share the Laravel application and the same database transaction whenever Rihla's business rules require it.
 
-اخترنا `packages` لأن المشروع يحتوي حدودًا مستقرة بين الحساب والمسافر والخدمة والمحفظة والشحن والطلب والتنفيذ. يوفر هذا التنظيم:
+We chose `packages` because the project has stable boundaries between account, traveler, service, wallet, top-up, order, and fulfillment. This organization provides:
 
-- `composer.json` وnamespace واختبارات وREADME لكل مجال.
-- اعتمادًا معلنًا بين الحزم يمكن فحصه آليًا.
-- مساحة تغيير محدودة لوكيل البرمجة.
-- إمكانية استخراج حزمة لاحقًا إذا ظهر سبب تشغيلي حقيقي.
-- منع واجهات Web وAPI وAdmin من امتلاك منطق الأعمال.
+- A `composer.json`, namespace, tests, and README for each domain.
+- Declared dependencies between packages that can be checked automatically.
+- A limited change surface for coding agents.
+- The ability to extract a package later if a real operational reason appears.
+- Prevention of Web, API, and Admin interfaces from owning business logic.
 
-Laravel لا يفرض هذا التنظيم؛ يدعم Composer تحميله. لذلك يجب فرض الحدود باختبارات معمارية، وليس بالمجلدات وحدها. [Laravel directory structure](https://laravel.com/framework/docs/13.x/structure).
+Laravel does not impose this organization; Composer supports loading it. Therefore, these boundaries must be enforced by architecture tests, not by folders alone. [Laravel directory structure](https://laravel.com/framework/docs/13.x/structure).
 
-## 2. التقنية الأساسية
+## 2. Core Technology
 
-| الطبقة | القرار |
+| Layer | Decision |
 |---|---|
-| Framework | Laravel 13.x مع تثبيت patch محدد في `composer.lock` |
-| Runtime | PHP 8.5 ضمن نطاق دعم الإصدار المختار |
-| Database | PostgreSQL 18، مع نسخة اختبار PostgreSQL حقيقية |
-| Customer Web | Blade + Livewire، جلسات Laravel، EN افتراضي وAR/RTL |
-| REST API | JSON API بإصدار `/api/v1` وتوثيق OpenAPI 3.1 |
-| Admin | Filament 5، ويستدعي أوامر التطبيق نفسها |
-| Authentication | Session للويب والإدارة؛ Sanctum لعملاء API عند تفعيلهم |
-| Authorization | Gates/Policies وقدرات دقيقة، والمنع هو الافتراضي |
-| Queue | Laravel Queue مع Outbox محفوظ في PostgreSQL |
-| Cache | تحسين للقراءات فقط؛ ليس مصدر حقيقة للمال أو الصلاحيات |
-| Storage | قرص خاص للمستندات وقرص عام منفصل للصور التسويقية |
-| Testing | Pest أو PHPUnit، واختبارات PostgreSQL وتكامل وHTTP ومتصفح |
-| Agent support | Laravel Boost ومهارات Laravel/Filament مع قواعد رحلة المحلية |
+| Framework | Laravel 13.x with a specific patch version pinned in `composer.lock` |
+| Runtime | PHP 8.5 within the support range of the selected release |
+| Database | PostgreSQL 18, with a real PostgreSQL test instance |
+| Customer Web | Blade + Livewire, Laravel sessions, EN by default and AR/RTL |
+| REST API | JSON API versioned under `/api/v1` with OpenAPI 3.1 documentation |
+| Admin | Filament 5, calling the same application commands |
+| Authentication | Session for Web and Admin; Sanctum for API clients when enabled |
+| Authorization | Gates/Policies with fine-grained abilities; deny-by-default |
+| Queue | Laravel Queue with an Outbox persisted in PostgreSQL |
+| Cache | Read optimization only; never a source of truth for money or authorization |
+| Storage | Private disk for documents and a separate public disk for marketing images |
+| Testing | Pest or PHPUnit, PostgreSQL, integration, HTTP, and browser tests |
+| Agent support | Laravel Boost and Laravel/Filament skills with Rihla-local rules |
 
-لا يفرض التصميم GraphQL أو Redis أو محرك Workflow خارجيًا. تضاف هذه المكونات عند وجود متطلب أو قياس يبررها.
+The design does not require GraphQL, Redis, or an external Workflow engine. These components are added only when a requirement or measurement justifies them.
 
-## 3. هيكل المستودع
+## 3. Repository Structure
 
 ```text
 rehla3/
@@ -58,7 +58,7 @@ rehla3/
 │   └── providers.php
 ├── config/
 ├── database/
-│   └── seeders/                  # تنسيق seed العام فقط
+│   └── seeders/                  # Global seed orchestration only
 ├── lang/
 │   ├── en/
 │   └── ar/
@@ -87,7 +87,7 @@ rehla3/
 │   ├── css/
 │   └── js/
 ├── routes/
-│   └── console.php               # أوامر المضيف فقط
+│   └── console.php               # Host-level commands only
 ├── tests/
 │   ├── Architecture/
 │   ├── EndToEnd/
@@ -97,9 +97,9 @@ rehla3/
 └── phpunit.xml
 ```
 
-يعرّف `composer.json` في الجذر repository من النوع `path` على `packages/Rehla/*`. لكل حزمة `composer.json` خاص بها وPSR-4 مثل `Rehla\\Wallet\\`. تعتمد الحزمة على أسماء Composer للحزم الأخرى، وتسجل Service Provider عبر Laravel package discovery. يقلل ذلك تعديل ملفات تسجيل مركزية عند إضافة الحزم.
+The root `composer.json` defines a `path` repository for `packages/Rehla/*`. Every package has its own `composer.json` and PSR-4 namespace such as `Rehla\\Wallet\\`. Packages depend on the Composer package names of other packages and register their Service Providers through Laravel package discovery. This minimizes changes to centralized registration files when packages are added.
 
-مثال العقد في الجذر:
+Example root contract:
 
 ```json
 {
@@ -118,39 +118,39 @@ rehla3/
 }
 ```
 
-لا تنسخ الحزم إلى `vendor` أثناء التطوير. يثبت CI الاعتمادات من `composer.lock` دون الاعتماد على ملفات خارج المستودع. كل migration موجود داخل الحزمة المالكة للجدول، وتحمله Service Provider الخاص بها. أسماء الجداول عالمية وواضحة، ولا تنشئ حزمتان migration للجدول نفسه.
+Packages are not copied into `vendor` during development. CI installs dependencies from `composer.lock` without relying on files outside the repository. Every migration lives inside the package that owns the table and is loaded by that package's Service Provider. Table names are global and explicit, and two packages must never create migrations for the same table.
 
-## 4. الحزم ومسؤولياتها
+## 4. Packages and Responsibilities
 
-| الحزمة | المسؤولية | أهم البيانات التي تملكها |
+| Package | Responsibility | Primary data it owns |
 |---|---|---|
-| `Core` | قيم وأدوات مستقلة يحتاجها أكثر من مجال | لا جداول أعمال؛ `Money` وIDs وClock ونتائج الأخطاء |
-| `Identity` | الحسابات والموظفون والأدوار والقدرات | users، staff profiles، roles، abilities، assignments |
-| `Catalog` | الخدمات والأسعار والمتطلبات والصور والترتيب والتفعيل وسياسات التنفيذ المنشورة | services، service requirements، service media، price history، fulfillment policy versions |
-| `Forms` | مسودات نماذج الخدمات وإصداراتها المنشورة والتحقق منها | form drafts، form versions، schemas/checksums |
-| `Travelers` | المسافر وملكيته وتطبيع الجواز وتفرده | travelers |
-| `Documents` | metadata للملفات والملكية والتصنيف والتخزين الخاص والعام | documents، upload sessions، retention state |
-| `Wallet` | المحافظ والرصيد والقيود غير القابلة للتعديل والتسوية | wallets، wallet ledger entries، reconciliation runs |
-| `TopUps` | البنوك وإعداد الحد الأدنى وطلبات التحويل ومراجعتها | bank accounts، top-up settings، top-up requests، receipt links |
-| `Orders` | السجل التجاري الثابت ولقطات الشراء | orders، service/traveler/price snapshots، debit reference |
-| `Fulfillment` | تنفيذ الخدمة وحالاتها وإجاباتها ومطلوبات العميل | executions، responses، status history، notes، action requests، document links |
-| `Purchasing` | تنسيق إرسال الطلب والـidempotency والمعاملة المشتركة | purchase attempts/idempotency records |
-| `Notifications` | الإشعارات داخل التطبيق وOutbox ومحاولات التسليم | outbox messages، outbox delivery attempts، in-app notifications |
-| `Content` | صفحات ومحتوى الموقع العام | pages، localized content |
-| `Audit` | سجل القرارات الحساسة غير القابل للمحو | audit entries |
-| `Reporting` | قراءات ومؤشرات القسم 62 | read models أو materialized views؛ لا يكتب سجلات المصدر |
-| `Integrations` | adapters للقنوات والمزودين الخارجيين | provider credentials references، delivery/provider logs عند الحاجة |
-| `Web` | المتجر وحساب العميل بواجهات Blade/Livewire | لا يملك بيانات أعمال |
-| `Api` | REST API v1، الموارد، OpenAPI، وتحويل الأخطاء | لا يملك بيانات أعمال |
-| `Admin` | Filament ولوحة التشغيل والصلاحيات | لا يملك بيانات أعمال |
+| `Core` | Domain-neutral values and utilities required by multiple domains | No business tables; `Money`, IDs, Clock, error result types |
+| `Identity` | Accounts, staff, roles, and abilities | users, staff profiles, roles, abilities, assignments |
+| `Catalog` | Services, prices, requirements, media, ordering, activation, and published fulfillment policies | services, service requirements, service media, price history, fulfillment policy versions |
+| `Forms` | Service form drafts, published versions, and validation | form drafts, form versions, schemas/checksums |
+| `Travelers` | Travelers, ownership, passport normalization, and uniqueness | travelers |
+| `Documents` | File metadata, ownership, classification, and private/public storage | documents, upload sessions, retention state |
+| `Wallet` | Wallets, balances, immutable ledger entries, and reconciliation | wallets, wallet ledger entries, reconciliation runs |
+| `TopUps` | Banks, minimum top-up configuration, transfer requests, and review | bank accounts, top-up settings, top-up requests, receipt links |
+| `Orders` | Immutable commercial record and purchase snapshots | orders, service/traveler/price snapshots, debit reference |
+| `Fulfillment` | Service execution, states, responses, and customer action requests | executions, responses, status history, notes, action requests, document links |
+| `Purchasing` | Order-submission orchestration, idempotency, and shared transaction | purchase attempts/idempotency records |
+| `Notifications` | In-app notifications, Outbox, and delivery attempts | outbox messages, outbox delivery attempts, in-app notifications |
+| `Content` | Public website pages and content | pages, localized content |
+| `Audit` | Immutable record of sensitive decisions | audit entries |
+| `Reporting` | Reads and metrics for section 62 | read models or materialized views; does not write source records |
+| `Integrations` | Adapters for external channels and providers | provider credential references, delivery/provider logs when needed |
+| `Web` | Storefront and customer account via Blade/Livewire | Owns no business data |
+| `Api` | REST API v1, resources, OpenAPI, and error mapping | Owns no business data |
+| `Admin` | Filament operations panel and authorization | Owns no business data |
 
-`Purchasing` حزمة Process وليست كتالوج تجارة. وجودها يمنع جعل `Orders` أو `Wallet` يعتمد أحدهما على الآخر في الاتجاهين، ويمنح عملية الشراء الذرية مالكًا واحدًا.
+`Purchasing` is a Process package, not a commerce catalog. Its existence prevents `Orders` and `Wallet` from depending on each other in both directions and gives the atomic purchase operation a single owner.
 
-يعرف `Purchasing` عقد `ExecutionCreator` الذي يحتاجه SubmitOrder، وتنفذه `Fulfillment`. لذلك تعتمد Fulfillment وقت البناء على Purchasing، بينما يستدعي Purchasing العقد الذي يملكه دون استيراد Fulfillment. يسجل Service Provider الخاص بـFulfillment الربط وقت التشغيل. هذا Dependency Inversion يمنع دورة Composer ويحافظ على المعاملة المشتركة.
+`Purchasing` defines the `ExecutionCreator` contract required by `SubmitOrder`, and `Fulfillment` implements it. Therefore, Fulfillment has a build-time dependency on Purchasing, while Purchasing calls the contract it owns without importing Fulfillment. Fulfillment's Service Provider registers the runtime binding. This Dependency Inversion prevents a Composer cycle while preserving the shared transaction.
 
-## 5. بنية كل حزمة أعمال
+## 5. Structure of Each Business Package
 
-تبدأ الحزم ببنية Laravel مسطحة وقابلة للتوقع، ولا تنشئ طبقات فارغة:
+Packages start with a flat, predictable Laravel structure and do not create empty layers:
 
 ```text
 packages/Rehla/TopUps/
@@ -159,20 +159,20 @@ packages/Rehla/TopUps/
 ├── src/
 │   ├── Providers/
 │   │   └── TopUpsServiceProvider.php
-│   ├── Actions/                   # حالات استخدام الكتابة
+│   ├── Actions/                   # Write use cases
 │   │   ├── SubmitTopUp.php
 │   │   ├── ApproveTopUp.php
 │   │   └── RejectTopUp.php
-│   ├── Queries/                   # قراءات بلا أثر جانبي
-│   ├── Contracts/                 # السطح المسموح للحزم الأخرى
-│   ├── Data/                      # DTOs للمدخلات والنتائج
-│   ├── Domain/                    # قواعد خالصة عند الحاجة
-│   ├── Models/                    # Eloquent داخل مالك الجدول
+│   ├── Queries/                   # Side-effect-free reads
+│   ├── Contracts/                 # Surface allowed to other packages
+│   ├── Data/                      # DTOs for inputs and results
+│   ├── Domain/                    # Pure rules when needed
+│   ├── Models/                    # Eloquent inside the table owner
 │   ├── Enums/
 │   ├── Events/
 │   ├── Exceptions/
 │   ├── Policies/
-│   ├── Infrastructure/            # storage/provider adapters عند الحاجة
+│   ├── Infrastructure/            # Storage/provider adapters when needed
 │   ├── config/
 │   ├── database/
 │   │   ├── factories/
@@ -189,38 +189,38 @@ packages/Rehla/TopUps/
     └── Architecture/
 ```
 
-القواعد المعقدة الخالصة، مثل انتقالات الحالة أو `Money`، يمكن وضعها في `Domain/` داخل الحزمة. لا يضاف `Repository Interface` لكل Model تلقائيًا؛ يضاف عندما تعبر العملية حد حزمة أو يوجد أكثر من تنفيذ أو يحتاج الاختبار إلى عزل اعتماد خارجي.
+Complex pure rules, such as state transitions or `Money`, may live in `Domain/` inside the package. A `Repository Interface` is not added automatically for every Model; it is added when an operation crosses a package boundary, when multiple implementations exist, or when a test must isolate an external dependency.
 
-يبقى جذر الحزمة محصورًا في `composer.json` و`README.md` و`src/` و`tests/`. توضع إعدادات الحزمة وترحيلاتها ومواردها ومساراتها وOpenAPI تحت `src/`، ولا ينشأ أي مجلد منها إن لم تحتجه الحزمة. تبقى `tests/` في الجذر ويشير إليها `autoload-dev`.
+The package root remains limited to `composer.json`, `README.md`, `src/`, and `tests/`. Package configuration, migrations, resources, routes, and OpenAPI files live under `src/`, and no directory is created unless the package needs it. `tests/` remains at the package root and is referenced by `autoload-dev`.
 
-يحمل Service Provider موارد الحزمة من مواضعها الفعلية تحت `src/`: يستخدم `mergeConfigFrom` للإعدادات، و`loadMigrationsFrom` للترحيلات، و`loadRoutesFrom` للمسارات، و`loadViewsFrom` للقوالب، و`loadTranslationsFrom` للترجمات. يقتصر النشر إلى تطبيق المضيف على الموارد القابلة للتخصيص، ولا يغير ملكيتها داخل الحزمة.
+The Service Provider loads package resources from their actual locations under `src/`: `mergeConfigFrom` for configuration, `loadMigrationsFrom` for migrations, `loadRoutesFrom` for routes, `loadViewsFrom` for views, and `loadTranslationsFrom` for translations. Publishing to the host application is limited to customizable resources and does not change package ownership.
 
-كل `README.md` للحزمة يحدد:
+Every package `README.md` defines:
 
-- مسؤوليتها وما لا تملكه.
-- جداولها وواجهاتها العامة.
-- الحزم التي تعتمد عليها والسبب.
-- الأوامر والاستعلامات والأحداث العامة.
-- invariants وأوامر الاختبار.
-- قرارات الأمان والخصوصية الخاصة بها.
+- What the package owns and what it does not own.
+- Its tables and public interfaces.
+- The packages it depends on and why.
+- Public commands, queries, and events.
+- Invariants and test commands.
+- Package-specific security and privacy decisions.
 
-الأسطح العامة الحرجة تكون صغيرة ومسمّاة حسب النتيجة، مثل:
+Critical public surfaces remain small and are named by outcome, for example:
 
 ```text
-Catalog:      GetCurrentServiceQuote
-Forms:        GetPublishedForm + ValidateFormSubmission
-Travelers:    GetOwnedTravelerSnapshot
-Documents:    ValidateOwnedDocuments
-Wallet:       CreditWallet + DebitWallet
-Orders:       CreatePaidOrder
-Fulfillment:  CreateExecution + TransitionExecution
-Audit:        AppendAuditEntry
+Catalog:       GetCurrentServiceQuote
+Forms:         GetPublishedForm + ValidateFormSubmission
+Travelers:     GetOwnedTravelerSnapshot
+Documents:     ValidateOwnedDocuments
+Wallet:        CreditWallet + DebitWallet
+Orders:        CreatePaidOrder
+Fulfillment:   CreateExecution + TransitionExecution
+Audit:         AppendAuditEntry
 Notifications: AppendOutboxMessage
 ```
 
-تعيد هذه العقود Data objects ومعرفات وقيمًا ثابتة، ولا تعيد Model قابلًا للتعديل إلى حزمة أخرى. `Purchasing` يجمعها في `SubmitOrder`، و`TopUps` يستعمل عقد `CreditWallet` فقط.
+These contracts return Data objects, identifiers, and immutable values. They do not return mutable Models to another package. `Purchasing` composes them in `SubmitOrder`, while `TopUps` uses only the `CreditWallet` contract.
 
-## 6. قواعد الاعتماد
+## 6. Dependency Rules
 
 ```mermaid
 flowchart TD
@@ -259,11 +259,11 @@ flowchart TD
   Fulfillment --> Admin
 ```
 
-الأسهم تعني «يوفر اعتمادًا إلى المستهلك»؛ مثال: `Catalog --> Purchasing` تعني أن `Purchasing` يعتمد على السطح العام لـ`Catalog`. يوضح الرسم مسارات الكتابة الأهم، والجدول التالي هو المرجع الكامل للاعتمادات المسموحة:
+The arrows mean "provides a dependency to the consumer." For example, `Catalog --> Purchasing` means `Purchasing` depends on the public surface of `Catalog`. The diagram shows the most important write paths; the following table is the authoritative reference for all allowed dependencies:
 
-| المستهلك | الحزم المسموح أن يعتمد عليها |
+| Consumer | Packages it is allowed to depend on |
 |---|---|
-| Core | لا شيء من Rehla |
+| Core | None from Rehla |
 | Audit | Core |
 | Identity | Core, Audit |
 | Documents | Core, Identity, Audit |
@@ -283,23 +283,23 @@ flowchart TD
 | Api | Core, Identity, Catalog, Forms, Travelers, Documents, Wallet, TopUps, Orders, Fulfillment, Purchasing, Notifications, Integrations |
 | Admin | Core, Identity, Catalog, Forms, Travelers, Documents, Wallet, TopUps, Orders, Fulfillment, Notifications, Content, Audit, Reporting |
 
-هذه المصفوفة تلغي اعتماد `Integrations -> Fulfillment`؛ يبقى التكامل منفذ قناة يعرّفه `Notifications` ولا يقرأ التنفيذ. كما تلغي قراءات `Reporting` المباشرة من `Catalog` و`Notifications`، وتضيف `Audit` إلى `Identity` و`Notifications`، وتضيف `Integrations` إلى `Api` لبناء رابط الاستفسار عبر عقد معلن. سياسة التنفيذ وإصداراتها ملك `Catalog` ويقرأها `Purchasing` منه، بينما يعرّف `Purchasing` منفذ إنشاء التنفيذ الذي تنفذه حزمة `Fulfillment`، وبذلك لا تنشأ دورة بينهما.
+This matrix removes the `Integrations -> Fulfillment` dependency; integrations remain channel implementations defined by `Notifications` and do not read execution data. It also removes direct `Reporting` reads from `Catalog` and `Notifications`, adds `Audit` to `Identity` and `Notifications`, and adds `Integrations` to `Api` so the inquiry link can be built through a declared contract. Fulfillment policy and its versions belong to `Catalog` and are read by `Purchasing`, while `Purchasing` defines the execution-creation port implemented by `Fulfillment`, so no cycle is created between them.
 
-أي اعتماد غير موجود في الجدول يحتاج تحديثًا معللًا لهذه الوثيقة واختبارات Architecture قبل إدخاله. مصادر الحقيقة المقروءة آليًا هي [خريطة الاعتماد](architecture/rehla-package-map.json)، و[خريطة العقود لكل حافة](architecture/rehla-package-contract-map.json)، و[خريطة ملكية الجداول](architecture/table-ownership.json). يتحقق CI من مساواة Composer imports بالحواف الـ98، ومن وجود سطح عام لكل حافة، ومن عدم وجود دورات أو كتابة عبر مالك الجدول.
+Any dependency not present in the table requires a justified update to this document and Architecture tests before it is introduced. The machine-readable sources of truth are the [dependency map](architecture/rehla-package-map.json), the [contract map for every edge](architecture/rehla-package-contract-map.json), and the [table ownership map](architecture/table-ownership.json). CI verifies that Composer imports match the 98 edges, that every edge has a public surface, and that there are no cycles or writes across table ownership.
 
-قواعد ملزمة:
+Mandatory rules:
 
-1. `Core` لا يستورد أي حزمة من `Rehla`.
-2. حزم الأعمال لا تستورد `Web` أو `Api` أو `Admin`.
-3. حزم الواجهات لا تكتب جداول الأعمال مباشرة، ولا تبدأ المعاملات المالية.
-4. لا تستورد حزمة `Models` الداخلية لحزمة أخرى. تستخدم `Contracts` وData objects ومعرفات typed.
-5. القراءة الإدارية عبر Query DTO أو `Contracts/ReadModels` عامة للقراءة فقط. لا يوجد استثناء مفتوح لاستيراد Model داخلي.
-6. كل جدول له مالك واحد. المفاتيح الأجنبية عبر الحزم مسموحة، والكتابة عبر الحدود ممنوعة.
-7. `Reporting` يقرأ من views أو Queries معلنة ولا يصبح مسار تعديل للبيانات.
-8. الحزم لا تستعمل Service Locator أو Facades لإخفاء اعتماد بين المجالات داخل منطق الأعمال.
-9. تفشل اختبارات Architecture عند وجود اعتماد غير معلن أو دورة بين الحزم.
+1. `Core` imports no package from `Rehla`.
+2. Business packages do not import `Web`, `Api`, or `Admin`.
+3. Interface packages do not write business tables directly and do not start financial transactions.
+4. A package does not import another package's internal `Models`. It uses `Contracts`, Data objects, and typed identifiers.
+5. Administrative reads through Query DTOs or public `Contracts/ReadModels` are read-only. There is no open exception for importing an internal Model.
+6. Every table has one owner. Foreign keys across packages are allowed; cross-boundary writes are forbidden.
+7. `Reporting` reads from views or declared Queries and never becomes a data-mutation path.
+8. Packages do not use a Service Locator or Facades to hide cross-domain dependencies inside business logic.
+9. Architecture tests fail when an undeclared dependency or package cycle exists.
 
-## 7. واجهات التطبيق الثلاث
+## 7. The Three Application Interfaces
 
 ### 7.1 Web
 
@@ -322,7 +322,7 @@ packages/Rehla/Web/
 └── tests/Feature/
 ```
 
-تشمل الواجهة العامة Home وServices وService Details وWhatsApp. وتشمل واجهة الحساب Profile وTravelers وWallet وTop-ups وOrders وNotifications. فتح نموذج الطلب لا ينشئ Order ولا يحجز رصيدًا. يحفظ رفع الملف Upload مؤقتًا خاصًا يمكن تنظيفه، وليس مسودة طلب.
+The public interface includes Home, Services, Service Details, and WhatsApp. The account interface includes Profile, Travelers, Wallet, Top-ups, Orders, and Notifications. Opening an order form does not create an Order and does not reserve wallet balance. A file upload is stored as a private temporary Upload that can be cleaned up; it is not an order draft.
 
 ### 7.2 REST API
 
@@ -344,7 +344,7 @@ packages/Rehla/Api/
     └── Feature/
 ```
 
-المسارات الأساسية للإصدار الأول:
+Core first-release routes:
 
 ```text
 POST   /api/v1/auth/register
@@ -383,46 +383,46 @@ GET    /api/v1/notifications
 POST   /api/v1/notifications/{notification_id}/read
 ```
 
-`POST /order-submissions` يتطلب `Idempotency-Key`. يحفظ `Purchasing` بصمة الحمولة مع الحساب والمفتاح. تكرار المفتاح والحمولة يعيد النتيجة السابقة؛ المفتاح نفسه بحمولة مختلفة يعيد `409` برمز ثابت.
+`POST /order-submissions` requires an `Idempotency-Key`. `Purchasing` stores the payload fingerprint together with the account and key. Reusing the same key with the same payload returns the previous result; reusing the same key with a different payload returns `409` with a stable code.
 
-يتضمن طلب الإرسال `service_id` و`traveler_id` و`accepted_price` و`form_version_id` و`answers` ومعرفات uploads. كلها claims من العميل يعاد التحقق منها؛ لا يصبح السعر أو الإصدار أو الملكية صحيحًا لمجرد وجوده في الطلب. يعيد الإنشاء الأول `201`، ويمكن لإعادة ناجحة مطابقة أن تعيد `200` مع Order نفسه.
+The submission request includes `service_id`, `traveler_id`, `accepted_price`, `form_version_id`, `answers`, and upload identifiers. All of these are client claims that are revalidated; price, version, and ownership do not become authoritative merely because they appear in the request. The first successful creation returns `201`; a matching successful replay may return `200` with the same Order.
 
-مسارات التسجيل والدخول تخضع لآلية المصادقة التي تعتمد قبل التنفيذ. تصدر Api رموز Sanctum للعملاء فقط، ولا تحمل staff abilities ولا تدخل Admin. تستخدم Web sessions وتستدعي عقود المجالات داخل العملية؛ لا تستدعي REST داخليًا. تطبق rate limits أشد على التسجيل والدخول ورفع الملفات وإرسال الطلب.
+Registration and login routes are subject to the authentication mechanism selected before implementation. Api issues Sanctum tokens only to customers; those tokens do not carry staff abilities and cannot access Admin. Web uses sessions and calls domain contracts inside the same process; it does not call the REST API internally. Stricter rate limits apply to registration, login, file upload, and order submission.
 
-استجابات الخطأ تستخدم `application/problem+json` وتحتوي على `code` غير مترجم و`message` مترجمة و`errors` للحقول و`trace_id` و`correlation_id`. تقبل المنصة `X-Correlation-ID` صالحًا أوتنشئه، وتنشئ trace جديدًا لكل محاولة ولا تثق بقيمة trace من العميل. التعريفان الملزمان:
+Error responses use `application/problem+json` and contain an untranslated `code`, localized `message`, field-level `errors`, `trace_id`, and `correlation_id`. The platform accepts a valid `X-Correlation-ID` or creates one, creates a new trace for every attempt, and never trusts a trace value supplied by the client. The mandatory definitions are:
 
 ```text
 trace_id: unique identifier for one HTTP request or one queued-job attempt; changes on retry.
 correlation_id: stable identifier for one logical business operation across retries, audit, notifications, and outbox.
 ```
 
-لا تكشف رسالة تكرار الجواز هوية مالكه. تستخدم القوائم cursor pagination عندما يكبر التاريخ. API موثق ومختبر مقابل OpenAPI، ولا يقرأ Controllers قاعدة البيانات مباشرة. يطابق `code` التعبير `^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$`، وتعارض إعادة استعمال المفتاح هو `idempotency.key_reused`.
+A duplicate-passport error must not reveal the owner's identity. Lists use cursor pagination when history becomes large. The API is documented and tested against OpenAPI, and Controllers do not read the database directly. `code` matches the expression `^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)+$`, and idempotency-key reuse conflicts use `idempotency.key_reused`.
 
-مصفوفة عقد المسارات الملزمة:
+Mandatory route-contract matrix:
 
-| المسار/المجموعة | المصادقة | الصلاحية والملكية | ضوابط إضافية |
+| Route/group | Authentication | Authorization and ownership | Additional controls |
 |---|---|---|---|
-| `POST auth/register` | Public | إنشاء الحساب فقط | strict rate limit، validation، locale |
-| `POST auth/login` | Public | بيانات اعتماد صحيحة | strict rate limit، lockout/alerts |
-| `POST auth/logout` | Session/token | الجلسة أو token الحالي | CSRF للجلسة، revoke token |
-| `GET/PATCH me` | Customer | الهوية الحالية فقط | field allowlist، locale |
-| `GET services*` | Public | المنشور والفعال فقط | public rate limit، locale، cache آمن |
-| `GET travelers*` | Customer | `account_id` الحالي | object Policy، 404 لغير المالك، pagination |
-| `POST/PATCH travelers*` | Customer | `account_id` الحالي | object Policy، 404 لغير المالك، write rate limit |
-| `GET wallet*` | Customer | محفظة الحساب الحالي | read-only، لا account ID من العميل |
-| `GET bank-accounts` | Customer | البنوك الفعالة فقط | لا بيانات داخلية، locale |
-| `GET/POST top-ups*` | Customer | TopUp الحساب الحالي | upload `clean`، unique reference، write rate limit |
-| `PUT top-ups/*/receipt` | Customer | طلب `under_review` للحساب الحالي | يحتفظ بالطلب والبنك والمرجع، ويستبدل clean receipt فقط |
-| `POST uploads` | Customer | ينسب للهوية الحالية | size/type quota، scan، rate limit |
-| `GET uploads/*` | Customer | upload للهوية الحالية | حالة scan آمنة، 404 لغير المالك، polling rate limit |
-| `GET documents/*/content` | Customer/staff | Policy للغرض والسجل المتصل | audit حساس، no-store، nosniff، URL قصير فقط |
-| `POST order-submissions` | Customer | traveler/files/wallet للحساب الحالي | `Idempotency-Key`، accepted price، transaction، strict rate limit |
-| `GET orders*` | Customer | Orders الحساب الحالي | authorized nested documents، cursor pagination |
-| `POST executions/*/responses` | Customer | action مفتوح يخص حسابه | idempotency، files clean، transition check |
-| `GET notifications` | Customer | notifications الخاصة به | read-only، pagination |
-| `POST notifications/*/read` | Customer | notification الخاصة به | mark-read idempotent |
+| `POST auth/register` | Public | Account creation only | strict rate limit, validation, locale |
+| `POST auth/login` | Public | Valid credentials | strict rate limit, lockout/alerts |
+| `POST auth/logout` | Session/token | Current session or token | CSRF for session, revoke token |
+| `GET/PATCH me` | Customer | Current identity only | field allowlist, locale |
+| `GET services*` | Public | Published and active only | public rate limit, locale, safe cache |
+| `GET travelers*` | Customer | Current `account_id` | object Policy, 404 for non-owner, pagination |
+| `POST/PATCH travelers*` | Customer | Current `account_id` | object Policy, 404 for non-owner, write rate limit |
+| `GET wallet*` | Customer | Current account wallet | read-only, no account ID from client |
+| `GET bank-accounts` | Customer | Active banks only | no internal data, locale |
+| `GET/POST top-ups*` | Customer | Current account TopUp | `clean` upload, unique reference, write rate limit |
+| `PUT top-ups/*/receipt` | Customer | Current account request in `under_review` | preserve request, bank, and reference; replace only with clean receipt |
+| `POST uploads` | Customer | Assigned to current identity | size/type quota, scan, rate limit |
+| `GET uploads/*` | Customer | Upload owned by current identity | safe scan status, 404 for non-owner, polling rate limit |
+| `GET documents/*/content` | Customer/staff | Policy for purpose and linked record | sensitive audit, no-store, nosniff, short-lived URL only |
+| `POST order-submissions` | Customer | traveler/files/wallet of current account | `Idempotency-Key`, accepted price, transaction, strict rate limit |
+| `GET orders*` | Customer | Orders of current account | authorized nested documents, cursor pagination |
+| `POST executions/*/responses` | Customer | Open action belonging to the account | idempotency, clean files, transition check |
+| `GET notifications` | Customer | Own notifications | read-only, pagination |
+| `POST notifications/*/read` | Customer | Own notification | idempotent mark-read |
 
-كل صف يفصل اختبارات `401` و`403` و`404`، ويختبر object ownership بحسابين. يثبت OpenAPI security scheme واللغة وحدود الحجم والـrate-limit وheader المطلوب لكل عملية، بدل الاعتماد على middleware group عام فقط.
+Every row distinguishes `401`, `403`, and `404` tests and verifies object ownership using two accounts. OpenAPI specifies the security scheme, locale, size limits, rate limits, and required headers for each operation instead of relying only on a generic middleware group.
 
 ### 7.3 Admin
 
@@ -440,45 +440,45 @@ packages/Rehla/Admin/
 └── tests/Feature/
 ```
 
-توفر لوحة Filament أقسام Overview وServices وApplication Forms وCustomers وTravelers وWallets وBank Accounts وTop-up Requests وOrders وService Executions وContent وNotifications وRoles & Permissions وAudit Log.
+The Filament panel provides Overview, Services, Application Forms, Customers, Travelers, Wallets, Bank Accounts, Top-up Requests, Orders, Service Executions, Content, Notifications, Roles & Permissions, and Audit Log.
 
-| القسم | قدرة العرض | أوامر التغيير | الحقول الحساسة |
+| Section | View ability | Mutation commands | Sensitive fields |
 |---|---|---|---|
-| Overview | `admin.overview.view` | لا شيء | مؤشرات مجمعة فقط |
-| Services | `services.view` | `services.manage` | سجل السعر حسب القدرة |
-| Application Forms | `forms.view` | `forms.draft`, `forms.publish` | schema وإصدارات النشر |
-| Customers | `customers.view` | `customers.manage_status` إن اعتمد | بيانات الدعم allowlist فقط |
-| Travelers | `travelers.view` | لا تعديل افتراضيًا | الجواز مخفي إلا `travelers.view_sensitive` |
-| Wallets | `wallets.view` | correction command بقدرة مستقلة مستقبلًا | ledger غير قابل للتعديل |
-| Bank Accounts | `banks.view` | `banks.manage` | بيانات داخلية محجوبة عن غير المخول |
-| Top-up Requests | `topups.view` | `topups.review` | receipt يحتاج `documents.view_sensitive` |
-| Orders | `orders.view` | لا تعديل السجل التجاري | snapshots والمال حسب الحاجة |
-| Service Executions | `executions.view` | `executions.transition`, `executions.note` | المستندات بقدرة منفصلة |
-| Content | `content.view` | `content.manage` | لا حقول مالية |
-| Notifications | `notifications.view` | `notifications.replay` | body وrecipient بحسب الدور |
-| Roles & Permissions | `access.view` | `access.manage` | MFA وإعادة توثيق للتغيير |
-| Audit Log | `audit.view` | لا تغيير | sensitive metadata محجوب حسب القدرة |
+| Overview | `admin.overview.view` | None | Aggregated metrics only |
+| Services | `services.view` | `services.manage` | Price history according to ability |
+| Application Forms | `forms.view` | `forms.draft`, `forms.publish` | schema and published versions |
+| Customers | `customers.view` | `customers.manage_status` if adopted | support-data allowlist only |
+| Travelers | `travelers.view` | No modification by default | passport hidden unless `travelers.view_sensitive` |
+| Wallets | `wallets.view` | future correction command with separate ability | immutable ledger |
+| Bank Accounts | `banks.view` | `banks.manage` | internal data hidden from unauthorized staff |
+| Top-up Requests | `topups.view` | `topups.review` | receipt requires `documents.view_sensitive` |
+| Orders | `orders.view` | No modification of commercial record | snapshots and money as required |
+| Service Executions | `executions.view` | `executions.transition`, `executions.note` | documents require a separate ability |
+| Content | `content.view` | `content.manage` | no financial fields |
+| Notifications | `notifications.view` | `notifications.replay` | body and recipient according to role |
+| Roles & Permissions | `access.view` | `access.manage` | MFA and re-authentication for changes |
+| Audit Log | `audit.view` | No mutation | sensitive metadata hidden according to ability |
 
-يستخدم Admin guard/session منفصلًا عن customer session، وتطلب MFA وإعادة توثيق للقدرات المالية وإدارة الصلاحيات. تختبر كل Action مقابل ability الخاصة بها، وتختبر field visibility مستقلة عن مجرد القدرة على فتح الصفحة.
+Admin uses a guard/session separate from the customer session and requires MFA and re-authentication for financial abilities and permission management. Every Action is tested against its own ability, and field visibility is tested independently from the ability to open the page.
 
-قواعد لوحة الإدارة:
+Admin panel rules:
 
-- يمكن ربط Resource بـ`Contracts/ReadModels` فقط. يرث read model من قاعدة تمنع `save/update/delete/create`، وتقتصر فائدته على query وعرض Filament.
-- تمنع القاعدة والحراس أيضًا builder `update/delete` وrelationship mutation والوصول إلى raw connection من Admin.
-- كل Create/Edit/Delete مخصص يستدعي Action من الحزمة المالكة؛ لا يستورد Admin mutable Model.
-- اعتماد ورفض التحويل Actions مخصصة تستدعي `ApproveTopUp` و`RejectTopUp`.
-- انتقال التنفيذ يستدعي أمر `TransitionExecution` ويتحقق من آلة الحالة.
-- لا توجد Edit/Delete actions على ledger أو Order snapshots أو Audit.
-- لا تنفذ Filament closures خصمًا أو اعتمادًا أو انتقالًا مباشرًا على Model.
-- عرض المستند يستدعي بوابة تنزيل مخولة، ولا يعرض storage key أو رابطًا دائمًا.
-- حقول العميل الحساسة ظاهرة فقط للقدرات التي تحتاجها المهمة.
-- تختبر قواعد Architecture منع دوال الكتابة و`DB::` وmutable Models داخل namespace الخاص بـAdmin.
+- A Resource may bind only to `Contracts/ReadModels`. A read model inherits from a base that blocks `save/update/delete/create`; its purpose is limited to querying and Filament display.
+- The base and guards also block builder `update/delete`, relationship mutation, and access to the raw connection from Admin.
+- Every custom Create/Edit/Delete action calls an Action from the owning package; Admin never imports a mutable Model.
+- Transfer approval and rejection use dedicated Actions that call `ApproveTopUp` and `RejectTopUp`.
+- Execution transitions call `TransitionExecution` and validate the state machine.
+- There are no Edit/Delete actions on ledger entries, Order snapshots, or Audit records.
+- Filament closures never perform direct debit, approval, or state transition on a Model.
+- Document viewing calls an authorized download gateway and never exposes a storage key or permanent URL.
+- Sensitive customer fields are visible only to abilities that require them for the task.
+- Architecture rules test that write methods, `DB::`, and mutable Models are forbidden inside the Admin namespace.
 
-## 8. العمليات الحرجة
+## 8. Critical Operations
 
-### 8.0 تسجيل العميل الذري
+### 8.0 Atomic Customer Registration
 
-مالك العملية: `Identity/Actions/RegisterCustomer`.
+Operation owner: `Identity/Actions/RegisterCustomer`.
 
 ```text
 begin transaction
@@ -490,11 +490,11 @@ begin transaction
   → optionally emit CustomerRegistered for analytics
 ```
 
-تنفذ Wallet المنفذ الأول وتنفذ Notifications الثاني، ويسجلهما Service Provider الخاص بكل حزمة. تستدعي Identity المنفذين synchronously على اتصال PostgreSQL ومعاملة التسجيل نفسيهما، ولا تعتمد على event لإنشاء المحفظة أوإشعار الترحيب. أي فشل يرجع الحساب والمحفظة والإشعار وOutbox وAudit معًا. لا توجد network I/O قبل commit.
+Wallet implements the first port and Notifications implements the second, and each package's Service Provider registers the binding. Identity calls both ports synchronously on the same PostgreSQL connection and within the same registration transaction; it does not rely on an event to create the wallet or welcome notification. Any failure rolls back the account, wallet, notification, Outbox, and Audit together. No network I/O occurs before commit.
 
-### 8.1 اعتماد شحن المحفظة
+### 8.1 Wallet Top-Up Approval
 
-مالك العملية: `TopUps/Actions/ApproveTopUp`.
+Operation owner: `TopUps/Actions/ApproveTopUp`.
 
 ```text
 Policy authorization
@@ -510,11 +510,11 @@ Policy authorization
   → commit
 ```
 
-يفرض PostgreSQL uniqueness على `(bank_account_id, normalized_reference)` وعلى مرجع القيد الناتج من طلب الشحن. لا يحل فحص PHP وحده سباق الطلبات المتزامنة. الرفض يسجل السبب والفاعل والوقت داخل معاملة، دون قيد محفظة.
+PostgreSQL enforces uniqueness on `(bank_account_id, normalized_reference)` and on the ledger-entry reference produced from the top-up request. A PHP check alone does not solve concurrent-request races. Rejection records the reason, actor, and timestamp inside a transaction without creating a wallet entry.
 
-### 8.2 إرسال الطلب والشراء
+### 8.2 Order Submission and Purchase
 
-مالك العملية: `Purchasing/Actions/SubmitOrder`.
+Operation owner: `Purchasing/Actions/SubmitOrder`.
 
 ```text
 Authenticate + authorize account
@@ -533,17 +533,17 @@ Authenticate + authorize account
   → commit
 ```
 
-كل المشاركين ينضمون إلى المعاملة التي يملكها `SubmitOrder` ولا يستدعون `commit`. لا يرسل بريد أو HTTP أو WhatsApp داخل المعاملة. ترتيب الأقفال ثابت، وإعادة محاولة deadlock/serialization محدودة ولا تعيد أثرًا خارجيًا.
+All participants join the transaction owned by `SubmitOrder` and never call `commit` themselves. No email, HTTP request, or WhatsApp message is sent inside the transaction. Lock ordering is fixed, and deadlock/serialization retries are bounded and do not repeat an external side effect.
 
-يستخدم جميع المشاركين اتصال PostgreSQL نفسه وسياق المعاملة نفسه؛ يحظر فتح اتصال persistence منفصل داخل العملية. داخل المعاملة يجرب النظام INSERT بسجل فريد `(account_id, idempotency_key)`. عند التعارض يقفل السجل ويقرأ fingerprint والحالة والنتيجة: حمولة مختلفة تعيد409، ونتيجة مكتملة تعيد Order نفسه. تحفظ النتيجة داخل المعاملة ذاتها، لذلك لا يوجد claim دائم منفصل أو lease عالق. لا يعتمد التنفيذ على `exists()` ثم `insert()`.
+All participants use the same PostgreSQL connection and transaction context; opening a separate persistence connection inside the operation is forbidden. Inside the transaction, the system attempts an INSERT into a record with unique `(account_id, idempotency_key)`. On conflict it locks the record and reads the fingerprint, status, and result: a different payload returns `409`, while a completed result returns the same Order. The result is stored inside the same transaction, so there is no separate persistent claim or stuck lease. The implementation does not depend on `exists()` followed by `insert()`.
 
-إذا تغير السعر أو الإصدار، تفشل العملية قبل الخصم بخطأ يمكن للواجهة تحويله إلى طلب تأكيد جديد. إذا فشل إنشاء Order أو Execution تتراجع كل الكتابات بما فيها الخصم.
+If the price or version changes, the operation fails before debit with an error that the interface can turn into a new confirmation request. If Order or Execution creation fails, every write, including the debit, is rolled back.
 
-### 8.3 تنفيذ الخدمة
+### 8.3 Service Fulfillment
 
-مالك العمليات: `Fulfillment`.
+Operation owner: `Fulfillment`.
 
-الأوامر الأساسية:
+Core commands:
 
 ```text
 StartReview
@@ -557,9 +557,9 @@ AddInternalNote
 AttachExecutionDocument
 ```
 
-كل أمر يتحقق من الفاعل والانتقال المسموح، ويكتب `execution_status_history` وAudit في المعاملة نفسها. `CancelExecution` لا يرد المال تلقائيًا لأن سياسة الاسترداد غير معرفة في الإصدار الأول.
+Every command validates the actor and permitted transition, and writes `execution_status_history` plus Audit in the same transaction. `CancelExecution` does not automatically refund money because the refund policy is not defined in the first release.
 
-المجموعة القانونية الوحيدة للانتقالات هي:
+The only legal transition set is:
 
 ```text
 received -> under_review
@@ -581,56 +581,56 @@ action_required -> cancelled
 action_received -> cancelled
 ```
 
-يستعمل التنفيذ نسخة السياسة الملتقطة. إذا كان `requires_issued_document = true` يتطلب الإكمال مستندًا clean بتصنيف `issued_document`؛ وإذا كان false يكون `issued_document_id` اختياريًا ويسمح بالإكمال بلا مستند.
+An execution uses the captured policy version. If `requires_issued_document = true`, completion requires a `clean` document classified as `issued_document`; if false, `issued_document_id` is optional and completion without a document is allowed.
 
-## 9. نموذج البيانات والملكية
+## 9. Data Model and Ownership
 
-### المال
+### Money
 
-- يخزن المبلغ كعدد صحيح في أصغر وحدة تعتمدها سياسة SDG، مع `currency = SDG`.
-- يحظر `float` في Money والأسعار والأرصدة.
-- `wallet_ledger_entries` append-only؛ التصحيح قيد معاكس بسبب ومرجع.
-- يمكن حفظ balance على wallet للأداء، لكنه يتغير مع القيد في معاملة واحدة ويخضع لتسوية دورية مع مجموع القيود.
-- قيود DB تمنع الرصيد السالب والقيمة الصفرية غير المسموحة والتكرار المنطقي.
+- Amounts are stored as integers in the smallest unit defined by the SDG policy, with `currency = SDG`.
+- `float` is forbidden in Money, prices, and balances.
+- `wallet_ledger_entries` are append-only; a correction is a reversing entry with a reason and reference.
+- A wallet balance may be stored for performance, but it changes with the ledger entry in one transaction and is periodically reconciled against the sum of ledger entries.
+- DB constraints prevent negative balance, disallowed zero amounts, and logical duplication.
 
-### المسافر والجواز
+### Traveler and Passport
 
-- `account_id` يحدد المالك، والحساب قد يشتري لمسافرين متعددين.
-- `passport_number_normalized` إلزامي وفريد عالميًا.
-- دالة التطبيع موثقة ومختبرة ولا تتغير دون migration وقرار بيانات.
-- لا تضيف الجنسية أو بلد الجواز في الإصدار الأول.
+- `account_id` identifies the owner, and one account may purchase for multiple travelers.
+- `passport_number_normalized` is mandatory and globally unique.
+- The normalization function is documented and tested and does not change without a migration and a data decision.
+- Nationality and passport country are not added in the first release.
 
-### النماذج
+### Forms
 
-- `form_drafts` قابلة للتعديل.
-- النشر ينشئ `form_versions` immutable برقم إصدار وJSON schema وchecksum ووقت وفاعل النشر.
-- تدعم schema الأنواع الأحد عشر: short text، long text، email، phone، number، date، dropdown، radio، checkbox، file upload، image upload.
-- يعرّف كل حقل label والترتيب وrequired/optional وhelper text والخيارات المناسبة وقواعد التحقق.
-- الطلب/التنفيذ يحتفظ بـ`form_version_id` والإجابات التاريخية؛ تعديل الخدمة لا يعيد تفسير الطلب القديم.
-- تمنع trigger وصلاحيات دور التطبيق `UPDATE/DELETE` لإصدار منشور. التصحيح ينشئ FormVersion جديدًا، وتختبر الحماية باستعلام SQL مباشر.
+- `form_drafts` are mutable.
+- Publishing creates immutable `form_versions` with version number, JSON schema, checksum, timestamp, and publishing actor.
+- The schema supports eleven field types: short text, long text, email, phone, number, date, dropdown, radio, checkbox, file upload, and image upload.
+- Every field defines label, order, required/optional, helper text, applicable options, and validation rules.
+- The order/execution retains `form_version_id` and historical answers; editing a service does not reinterpret an old order.
+- A trigger and application-role privileges block `UPDATE/DELETE` on a published version. A correction creates a new FormVersion, and protection is tested with direct SQL.
 
-### الطلب واللقطات
+### Order and Snapshots
 
-- كل Order لخدمة واحدة ومسافر واحد.
-- يحتوي Order على السعر المدفوع والعملة ومرجع debit و`service_snapshot` و`traveler_snapshot` وإصدار snapshot schema.
-- Order ولقطاته لا تعدل بعد الإنشاء؛ تصحيحات التشغيل تسجل في كيانات جديدة ولا تمحو التاريخ.
-- تمنع trigger وصلاحيات دور التطبيق تعديل أو حذف أعمدة Order التاريخية ولقطاته. أي تصحيح لاحق سجل مرتبط جديد، وتوجد اختبارات SQL مباشرة لهذه القيود.
+- Every Order is for one service and one traveler.
+- The Order contains paid price, currency, debit reference, `service_snapshot`, `traveler_snapshot`, and snapshot schema version.
+- The Order and its snapshots are never modified after creation; operational corrections are recorded in new entities and never erase history.
+- A trigger and application-role privileges prevent modification or deletion of historical Order columns and snapshots. Any later correction is a new linked record, and direct SQL tests verify these constraints.
 
-### المستندات
+### Documents
 
-- `Documents` يخزن storage key داخليًا، checksum، MIME المكتشف من المحتوى، الحجم، المالك، التصنيف، والحالة.
-- حالات المستند: `pending_scan → quarantined → clean | rejected` ثم `clean → attached`. لا يقبل الشراء أو مراجعة الإيصال إلا `clean`، ولا يعود المستند المرتبط إلى حالة مؤقتة.
-- الجواز والإيصال والمستندات الداعمة على private disk.
-- صور الخدمات وشعارات البنوك على public disk منفصل.
-- التنزيل الخاص يمر عبر Policy ثم stream أو URL قصير العمر.
-- يتحقق الخادم من الحجم وmagic bytes وفك الصورة الآمن وفحص البرمجيات الخبيثة، ويرفض mismatch وpolyglot بحسب السياسة المعتمدة.
-- يقفل الإرسال صف المستند ويربطه داخل المعاملة. يطالب عامل التنظيف orphan ذريًا قبل حذف blob، فلا يمكنه حذف ملف تحقق منه الإرسال ولم يربطه بعد.
-- upload session غير المرتبط ينظف بعد مدة معتمدة؛ لا يحذف ملف مرتبط بطلب أو تنفيذ.
-- التنزيل يثبت `Content-Disposition` آمنًا و`Content-Type` معروفًا و`X-Content-Type-Options: nosniff`؛ تختبر redirects وranges إذا استعملها backend.
+- `Documents` stores the internal storage key, checksum, MIME type detected from content, size, owner, classification, and status.
+- Document states are `pending_scan → quarantined → clean | rejected`, followed by `clean → attached`. Purchase and receipt review accept only `clean`; an attached document never returns to a temporary state.
+- Passport, receipt, and supporting documents use a private disk.
+- Service images and bank logos use a separate public disk.
+- Private download goes through a Policy, then streaming or a short-lived URL.
+- The server validates size, magic bytes, safe image decoding, and malware scanning, and rejects MIME mismatch and polyglot files according to the adopted policy.
+- Submission locks the document row and attaches it inside the transaction. The cleanup worker atomically claims an orphan before deleting the blob, so it cannot delete a file that submission already validated but has not yet attached.
+- An unattached upload session is cleaned after the approved retention period; a file linked to an order or execution is never deleted.
+- Download sets safe `Content-Disposition`, known `Content-Type`, and `X-Content-Type-Options: nosniff`; redirects and ranges are tested if the backend uses them.
 
-## 10. آلات الحالات
+## 10. State Machines
 
-لا يستخدم Enum واحد لكل الحالات:
+One Enum is not used for all statuses:
 
 ```text
 TopUpStatus:
@@ -639,36 +639,36 @@ under_review → rejected
 
 OrderStatus:
 paid
-# يضاف cancelled أو refunded فقط بعد تعريف السياسة التجارية
+# cancelled or refunded is added only after the commercial policy is defined
 
 ExecutionStatus:
 received → under_review → processing
 under_review|processing → action_required
 action_required → action_received → processing
-under_review|processing|action_received → completed حسب SOP
-الحالات المسموحة → cancelled حسب SOP وصلاحية الفاعل
+under_review|processing|action_received → completed according to SOP
+allowed states → cancelled according to SOP and actor authorization
 ```
 
-تعرف كل خدمة SOP أو transition policy الخاصة بها فوق الحالات القياسية. لا تخلط حالة TopUp أو Order أو Execution في عمود مشترك.
+Each service defines its own SOP or transition policy on top of the standard states. TopUp, Order, and Execution statuses are never mixed in one column.
 
-## 11. الهوية والصلاحيات والأمان
+## 11. Identity, Authorization, and Security
 
-- Web وAdmin يستخدمان جلسات مستقلة وحماية CSRF؛ API يستخدم Sanctum عند تفعيل token clients.
-- يحسم S1 نمط API: first-party stateful cookie أو personal access token لكل نوع عميل. عند tokens توجد abilities وexpiry وrevocation ودوران، ولا تمنح صلاحيات موظف.
-- Admin guard وcookie name وsession lifetime منفصلة، مع MFA وإعادة توثيق للإجراءات المالية وإدارة القدرات.
-- كل استعلام عميل مقيد بـ`account_id` من الهوية الموثقة، لا من body الطلب.
-- Policies تفحص القدرة وملكية السجل؛ معرفة ID لا تمنح الوصول.
-- القدرات منفصلة: إدارة الخدمات، النماذج، البنوك، مراجعة الشحن، عرض الطلبات، تشغيل الخدمات، المستخدمين، التدقيق، والمستندات الحساسة.
-- لا يحصل موظف جديد على قدرات حساسة تلقائيًا.
-- الإجراءات المالية والتشغيلية تسجل actor ووقتًا وسببًا وcorrelation ID.
-- الأسرار في secret store للبيئة، ولا تخزن في المستودع أو قاعدة بيانات بصيغة مكشوفة.
-- API يطبق rate limits وتدقيق content type/size، والملفات تفحص على الخادم.
-- CORS allowlist صريحة، والكوكيز `Secure` و`HttpOnly` و`SameSite` بحسب العميل، وتطبق CSP وHSTS وبقية security headers في طبقة HTTP.
-- Audit وledger محميان من UPDATE/DELETE بقيود التطبيق وقواعد قاعدة البيانات وصلاحية تشغيل محدودة.
+- Web and Admin use separate sessions and CSRF protection; API uses Sanctum when token clients are enabled.
+- S1 resolves the API mode: first-party stateful cookie or personal access token for each client type. Tokens have abilities, expiry, revocation, and rotation, and never grant staff permissions.
+- Admin guard, cookie name, and session lifetime are separate, with MFA and re-authentication for financial actions and ability management.
+- Every customer query is scoped by the authenticated identity's `account_id`, not by a request-body value.
+- Policies check both ability and record ownership; knowing an ID does not grant access.
+- Abilities are separated for service management, forms, banks, top-up review, order viewing, service operations, users, audit, and sensitive documents.
+- New staff do not receive sensitive abilities by default.
+- Financial and operational actions record actor, timestamp, reason, and correlation ID.
+- Secrets live in the environment's secret store and are not stored in the repository or in plaintext in the database.
+- The API applies rate limits and content type/size validation; files are scanned server-side.
+- CORS uses an explicit allowlist; cookies use `Secure`, `HttpOnly`, and `SameSite` as appropriate to the client; CSP, HSTS, and other security headers are applied at the HTTP layer.
+- Audit and ledger are protected from UPDATE/DELETE by application constraints, database rules, and limited runtime privileges.
 
-## 12. الأحداث والمهام والتكاملات
+## 12. Events, Jobs, and Integrations
 
-أحداث المجال تسمي واقعة مكتملة مثل:
+Domain events name a completed fact, such as:
 
 ```text
 TopUpApproved
@@ -679,68 +679,68 @@ CustomerActionRequested
 ExecutionCompleted
 ```
 
-ينشأ إشعار in-app داخل معاملة العملية، ويكتب حدث القنوات الخارجية المطلوبة إلى Outbox في المعاملة نفسها. يحتوي سجل Outbox على `available_at`, `locked_at`, `locked_by`, `lock_token`, `lease_expires_at`, `attempts`, `delivered_at`, `deduplication_key` وpayload version. يطالب العامل بدفعة عبر `FOR UPDATE SKIP LOCKED` أو آلية مكافئة ويولد token جديدًا لكل lease. لا يقبل `MarkDelivered` أو `MarkFailed` إلا `(id, worker_id, lock_token)` الحالي؛ لذلك لا يستطيع العامل القديم اعتماد نتيجة بعد إعادة المطالبة. الحد الابتدائي خمس محاولات، ثم dead-letter مع replay يدوي مدقق.
+An in-app notification is created inside the business transaction, and an event for required external channels is written to the Outbox in the same transaction. An Outbox record contains `available_at`, `locked_at`, `locked_by`, `lock_token`, `lease_expires_at`, `attempts`, `delivered_at`, `deduplication_key`, and a payload version. A worker claims a batch through `FOR UPDATE SKIP LOCKED` or an equivalent mechanism and generates a new token for every lease. `MarkDelivered` or `MarkFailed` is accepted only for the current `(id, worker_id, lock_token)`, so an old worker cannot acknowledge a result after the record has been reclaimed. The initial limit is five attempts, followed by dead-letter handling with audited manual replay.
 
-التسليم **at-least-once**؛ لا ندعي exactly-once مع مزود خارجي. يمنع deduplication تكرار الأثر الذي نستطيع التحكم به، ويحمل الطلب الخارجي مفتاح idempotency إن دعمه المزود. wake-up للعامل يحدث بعد commit، وتبقى polling recovery وسيلة الاستعادة إذا ضاعت إشارة wake-up.
+Delivery is **at-least-once**; the platform does not claim exactly-once delivery with an external provider. Deduplication prevents repeated effects under platform control, and the external request carries an idempotency key when the provider supports it. Worker wake-up occurs after commit, while polling recovery remains the recovery mechanism if the wake-up signal is lost.
 
-`Integrations` ينفذ عقود القنوات الخارجية. فشل القناة لا يتراجع عن الخصم أو إكمال العملية. رابط WhatsApp للاستفسار يولد من إعداد معتمد ولا يستدعي أي أمر شراء.
+`Integrations` implements external channel contracts. A channel failure does not roll back debit or execution completion. The WhatsApp inquiry link is generated from approved configuration and never invokes a purchase command.
 
-تستخدم Queue للأعمال التي يمكن إعادتها، مثل إرسال إشعار أو فحص ملف أو بناء تقرير. لا تستخدم Queue لتنفيذ الخصم وإنشاء الطلب لأنهما يجب أن يكونا ذريين ومتزامنين مع رد الإرسال.
+Queue is used for retryable work such as sending a notification, scanning a file, or building a report. Queue is not used for wallet debit and Order creation because those operations must remain atomic and synchronous with the submission response.
 
-## 13. الترجمة والأخطاء وتجربة الاستخدام
+## 13. Localization, Errors, and User Experience
 
-- `en` اللغة الافتراضية و`ar` ثانوية مع RTL.
-- النصوص البشرية في ملفات ترجمة الحزمة؛ المحتوى الإداري المترجم يخزن بحقول أو JSON محدد السياسة.
-- الأخطاء الداخلية لها codes ثابتة مثل `wallet.insufficient_balance` و`service.price_changed` و`traveler.passport_conflict` و`top_up.reference_used`.
-- Web يعرض رسالة قابلة للتصرف؛ API يعيد code نفسه مع ترجمة مناسبة.
-- الواجهة تعرض السعر والمتطلبات والمسافر وحالة الدفع وحالة التنفيذ والإجراء المطلوب بوضوح.
-- لا تعرض تفاصيل داخلية أو هوية حساب آخر في الأخطاء.
+- `en` is the default language and `ar` is secondary with RTL.
+- Human-facing strings live in package translation files; localized admin-managed content is stored in fields or JSON according to the adopted policy.
+- Internal errors have stable codes such as `wallet.insufficient_balance`, `service.price_changed`, `traveler.passport_conflict`, and `top_up.reference_used`.
+- Web displays an actionable message; API returns the same code with an appropriate localized message.
+- The interface clearly displays price, requirements, traveler, payment state, fulfillment state, and required customer action.
+- Errors never expose internal details or the identity of another account.
 
-## 14. الاختبارات وبوابات الجودة
+## 14. Testing and Quality Gates
 
-| المستوى | ما يثبته |
+| Level | What it proves |
 |---|---|
-| Unit داخل الحزمة | التطبيع وMoney وآلات الحالات والتحقق من schema |
-| Feature داخل الحزمة | Actions وQueries وPolicies وقيود Eloquent |
-| PostgreSQL Integration | locks وuniqueness وrollback وconcurrency وappend-only |
-| API Contract | تطابق OpenAPI والمصادقة والأخطاء والـidempotency |
-| Web/Admin Feature | Form Requests وLivewire وFilament والصلاحيات |
-| Browser E2E | رحلة العميل والإدارة في القسمين 52 و63 وEN/AR/RTL |
-| Architecture | اتجاه الاعتمادات وملكية الجداول ومنع استيراد presentations |
-| Security | حسابان وموظف محدود وملفات خاصة وmass assignment وrate limit |
+| Unit inside package | normalization, Money, state machines, schema validation |
+| Feature inside package | Actions, Queries, Policies, Eloquent constraints |
+| PostgreSQL Integration | locks, uniqueness, rollback, concurrency, append-only |
+| API Contract | OpenAPI alignment, authentication, errors, idempotency |
+| Web/Admin Feature | Form Requests, Livewire, Filament, authorization |
+| Browser E2E | customer/admin journeys in sections 52 and 63, EN/AR/RTL |
+| Architecture | dependency direction, table ownership, prevention of presentation imports |
+| Security | two accounts, limited staff, private files, mass assignment, rate limiting |
 
-اختبارات المحفظة والشحن والشراء تعمل على PostgreSQL باسم ينتهي بـ`_testing`؛ SQLite لا يثبت سلوك الأقفال والتزامن المطلوب. قبل التشغيل يفشل guard إذا كان اسم القاعدة أو host أو environment إنتاجيًا، ويتحقق من driver وإصدار PostgreSQL. يمنح كل process متوازٍ قاعدة أو schema اختبار معزولة باسم محسوب وآمن.
+Wallet, top-up, and purchasing tests run against PostgreSQL using a database name ending in `_testing`; SQLite does not prove the required locking and concurrency behavior. Before execution, a guard fails if the database name, host, or environment appears production-like, and verifies the driver and PostgreSQL version. Every parallel process gets an isolated database or schema with a computed safe name.
 
-اختبارات التزامن تستخدم عمليتين أو اتصالين حقيقيين خارج transaction التي يلف بها test runner الحالة عادة. تشمل اختبارات failure injection الفشل بعد الخصم وبعد Order وقبل Execution، وتثبت التراجع الكامل. وتختبر القيود وtriggers باستعلام SQL مباشر، إلى جانب اختبار Eloquent.
+Concurrency tests use two real processes or connections outside the transaction normally wrapped around test-runner state. Failure-injection tests include failure after debit, after Order creation, and before Execution creation, and prove complete rollback. Constraints and triggers are tested with direct SQL in addition to Eloquent tests.
 
-تغطي اختبارات المتصفح keyboard navigation وfocus والأسماء الدلالية والتباين، إضافة إلى EN وAR/RTL. تحدد budgets لزمن صفحات الخدمات والحساب ولوحة المراجعة ولزمن معاملة الشراء، وتقاس ببيانات معلومة بدل وصف «سريع» فقط.
+Browser tests cover keyboard navigation, focus, semantic names, and contrast, in addition to EN and AR/RTL. Budgets are defined for service-page latency, account-page latency, review-panel latency, and purchase-transaction latency, and are measured against known data instead of relying on a vague "fast" requirement.
 
-أوامر التحقق النهائية تُحدد عند إنشاء التطبيق، ويجب أن تشمل على الأقل formatter وstatic analysis وComposer audit واختبارات جميع الحزم وbuild الواجهة. لا يكفي تشغيل اختبارات الجذر إن لم يكتشف tests داخل `packages/Rehla/*`.
+Final verification commands are defined when the application is created and must include at least a formatter, static analysis, Composer audit, tests for all packages, and frontend build. Running root tests alone is not sufficient if tests inside `packages/Rehla/*` are not discovered.
 
-### عقد مؤشرات المنتج
+### Product Metrics Contract
 
-ينشئ `Reporting` عقود القراءة والنماذج الدنيا قبل بناء Admin Overview. لكل مؤشر تعريف زمني وtimezone ومصدر وnumerator/denominator عندما يكون نسبة:
+`Reporting` creates the minimum read contracts and models before Admin Overview is built. Every metric has a time definition, timezone, source, and numerator/denominator when it is a ratio:
 
-| المؤشر | المصدر والتعريف الأولي |
+| Metric | Source and initial definition |
 |---|---|
-| المستخدمون المسجلون | عدد Identity accounts المنشأة في الفترة |
-| ملفات المسافرين | عدد Travelers المنشأة، مع تمييز العدد الحالي عن الإنشاءات |
-| حجم الطلبات | عدد Orders المدفوعة ومجموع قيمتها كمؤشرين منفصلين |
-| اكتمال طلبات الشحن | الطلبات ذات قرار نهائي ÷ الطلبات المقدمة في cohort محدد |
-| زمن مراجعة التحويل | `decision_at - submitted_at` للطلبات ذات القرار |
-| نسبة القبول/الرفض | approved أو rejected ÷ الطلبات ذات القرار |
-| الطلبات حسب الخدمة | Orders مجمعة حسب service snapshot/id المستقر |
-| زمن تنفيذ الخدمة | `completed_at - received_at` للتنفيذ المكتمل |
-| حجم مطلوبات العميل | عدد executions التي دخلت `action_required` وعدد الوقائع، كلاهما واضح |
-| نسبة الطلبات المكتملة | executions completed ÷ eligible executions في cohort محدد |
-| إعادة استعمال المسافر | المسافرون المستخدمون في أكثر من Order ÷ المسافرين المستخدمين |
-| تكرار العميل/الاحتفاظ | حسابات ذات Order لاحق ضمن نافذة متفق عليها ÷ cohort المشترين |
+| Registered users | Number of Identity accounts created during the period |
+| Traveler profiles | Number of Travelers created, distinguishing current count from new creations |
+| Order volume | Number of paid Orders and total value as two separate metrics |
+| Top-up completion | Requests with a final decision ÷ requests submitted in a defined cohort |
+| Transfer review time | `decision_at - submitted_at` for requests with a decision |
+| Approval/rejection ratio | approved or rejected ÷ requests with a decision |
+| Orders by service | Orders grouped by service snapshot/stable ID |
+| Service fulfillment time | `completed_at - received_at` for completed executions |
+| Customer-action volume | Number of executions that entered `action_required` and number of such events, both explicitly defined |
+| Completed-order ratio | completed executions ÷ eligible executions in a defined cohort |
+| Traveler reuse | travelers used in more than one Order ÷ travelers used in any Order |
+| Repeat customer/retention | accounts with a later Order within an agreed window ÷ buyer cohort |
 
-لا يخلط dashboard event time بوقت تشغيل التقرير، ويعرض timezone والفترة وتعريف metric. fixtures ثابتة تثبت كل حساب وتمنع تغير الدلالة بصمت.
+The dashboard does not mix event time with report-run time and displays timezone, period, and metric definition. Fixed fixtures prove every calculation and prevent semantic drift.
 
-## 15. التشغيل والمراقبة
+## 15. Operations and Observability
 
-الوحدات التشغيلية الأولية:
+Initial runtime units:
 
 ```text
 Web/PHP application
@@ -751,136 +751,136 @@ Private object storage
 Public asset storage/CDN
 ```
 
-- طلبات HTTP والمهام تحمل trace/correlation ID.
-- تسجل مدة مراجعة TopUp ومدة Fulfillment وعمق Outbox/Queue وفشل التسليم وتعارضات المعاملات.
-- alerts على فشل تسوية المحفظة، تراكم Outbox، فشل متكرر للمهام، وزيادة 5xx.
-- النسخ الاحتياطية مشفرة، والاستعادة تختبر دوريًا.
-- migrations تتبع expand → migrate/backfill → contract، ولا تعتمد نسخة تطبيق على عمود محذوف أثناء النشر.
-- Horizon أو Redis يضافان عند حاجة تشغيلية؛ Database Queue مقبول للبداية إن حقق الحمل والقياس.
-- كل بيئة تنشر artifact غير قابل للتغيير مبنيًا مرة واحدة. الترتيب: pre-deploy checks، expand migrations، نشر web، graceful restart للworkers، تشغيل backfill، post-deploy smoke، ثم contract migration في إصدار لاحق.
-- `/up` يثبت حياة التطبيق، وreadiness يختبر الاعتمادات اللازمة لاستقبال الحركة دون كشف الأسرار. scheduler يعمل singleton بقفل موزع، و`retry_after` أكبر من worker timeout بهامش موثق.
-- تحدد S1 قيم RPO/RTO المقبولة. تمرين الاستعادة يعيد PostgreSQL وprivate blobs إلى نقطة متناسقة ويتحقق من checksum وروابط المستندات.
-- rollback يعيد artifact أو يعطل feature flag ولا يعكس migration مدمرة بعد تشغيل نسخة جديدة.
+- HTTP requests and jobs carry trace/correlation IDs.
+- The system records TopUp review duration, Fulfillment duration, Outbox/Queue depth, delivery failures, and transaction conflicts.
+- Alerts cover wallet reconciliation failure, Outbox backlog, repeated job failure, and increased 5xx responses.
+- Backups are encrypted, and restore is tested periodically.
+- Migrations follow expand → migrate/backfill → contract, and no application version depends on a column that is removed during the same deployment.
+- Horizon or Redis is added only for an operational need; Database Queue is acceptable initially if it satisfies load and measurement requirements.
+- Every environment deploys an immutable artifact built once. Order: pre-deploy checks, expand migrations, deploy web, graceful worker restart, run backfill, post-deploy smoke, then contract migration in a later release.
+- `/up` proves application liveness, and readiness checks dependencies required to accept traffic without exposing secrets. The scheduler runs as a singleton with a distributed lock, and `retry_after` is greater than worker timeout by a documented margin.
+- S1 defines acceptable RPO/RTO values. A restore exercise restores PostgreSQL and private blobs to a consistent point and verifies checksum and document links.
+- Rollback restores an artifact or disables a feature flag and does not reverse a destructive migration after new code has already used it.
 
-توجد قائمة مقروءة آليًا لملكية الجداول واعتماد migrations عند التنفيذ. يفحص CI: عدم امتلاك حزمتين الجدول نفسه، وترتيب foreign keys، وfresh migrate، والترقية من آخر إصدار مدعوم. تعديل جدول حزمة أخرى يحتاج migration contract معلنًا وموافقة مالك الحزمة.
+A machine-readable list of table ownership and migration dependencies exists when implementation begins. CI verifies that two packages do not own the same table, foreign-key ordering is valid, fresh migration succeeds, and upgrade from the latest supported release works. Modifying another package's table requires a declared migration contract and approval from the owning package.
 
-## 16. التوسع والاستراتيجية المستقبلية
+## 16. Expansion and Future Strategy
 
-التوسعات المذكورة في الوثيقة تدخل عبر الحدود الحالية:
+The expansions mentioned in the requirements enter through the existing boundaries:
 
-| التوسع | مكانه المتوقع |
+| Expansion | Expected location |
 |---|---|
-| خدمة أو دولة جديدة | Catalog + Forms + Fulfillment SOP، دون محفظة جديدة |
-| جنسيات إضافية | Travelers مع migration وسياسة تطبيع جديدة |
-| وسيلة تعبئة أو دفع | TopUps/Wallet عبر عقد مالي جديد وبعد تعريف التسوية |
-| مزود تأشيرات أو حكومي | Integrations adapter يستهلك عقد Fulfillment |
-| عروض وولاء | حزمة جديدة تعتمد على Catalog/Purchasing contracts دون تعديل ledger مباشرة |
-| تقييمات | حزمة مستقلة بعد دخولها النطاق |
-| دعم وCRM | حزمة Support/CRM عند وجود المتطلبات |
-| رد أموال | Refunds package بعد تعريف السياسة، ويضيف قيد Wallet جديدًا ولا يعدل القديم |
-| تقارير متقدمة | Reporting read models دون نقل ملكية البيانات المصدرية |
+| New service or country | Catalog + Forms + Fulfillment SOP, without a new wallet |
+| Additional nationalities | Travelers with migration and a new normalization policy |
+| New funding or payment method | TopUps/Wallet through a new financial contract and after reconciliation is defined |
+| Visa or government provider | Integrations adapter consuming a Fulfillment contract |
+| Promotions and loyalty | New package depending on Catalog/Purchasing contracts without directly modifying the ledger |
+| Ratings | Independent package after entering scope |
+| Support and CRM | Support/CRM package when requirements exist |
+| Refunds | Refunds package after policy definition; adds a new Wallet entry and never modifies the old one |
+| Advanced reporting | Reporting read models without moving ownership of source data |
 
-لا تنشأ حزم Cart أوInventory أوShipping أوMultiCurrency أوMarketplace أوRefunds في الإصدار الأول. يوثق الحظر في Scope architecture tests حتى لا يضيف وكيل مفاهيم تجارية غير مطلوبة.
+Cart, Inventory, Shipping, MultiCurrency, Marketplace, and Refunds packages are not created in the first release. The prohibition is documented in Scope architecture tests so that an agent does not introduce unnecessary commercial concepts.
 
-استخراج خدمة مستقلة مستقبلًا يتطلب قياسًا، عقد API/Events بإصدار، وآلية اتساق بديلة. بنية الحزم تسهل تحديد الحدود لكنها لا تجعل الاستخراج بلا تكلفة.
+Extracting an independent service in the future requires measurement, a versioned API/Events contract, and an alternative consistency mechanism. Package boundaries make the extraction boundary easier to identify, but extraction is not cost-free.
 
-## 17. الأنماط المحظورة
+## 17. Forbidden Patterns
 
-- Model observers أو global events تغيّر الرصيد أو تنشئ Order خفية.
-- `float` للأموال أو الأسعار.
-- تحديث أو حذف ledger وOrder snapshots وpublished form versions وAudit.
-- إرسال إشعار أو HTTP داخل المعاملة المالية.
-- استدعاء Models لحزمة أخرى وتعديلها.
-- منطق مجال في Controller أو Filament Resource أو Livewire component.
-- الوصول إلى ملف خاص عبر URL دائم أو public disk.
-- الثقة في `account_id` أو السعر أو الدور القادم من العميل.
-- إنشاء Order عند فتح النموذج أو رفع الملف.
-- دمج حالات TopUp وOrder وExecution.
-- إضافة حزمة عامة باسم `Helpers` أو `Common` تصبح مكانًا لكل شيء؛ `Core` يبقى صغيرًا ومستقلًا.
+- Model observers or global events that change balance or secretly create an Order.
+- `float` for money or prices.
+- Updating or deleting ledger entries, Order snapshots, published form versions, or Audit.
+- Sending a notification or HTTP request inside a financial transaction.
+- Importing another package's Models and modifying them.
+- Domain logic in a Controller, Filament Resource, or Livewire component.
+- Accessing a private file through a permanent URL or public disk.
+- Trusting `account_id`, price, or role supplied by the client.
+- Creating an Order when the form is opened or a file is uploaded.
+- Mixing TopUp, Order, and Execution statuses.
+- Adding a generic `Helpers` or `Common` package that becomes a dumping ground; `Core` remains small and independent.
 
-## 18. تتبع جميع أقسام المتطلبات إلى البنية
+## 18. Mapping All Requirement Sections to the Architecture
 
-الحالة في هذا الجدول تعني **مغطى بالتصميم**، ولا تعني منفذًا. رقم السطر يعود إلى وثيقة المفهوم.
+The status in this table means **covered by the design** and does not mean implemented. The line number refers to the concept document.
 
-| ID | الأسطر | الحزم/الواجهات المالكة | العقد أو التحقق المطلوب |
+| ID | Lines | Owning packages/interfaces | Required contract or verification |
 |---|---:|---|---|
-| R01 | 13–35 | Web, Admin وجميع حزم المجال | E2E كامل للمنصة |
-| R02 | 36–61 | Catalog, Travelers, Wallet, TopUps, Orders, Fulfillment | اختبارات فصل البيانات والحالات |
-| R03 | 62–67 | Web, Content | قبول جمهور السودان والنطاق |
-| R04 | 68–84 | Web, Api | رحلة حساب العميل كاملة |
-| R05 | 85–103 | Admin | رحلة موظف كاملة بقدرات منفصلة |
-| R06 | 104–156 | جميع الحزم المذكورة | architecture manifest وتغطية navigation |
-| R07 | 157–184 | Catalog, Web, Api | تفاصيل الخدمة والنشر والاستفسار والطلب |
-| R08 | 185–219 | Forms, Catalog, Web, Api, Admin | الأنواع11 والتحقق والعرض |
-| R09 | 220–241 | Forms, Fulfillment | Draft/Publish وimmutability وتاريخ الإصدار |
-| R10 | 242–259 | Identity, Travelers, Wallet, Web, Api | الحساب مختلف عن المسافر |
-| R11 | 260–284 | Travelers | تعدد المسافرين وحقول الإصدار الأول |
-| R12 | 285–294 | Travelers | التطبيع وunique عالمي واختبار سباق |
-| R13 | 295–304 | Travelers, Orders | تعديل المستقبل وsnapshot الماضي |
-| R14 | 305–319 | Purchasing, Orders | خدمة واحدة ومسافر واحد لكل Order |
-| R15 | 320–343 | Wallet | ledger append-only وتصحيح بقيد جديد |
-| R16 | 344–377 | TopUps, Documents, Web, Api, Admin | حد5000 قابل للإدارة ومسار التحويل |
-| R17 | 378–392 | TopUps, Documents | BankAccount وتعطيل دون محو التاريخ |
-| R18 | 393–411 | TopUps | حقول الطلب وunique للبنك/المرجع |
-| R19 | 412–437 | TopUps, Admin, Identity | مراجعة مخولة |
-| R20 | 438–457 | TopUps, Wallet, Audit, Notifications | اعتماد ذري وقيد دائن واحد |
-| R21 | 458–468 | TopUps, Audit, Notifications | رفض بسبب ودون تغيير الرصيد |
-| R22 | 469–482 | TopUps, Wallet, Purchasing | منع ربط التحويل المباشر بـOrder |
-| R23 | 483–498 | Catalog, Web, Api | صفحة/Resource تفاصيل الخدمة |
-| R24 | 499–513 | Web, Integrations | WhatsApp للاستفسار بلا أثر شراء |
-| R25 | 514–531 | Web, Api, Purchasing | فحص أولي فقط دون Order أو hold |
-| R26 | 532–547 | Travelers, Web, Api | اختيار مملوك أو إضافة مسافر |
-| R27 | 548–557 | Forms, Documents, Web, Api | النموذج المنشور دون إنشاء Order |
-| R28 | 558–571 | Purchasing, Orders | لا drafts ولا debit ولا hold |
-| R29 | 572–586 | Purchasing وكل العقود التابعة | إعادة تحقق داخل المعاملة |
-| R30 | 587–594 | Catalog, Purchasing, Web, Api | accepted price وprice_changed |
-| R31 | 595–602 | Wallet, Purchasing | قفل وقراءة رصيد لحظة الإرسال |
-| R32 | 603–618 | Purchasing, Wallet, Orders, Fulfillment | معاملة ذرية وfailure injection |
-| R33 | 619–638 | Orders | سجل تجاري ثابت وsnapshots |
-| R34 | 639–658 | Fulfillment, Forms, Documents | تنفيذ مستقل وإجابات ووثائق وتاريخ |
-| R35 | 659–672 | Orders, Fulfillment | فصل التجاري عن التشغيلي |
-| R36 | 673–690 | Fulfillment | state machine وسياسة SOP |
-| R37 | 691–710 | Fulfillment, Documents, Notifications, Web, Api | طلب فعل ورد العميل |
-| R38 | 711–734 | Orders, Fulfillment, Web, Api | read model بتفويض المستندات |
-| R39 | 735–750 | Notifications, Integrations | Outbox وقنوات وتسليم قابل للإعادة |
-| R40 | 751–774 | Admin | الأقسام14 في navigation |
-| R41 | 775–792 | Catalog, Forms, Documents, Admin | إدارة ونشر وتعطيل بلا كسر التاريخ |
-| R42 | 793–802 | Forms, Admin, Audit | PublishFormVersion وإصدار جديد فقط |
-| R43 | 803–817 | Identity, Admin | row/field authorization وleast privilege |
-| R44 | 818–841 | TopUps, Admin, Audit | واجهة اعتماد/رفض وهوية ووقت القرار |
-| R45 | 842–856 | Fulfillment, Admin, Documents, Audit | أوامر التشغيل والملاحظات والتاريخ |
-| R46 | 857–871 | Audit | سجل append-only للقرارات الحساسة |
-| R47 | 872–887 | Identity وجميع Policies | قدرات منفصلة وdeny-by-default |
-| R48 | 888–902 | Documents, Web, Api, Admin | authorized stream/URL مؤقت واختبار حسابين |
-| R49 | 903–908 | Catalog, TopUps, Documents, Web | public disk للصور والشعارات فقط |
-| R50 | 909–944 | Core, Web, Api, lang | error codes ثابتة ورسائل EN/AR |
-| R51 | 945–958 | TopUps, Orders, Fulfillment | Enums وآلات حالات مستقلة |
-| R52 | 959–1113 | Web, Api, Admin وجميع المجالات | browser/API journey من13 مرحلة |
-| R53 | 1114–1141 | Travelers, Wallet, Purchasing, Orders | طلبات أسرية مستقلة بلا Group Order |
-| R54 | 1142–1154 | Travelers, Orders | snapshot لا يتغير بتجديد الجواز |
-| R55 | 1155–1181 | Catalog, Forms, Orders, Fulfillment | السعر والإصدار التاريخيان ثابتان |
+| R01 | 13–35 | Web, Admin, and all domain packages | Full platform E2E |
+| R02 | 36–61 | Catalog, Travelers, Wallet, TopUps, Orders, Fulfillment | Data/state separation tests |
+| R03 | 62–67 | Web, Content | Sudan audience and scope acceptance |
+| R04 | 68–84 | Web, Api | Complete customer-account journey |
+| R05 | 85–103 | Admin | Complete staff journey with separate abilities |
+| R06 | 104–156 | All listed packages | architecture manifest and navigation coverage |
+| R07 | 157–184 | Catalog, Web, Api | service details, publishing, inquiry, and ordering |
+| R08 | 185–219 | Forms, Catalog, Web, Api, Admin | all 11 types, validation, and rendering |
+| R09 | 220–241 | Forms, Fulfillment | Draft/Publish, immutability, and version history |
+| R10 | 242–259 | Identity, Travelers, Wallet, Web, Api | account is distinct from traveler |
+| R11 | 260–284 | Travelers | multiple travelers and first-release fields |
+| R12 | 285–294 | Travelers | normalization, global uniqueness, race test |
+| R13 | 295–304 | Travelers, Orders | future edits and historical snapshots |
+| R14 | 305–319 | Purchasing, Orders | one service and one traveler per Order |
+| R15 | 320–343 | Wallet | append-only ledger and correction through new entry |
+| R16 | 344–377 | TopUps, Documents, Web, Api, Admin | configurable 5000 minimum and transfer flow |
+| R17 | 378–392 | TopUps, Documents | BankAccount and deactivation without erasing history |
+| R18 | 393–411 | TopUps | request fields and unique bank/reference |
+| R19 | 412–437 | TopUps, Admin, Identity | authorized review |
+| R20 | 438–457 | TopUps, Wallet, Audit, Notifications | atomic approval and one credit entry |
+| R21 | 458–468 | TopUps, Audit, Notifications | rejection with reason and no balance change |
+| R22 | 469–482 | TopUps, Wallet, Purchasing | prevent direct linking of transfer to Order |
+| R23 | 483–498 | Catalog, Web, Api | service-details page/Resource |
+| R24 | 499–513 | Web, Integrations | WhatsApp inquiry without purchase side effect |
+| R25 | 514–531 | Web, Api, Purchasing | preliminary check only, without Order or hold |
+| R26 | 532–547 | Travelers, Web, Api | select owned traveler or add traveler |
+| R27 | 548–557 | Forms, Documents, Web, Api | published form without creating Order |
+| R28 | 558–571 | Purchasing, Orders | no drafts, debit, or hold |
+| R29 | 572–586 | Purchasing and all dependent contracts | revalidation inside transaction |
+| R30 | 587–594 | Catalog, Purchasing, Web, Api | accepted price and `price_changed` |
+| R31 | 595–602 | Wallet, Purchasing | lock and read balance at submission time |
+| R32 | 603–618 | Purchasing, Wallet, Orders, Fulfillment | atomic transaction and failure injection |
+| R33 | 619–638 | Orders | immutable commercial record and snapshots |
+| R34 | 639–658 | Fulfillment, Forms, Documents | independent execution, answers, documents, history |
+| R35 | 659–672 | Orders, Fulfillment | commercial/operational separation |
+| R36 | 673–690 | Fulfillment | state machine and SOP policy |
+| R37 | 691–710 | Fulfillment, Documents, Notifications, Web, Api | customer action request and response |
+| R38 | 711–734 | Orders, Fulfillment, Web, Api | read model with document authorization |
+| R39 | 735–750 | Notifications, Integrations | Outbox, channels, retryable delivery |
+| R40 | 751–774 | Admin | 14 navigation sections |
+| R41 | 775–792 | Catalog, Forms, Documents, Admin | manage, publish, deactivate without breaking history |
+| R42 | 793–802 | Forms, Admin, Audit | PublishFormVersion and new version only |
+| R43 | 803–817 | Identity, Admin | row/field authorization and least privilege |
+| R44 | 818–841 | TopUps, Admin, Audit | approve/reject interface, actor, decision time |
+| R45 | 842–856 | Fulfillment, Admin, Documents, Audit | operational commands, notes, and history |
+| R46 | 857–871 | Audit | append-only record of sensitive decisions |
+| R47 | 872–887 | Identity and all Policies | separate abilities and deny-by-default |
+| R48 | 888–902 | Documents, Web, Api, Admin | authorized stream/temporary URL and two-account test |
+| R49 | 903–908 | Catalog, TopUps, Documents, Web | public disk only for images/logos |
+| R50 | 909–944 | Core, Web, Api, lang | stable error codes and EN/AR messages |
+| R51 | 945–958 | TopUps, Orders, Fulfillment | separate Enums and state machines |
+| R52 | 959–1113 | Web, Api, Admin, and all domains | 13-stage browser/API journey |
+| R53 | 1114–1141 | Travelers, Wallet, Purchasing, Orders | independent family orders without Group Order |
+| R54 | 1142–1154 | Travelers, Orders | snapshot unchanged by passport renewal |
+| R55 | 1155–1181 | Catalog, Forms, Orders, Fulfillment | historical price and version remain fixed |
 | R56 | 1182–1187 | TopUps | unique normalized bank/reference |
-| R57 | 1188–1199 | TopUps, Wallet | replay/concurrent approval يعطي قيدًا واحدًا |
-| R58 | 1200–1205 | Purchasing | scoped idempotency key وfingerprint |
-| R59 | 1206–1211 | Purchasing, Wallet | عمليتا شراء متزامنتان ورصيد لواحدة |
-| R60 | 1212–1231 | Architecture tests | منع حزم ومفاهيم خارج النطاق |
-| R61 | 1232–1262 | Web, Api, Documents, Audit | UX وsecurity وaudit acceptance |
-| R62 | 1263–1281 | Reporting وكل Queries المصدرية | تعريف ومصدر واختبار كل metric |
-| R63 | 1282–1337 | EndToEnd, Web, Admin | بوابة إطلاق العميل والإدارة |
-| R64 | 1338–1356 | Contracts, Integrations وحدود الحزم | extension seams مع حفظ التاريخ |
-| R65 | 1357–1377 | Catalog, Travelers, Wallet, Orders, Fulfillment | سلامة المسار الكامل |
+| R57 | 1188–1199 | TopUps, Wallet | replay/concurrent approval produces one entry |
+| R58 | 1200–1205 | Purchasing | scoped idempotency key and fingerprint |
+| R59 | 1206–1211 | Purchasing, Wallet | two concurrent purchases with balance sufficient for one |
+| R60 | 1212–1231 | Architecture tests | forbid out-of-scope packages and concepts |
+| R61 | 1232–1262 | Web, Api, Documents, Audit | UX, security, and audit acceptance |
+| R62 | 1263–1281 | Reporting and all source Queries | definition, source, and test for every metric |
+| R63 | 1282–1337 | EndToEnd, Web, Admin | customer/admin release gate |
+| R64 | 1338–1356 | Contracts, Integrations, and package boundaries | extension seams while preserving history |
+| R65 | 1357–1377 | Catalog, Travelers, Wallet, Orders, Fulfillment | integrity of the complete path |
 
-النتيجة: **65/65 قسمًا ومقدمة المشروع معيّنة إلى البنية**. الصف قد يحتوي عدة متطلبات ذرية؛ يفكك سجل التنفيذ القوائم إلى acceptance IDs فرعية قبل وصفها بالمكتملة، خصوصًا R08 وR17 وR18 وR33 وR34 وR40 وR43 وR47 وR62. لا يغلق المتطلب بمجرد وجود مجلد يحمل اسمه.
+Result: **65/65 sections and the project introduction are mapped to the architecture**. A row may contain multiple atomic requirements; the implementation register breaks lists into sub-acceptance IDs before describing them as complete, especially R08, R17, R18, R33, R34, R40, R43, R47, and R62. A requirement is not closed merely because a folder with its name exists.
 
-## 19. شروط قبول المعمارية
+## 19. Architecture Acceptance Criteria
 
-تعد البنية مطبقة عندما:
+The architecture is considered implemented when:
 
-1. تكون الحزم المدرجة موجودة فقط بقدر ما يحتاجه الإصدار الجاري، وبملكية واعتماد موثقين.
-2. تمر اختبارات Architecture دون cycles أو imports محظورة.
-3. تمر عقود المحفظة والشحن والشراء على PostgreSQL بما فيها concurrency وfailure injection.
-4. تستدعي Web وAPI وAdmin الأوامر نفسها ولا تكرر قواعد الأعمال.
-5. لا يوجد URL دائم لمستند خاص، وتثبت اختبارات حسابين وموظف محدود العزل.
-6. يثبت OpenAPI وHTTP tests عقد API v1.
-7. تثبت اختبارات المتصفح رحلة العميل والإدارة وتعريب/RTL الواجهات المعنية.
-8. يرتبط كل R01–R65 بدليل تنفيذ فعلي أو قرار نطاق موثق.
+1. The listed packages exist only to the extent required by the current release, with documented ownership and dependencies.
+2. Architecture tests pass without cycles or forbidden imports.
+3. Wallet, top-up, and purchasing contracts pass on PostgreSQL, including concurrency and failure injection.
+4. Web, API, and Admin call the same commands and do not duplicate business rules.
+5. No private document has a permanent URL, and two-account plus limited-staff tests prove isolation.
+6. OpenAPI and HTTP tests prove the API v1 contract.
+7. Browser tests prove the customer and admin journeys and the required localization/RTL behavior.
+8. Every R01–R65 requirement is linked to actual implementation evidence or a documented scope decision.
