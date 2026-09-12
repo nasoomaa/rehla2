@@ -73,9 +73,9 @@ S4A وS4B وS4C متوازية بعد S3. يمكن بدء S6A بالتوازي �
 
 **السياق:** كل المسارات تحتاج هوية وفاعلًا وصلاحية وتدقيقًا، وCore موجود ولا يعتمد على حزم رحلة.
 
-**العمل:** users/staff/roles/abilities، customer/admin sessions، MFA للموظف الحساس، actor context، Audit append-only، وواجهات التسجيل الذري.
+**العمل:** users/staff/roles/abilities، customer/admin sessions، MFA للموظف الحساس، actor context، Audit append-only، ومنفذا `RegistrationWalletInitializer` و`RegistrationNotificationRecorder` اللذان تملكهما Identity. يستدعيهما `RegisterCustomer` synchronously مع Audit داخل معاملة واحدة؛ event بعد commit للتحليلات فقط.
 
-**التحقق:** deny-by-default، موظف محدود، حسابان معزولان، Admin guard مستقل، وAudit لا يقبل UPDATE/DELETE حتى عبر SQL مباشر.
+**التحقق:** deny-by-default، موظف محدود، حسابان معزولان، Admin guard مستقل، وAudit لا يقبل UPDATE/DELETE حتى عبر SQL مباشر، وفشل أي منفذ يرجع سجل المستخدم.
 
 **التراجع:** migrations عكسية في بيئة التطوير فقط؛ لا حذف Audit بعد وجود بيانات حقيقية.
 
@@ -103,7 +103,7 @@ S4A وS4B وS4C متوازية بعد S3. يمكن بدء S6A بالتوازي �
 
 **السياق:** TopUps وPurchasing وFulfillment تحتاج Outbox ذريًا قبل workers والقنوات الخارجية.
 
-**العمل:** Outbox schema وappend contract وpayload versions وdedupe key وclaim/lease fields وin-app notification model. لا تنفذ adapters الخارجية بعد.
+**العمل:** Outbox schema وappend contract وpayload versions وdedupe key وclaim/lease fields وin-app notification model، وتنفيذ Notifications لمنفذ `RegistrationNotificationRecorder`. لا تنفذ adapters الخارجية بعد.
 
 **التحقق:** الكتابة تنضم إلى transaction المستدعي؛ rollback يزيل Outbox؛ unique dedupe؛ claim بعمليتين؛ recovery بعد lease.
 
@@ -113,7 +113,7 @@ S4A وS4B وS4C متوازية بعد S3. يمكن بدء S6A بالتوازي �
 
 **السياق:** الخدمة وأسعارها ومتطلباتها ونموذجها المنشور أساس بداية الشراء، وDocuments/Audit متاحان.
 
-**العمل:** Service lifecycle وprice history وrequirements/media والنشر والتعطيل والترتيب.
+**العمل:** Service lifecycle وprice history وrequirements/media والنشر والتعطيل والترتيب، وdraft/published immutable fulfillment-policy versions وعقد قراءتها العام.
 
 **التحقق:** تعطيل خدمة لا يحذف تاريخها، والسعر authoritative وله history، وmedia تستخدم Documents contract.
 
@@ -123,7 +123,7 @@ S4A وS4B وS4C متوازية بعد S3. يمكن بدء S6A بالتوازي �
 
 **السياق:** Catalog موجود، وكل نموذج وإصداراته مرتبطان بخدمة يملكها Catalog.
 
-**العمل:** form drafts وimmutable versions وschema للأنواع11 وخصائص الحقول والنشر.
+**العمل:** form drafts وimmutable versions وschema للأنواع11 وخصائص الحقول والنشر. تتحقق Forms من شكل opaque `document_id` فقط وتعيد التصنيفات المطلوبة؛ لا تقرأ Documents.
 
 **التحقق:** نشر إصدار ثم منع UPDATE/DELETE عبر SQL، إصدار أحدث لا يغير القديم، والتحقق من جميع الأنواع والخصائص.
 
@@ -143,7 +143,7 @@ S4A وS4B وS4C متوازية بعد S3. يمكن بدء S6A بالتوازي �
 
 **السياق:** الرصيد والقيد المالي أهم invariant، ويعتمد Wallet على Identity وAudit الموجودين.
 
-**العمل:** Wallet وinteger Money وappend-only ledger وcredit/debit والتسوية.
+**العمل:** Wallet وinteger Money وappend-only ledger وcredit/debit والتسوية، وتنفيذ `RegistrationWalletInitializer` وربطه في Wallet Service Provider.
 
 **التحقق:** خصمان متزامنان ورصيد لواحد، ledger SQL immutability، correction، reconciliation وfailure injection على PostgreSQL باتصالين.
 
@@ -193,7 +193,7 @@ S4A وS4B وS4C متوازية بعد S3. يمكن بدء S6A بالتوازي �
 
 **السياق:** جميع المشاركين الفعليين موجودون الآن. `Purchasing` هو المالك الوحيد للمعاملة المشتركة.
 
-**العمل:** يبدأ transaction، ثم INSERT/lock لسجل idempotency، ثم إعادة تحقق وقفل وترتيب ثابت، Debit، Order، Execution، Audit، Outbox، وحفظ النتيجة قبل commit. كل المشاركين يستعملون الاتصال نفسه ولا يعملون commit أو IO خارجي.
+**العمل:** يبدأ transaction، ثم INSERT/lock لسجل idempotency، ثم إعادة تحقق وقفل وترتيب ثابت. تتحقق Forms من شكل الإجابات، ثم تستدعي Purchasing `OwnedDocuments::assertCleanOwned` للملكية والتصنيف و`clean`، ثم Debit وOrder و`ExecutionCreator` وAudit وOutbox وحفظ النتيجة قبل commit. كل المشاركين يستعملون الاتصال نفسه ولا يعملون commit أو IO خارجي.
 
 **التحقق:** price/form changed، ownership/files/balance، same-key same/different payload، concurrent submission، concurrent insufficient balance، failure بعد debit وبعد Order وقبل Execution، snapshots، وعائلة بعدة Orders مستقلة.
 

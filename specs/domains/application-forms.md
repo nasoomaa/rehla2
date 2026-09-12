@@ -90,13 +90,14 @@ The Application Forms domain owns dynamic service application form definitions, 
 
 ### 6.4 ValidateFormSubmission (System Query)
 - **Preconditions**: Form version exists and is active.
-- **Inputs**: Form Version ID, Customer Answers Payload (key-value map of field responses and document IDs).
-- **Expected Outcome**: Successful validation confirmation or structured error list.
+- **Inputs**: Form Version ID and Customer Answers Payload (key-value map). File fields contain an opaque `document_id`, or the schema-defined list of opaque IDs, as their value.
+- **Contract**: `FormSubmissionValidator::validate(string $formVersionId, array $answers): ValidatedSubmission` performs shape validation only and does not query the Documents domain.
+- **Expected Outcome**: A `ValidatedSubmission` containing normalized scalar answers plus extracted document references and required classifications, or a structured schema error list.
 - **Observable Behavior**:
   - Rejects missing required fields.
   - Rejects unrecognized field keys not defined in schema.
   - Rejects type mismatches (e.g. non-date in date field, non-numeric in number field).
-  - Validates document IDs (verifies files exist, are marked `clean`, and belong to current customer).
+  - For `file_upload` and `image_upload`, validates only the answer cardinality and opaque-ID syntax declared by the captured schema.
 
 ---
 
@@ -111,7 +112,7 @@ The Application Forms domain owns dynamic service application form definitions, 
 ## 8. Edge Cases
 
 - **Customer Submits with Stale Version**: A customer loads Version 3 and takes 20 minutes to fill it out. During that time, staff publishes Version 4 (e.g. adding a new mandatory field). Upon clicking submit, the system detects `form_version_id` mismatch, halts checkout, and instructs the user to refresh and complete the updated requirements.
-- **File Upload Verification**: If a field requires an image or file upload, the customer must submit a valid `document_id` corresponding to a file previously uploaded, scanned, and verified clean under their account.
+- **File Upload Verification**: Forms accepts only the opaque reference shape. After shape validation, Purchasing asks Documents to verify existence, ownership, classification, scan state, and attachment eligibility inside checkout.
 
 ---
 
@@ -119,13 +120,13 @@ The Application Forms domain owns dynamic service application form definitions, 
 
 - **Schema Validation Errors**: Returns HTTP 422 with structured errors detailing the field key, failed validation rule, and localized human-readable message.
 - **Stale Form Version**: Returns HTTP 409 Conflict with code `form.version_outdated` and the ID of the new authoritative version.
-- **Unverified Document Reference**: Returns HTTP 422 with code `form.invalid_document_attachment`.
+- **Malformed Document Answer**: Returns HTTP 422 with a field-scoped form schema error. A syntactically valid reference that fails existence, ownership, classification, scan, or attachment checks returns `document.invalid_attachment` from the purchasing/document boundary.
 
 ---
 
 ## 10. Cross-Domain Interactions
 
 - **Service Catalog Domain**: Services require an active published Form Version to be published.
-- **Documents Domain**: Application form file/image fields reference clean document IDs managed by the Documents domain.
-- **Purchasing & Orders Domain**: `SubmitOrder` validates customer answers against the active `FormVersion` before executing the payment transaction.
+- **Documents Domain**: Forms treats file/image values as opaque references and has no dependency on Documents.
+- **Purchasing & Orders Domain**: `SubmitOrder` validates answers against the captured `FormVersion`, then passes extracted references and classifications to Documents before any debit.
 - **Fulfillment Domain**: Operational execution views display customer answers formatted against the historical `FormVersion` schema.

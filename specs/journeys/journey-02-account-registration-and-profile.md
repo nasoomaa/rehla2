@@ -51,7 +51,7 @@ The user clicks **"Sign Up"** on the Rehla header or navigates to `/register`.
    - Password is encrypted using Argon2id / bcrypt.
    - User record is inserted into `users` table with status `active`.
 6. **System initializes default wallet**:
-   - A synchronous in-process `CustomerRegistered` handler provisions the empty wallet inside the registration transaction; failure rolls back the user record.
+   - Identity calls its `RegistrationWalletInitializer` port synchronously; the Wallet adapter provisions the empty wallet inside the registration transaction, and failure rolls back the user record.
    - Currency is set to `SDG`.
    - `current_balance_minor` is initialized to `0`.
    - Status is set to `active`.
@@ -59,7 +59,7 @@ The user clicks **"Sign Up"** on the Rehla header or navigates to `/register`.
    - For Web: Creates an authenticated HTTP session cookie.
    - For API: Generates initial Sanctum Bearer token.
 8. **System records welcome notification**:
-   - Creates the welcome in-app notification atomically and inserts a `CustomerRegistered` outbox message only for enabled asynchronous external channels.
+   - Identity calls its `RegistrationNotificationRecorder` port synchronously; the Notifications adapter creates the welcome in-app notification atomically and inserts an external-channel Outbox message only for enabled asynchronous channels.
 9. **System commits transaction**:
    - PostgreSQL transaction commits cleanly.
 10. **System redirects to customer account dashboard**:

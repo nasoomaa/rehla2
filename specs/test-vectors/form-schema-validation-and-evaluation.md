@@ -12,7 +12,7 @@ This suite proves the deterministic validation of customer submitted answers aga
 2. If `required: false` and value is omitted or null, validation succeeds.
 3. Every field answer must match its declared schema type.
 4. Option-based fields (`dropdown`, `radio`) must only accept values declared in `options`.
-5. Document upload fields (`file_upload`, `image_upload`) must supply a valid `document_id` belonging to the customer in `clean` status.
+5. Document upload fields (`file_upload`, `image_upload`) validate only opaque `document_id` shape and cardinality. Documents/Purchasing separately validate existence, ownership, classification, and `clean` status.
 6. Undeclared fields (phantom fields not in the published schema) are rejected.
 
 ---
@@ -40,10 +40,10 @@ This suite proves the deterministic validation of customer submitted answers aga
 | **FRM-17** | `radio` | `options: ["male", "female"]` | `"unspecified"` | Invalid | `form.invalid_option_selected` |
 | **FRM-18** | `checkbox` | `required: true (agreement)` | `true` (boolean) | Valid | Mandatory agreement accepted |
 | **FRM-19** | `checkbox` | `required: true (agreement)` | `false` | Invalid | `form.mandatory_agreement_required` |
-| **FRM-20** | `file_upload` | `required: true, mime: ["application/pdf"]`| `"doc-bank-statement-pdf"` | Valid | Document exists, `clean`, owned by caller |
-| **FRM-21** | `file_upload` | `required: true` | `"doc-quarantined-file"` | Invalid | `form.document_not_clean` (Status != clean) |
-| **FRM-22** | `file_upload` | `required: true` | `"doc-other-user-file"` | Invalid | `form.document_ownership_violation` |
-| **FRM-23** | `image_upload`| `required: true, mime: ["image/jpeg", "image/png"]`| `"doc-photo-jpg"` | Valid | Image document `clean`, owned by caller |
+| **FRM-20** | `file_upload` | `required: true, mime: ["application/pdf"]`| `"doc-bank-statement-pdf"` | Valid | Opaque ID shape accepted; PDF classification is returned for Documents verification |
+| **FRM-21** | `file_upload` | `required: true` | `"doc-quarantined-file"` | Valid | Shape-only validation accepts the opaque ID; Purchasing later receives `document.invalid_attachment` |
+| **FRM-22** | `file_upload` | `required: true` | `"doc-other-user-file"` | Valid | Shape-only validation accepts the opaque ID; Documents later enforces ownership |
+| **FRM-23** | `image_upload`| `required: true, mime: ["image/jpeg", "image/png"]`| `"doc-photo-jpg"` | Valid | Opaque ID shape accepted; image classification is returned for Documents verification |
 | **FRM-24** | Undeclared | Schema contains fields A, B | Payload contains fields A, B, and `phantom_c` | Invalid | `form.undeclared_field_rejected` |
 
 ---

@@ -28,13 +28,14 @@
 - Create: `packages/Rehla/Identity/src/Data/{ActorData,ResourceRef,RegisterCustomerData,UserData}.php`
 - Create: `packages/Rehla/Identity/src/Actions/{RegisterCustomer,AssignRole,RevokeRole}.php`
 - Create: `packages/Rehla/Identity/src/Queries/{GetCurrentUser,FindCustomer}.php`
-- Create: `packages/Rehla/Identity/src/Contracts/AuthorizesActor.php`
+- Create: `packages/Rehla/Identity/src/Contracts/{AuthorizesActor,RegistrationWalletInitializer,RegistrationNotificationRecorder}.php`
 - Modify: `config/auth.php`
 - Test: `packages/Rehla/Identity/tests/Feature/IdentityTest.php`
 - Test: `packages/Rehla/Identity/tests/Integration/AuthorizationTest.php`
 
 **Interfaces:**
 - Produces: `RegisterCustomer::handle(RegisterCustomerData): UserData`; `AuthorizesActor::allows(ActorData, AbilityName, ?ResourceRef): bool`.
+- Produces: `RegistrationWalletInitializer::initialize(string $accountId): void` و`RegistrationNotificationRecorder::recordWelcome(string $accountId, string $locale, string $correlationId): void`؛ Identity يملك المنفذين وتوفر Wallet وNotifications التنفيذين.
 - Produces the exact canonical registry in `specs/cross-cutting/security-and-privacy.md`; tests reject every undeclared alias.
 
 - [ ] **Step 1: اكتب اختبارات التسجيل والمنع الافتراضي**
@@ -47,6 +48,13 @@ it('registers a customer without staff powers', function (): void {
 
     expect($user->email)->toBe('ahmed@example.test')
         ->and(app(AuthorizesActor::class)->allows($user->actor, AbilityName::TopUpsReview))->toBeFalse();
+});
+
+it('rolls registration back when a required collaborator fails', function (): void {
+    bindRegistrationPorts(wallet: succeeds(), notification: throwsException());
+
+    expect(fn () => registerCustomer())->toThrow(RuntimeException::class)
+        ->and(DB::table('users')->count())->toBe(0);
 });
 ```
 
@@ -65,7 +73,19 @@ interface AuthorizesActor
 {
     public function allows(ActorData $actor, AbilityName $ability, ?ResourceRef $resource = null): bool;
 }
+
+interface RegistrationWalletInitializer
+{
+    public function initialize(string $accountId): void;
+}
+
+interface RegistrationNotificationRecorder
+{
+    public function recordWelcome(string $accountId, string $locale, string $correlationId): void;
+}
 ```
+
+ينفذ `RegisterCustomer` إدخال المستخدم ثم `AuditWriter` ثم المنفذين داخل `DB::transaction` واحدة وعلى الاتصال نفسه. لا يلتقط استثناءات المشاركين ولا يسمح لهم بـcommit مستقل. تستخدم اختبارات Task 1 fakes للمنفذين؛ يبقى مسار التسجيل الفعلي fail-closed حتى تسجل Notifications ثم Wallet التنفيذين. `CustomerRegistered`، إن أضيف، يطلق بعد commit للتحليلات فقط.
 
 - [ ] **Step 4: أثبت عزل customer/admin guards وMFA policy**
 
@@ -264,6 +284,8 @@ git commit -m "feat(travelers): add owned traveler profiles and passport uniquen
 - Create: `packages/Rehla/Notifications/src/database/migrations/*_create_notification_tables.php`
 - Create: `packages/Rehla/Notifications/src/Data/OutboxMessageData.php`
 - Create: `packages/Rehla/Notifications/src/Contracts/OutboxWriter.php`
+- Create: `packages/Rehla/Notifications/src/Infrastructure/IdentityRegistrationNotificationRecorder.php`
+- Modify: `packages/Rehla/Notifications/src/Providers/NotificationsServiceProvider.php`
 - Create: `packages/Rehla/Notifications/src/Actions/{AppendOutboxMessage,ClaimOutboxBatch,MarkDelivered,MarkFailed,CreateInAppNotification,MarkNotificationRead}.php`
 - Create: `packages/Rehla/Notifications/src/Models/{OutboxMessage,Notification}.php`
 - Test: `packages/Rehla/Notifications/tests/Integration/OutboxTransactionTest.php`
@@ -273,6 +295,7 @@ git commit -m "feat(travelers): add owned traveler profiles and passport uniquen
 **Interfaces:**
 - Produces: `OutboxWriter::append(OutboxMessageData): string` يعمل على اتصال ومعاملة المستدعي.
 - Produces: `ClaimOutboxBatch::handle(int $limit, string $workerId, CarbonImmutable $now): array<OutboxEnvelope>`.
+- Implements: `Rehla\Identity\Contracts\RegistrationNotificationRecorder` عبر adapter يكتب إشعار الترحيب وOutbox القنوات المفعلة في معاملة التسجيل بلا network I/O أوcommit.
 
 - [ ] **Step 1: اكتب اختبارات المعاملة والـlease**
 
@@ -292,6 +315,13 @@ it('commits the in-app notification with its business event', function (): void 
     createBusinessEventAndNotification();
     expect(DB::table('notifications')->count())->toBe(1);
 });
+
+it('rolls registration back when recording the welcome message fails', function (): void {
+    failNextNotificationInsert();
+    expect(fn () => registerCustomer())->toThrow(QueryException::class)
+        ->and(DB::table('users')->count())->toBe(0)
+        ->and(DB::table('notifications')->count())->toBe(0);
+});
 ```
 
 - [ ] **Step 2: شغل RED**
@@ -302,7 +332,7 @@ Expected: FAIL قبل schema.
 
 - [ ] **Step 3: نفذ outbox schema وclaim**
 
-أنشئ `outbox_messages(id, event_name, aggregate_type, aggregate_id, payload_version, payload jsonb, deduplication_key unique, available_at, locked_at, locked_by, lock_token, lease_expires_at, attempts default0, delivered_at, last_error, last_trace_id, created_at)` و`notifications(id, user_id, type, payload, read_at, created_at)`. ينشأ in-app notification مع العملية، ويستخدم claim معاملة قصيرة و`FOR UPDATE SKIP LOCKED` ويولد token جديدًا عند كل claim أو استعادة lease منتهية.
+أنشئ `outbox_messages(id, event_name, aggregate_type, aggregate_id, payload_version, payload jsonb, deduplication_key unique, available_at, locked_at, locked_by, lock_token, lease_expires_at, attempts default0, delivered_at, last_error, last_trace_id, created_at)` و`notifications(id, user_id, type, payload, read_at, created_at)`. ينشأ in-app notification مع العملية، ويستخدم claim معاملة قصيرة و`FOR UPDATE SKIP LOCKED` ويولد token جديدًا عند كل claim أو استعادة lease منتهية. اربط `RegistrationNotificationRecorder` بالـadapter في `NotificationsServiceProvider`، واجعله ينضم لمعاملة Identity ولا يطلق event مطلوبًا لصحة التسجيل.
 
 - [ ] **Step 4: أثبت التنافس والاسترداد**
 

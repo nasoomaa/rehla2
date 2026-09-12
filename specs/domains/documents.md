@@ -95,7 +95,8 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
 
 ### 6.3 AttachDocumentsToEntity (System Command)
 - **Preconditions**: Called inside a parent transaction (e.g. `SubmitOrder` or `SubmitTopUp`).
-- **Inputs**: Account ID, List of Document IDs, Target Entity Type, Target Entity ID.
+- **Public Contract**: `OwnedDocuments::assertCleanOwned(array $documentIds, string $ownerId, array $requiredClassifications): array` locks and returns immutable document references; the owning workflow attaches those references to its target within the same transaction.
+- **Inputs**: Account ID, list of opaque Document IDs, required classification per reference, Target Entity Type, Target Entity ID.
 - **Expected Outcome**: Documents verified to belong to Account ID and to be in `clean` status; transitioned to `attached`.
 - **Failure Behavior**: If any document is not `clean`, does not belong to the account, or has already been attached to an incompatible record, checkout aborts with `document.invalid_attachment`.
 
@@ -142,6 +143,6 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
 ## 10. Cross-Domain Interactions
 
 - **Top-Ups Domain**: Bank transfer receipts are uploaded through this domain, verified clean, and attached to top-up requests.
-- **Application Forms Domain**: File and image field answers must supply clean document IDs.
+- **Application Forms Domain**: Declares file/image answer shapes and classifications without reading document state.
 - **Purchasing & Orders Domain**: Validates and attaches required documents atomically during order submission.
 - **Audit Domain**: Document rejections and staff accesses to private documents are recorded.

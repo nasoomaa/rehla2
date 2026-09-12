@@ -79,14 +79,14 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
   1. Begin PostgreSQL database transaction.
   2. Insert the pending idempotency attempt under unique `(account_id, idempotency_key)`, or lock/read the existing row. A matching completed fingerprint returns its response; a mismatch returns HTTP 409. The unique insert resolves the missing-row race.
   3. Lock the service and current price-version pointer. Assert active status and exact accepted price/version.
-  4. Lock the published form-version pointer. Assert the submitted form version is current and validate its answers.
-  5. Lock the published fulfillment-policy pointer and capture its immutable version.
+  4. Lock the published form-version pointer. Assert the submitted form version is current and run Forms shape validation, receiving extracted opaque document references and required classifications.
+  5. Through Catalog's `PublishedFulfillmentPolicyReader`, lock the published fulfillment-policy pointer and capture its immutable version.
   6. Lock the traveler, verify ownership, and build the immutable traveler snapshot.
-  7. Lock referenced documents in ascending opaque-ID order; verify ownership and `clean` status.
+  7. Call `OwnedDocuments::assertCleanOwned` with the extracted IDs, account ID, and required classifications; Documents locks references in ascending opaque-ID order and verifies existence, ownership, `clean` status, classification, and attachment eligibility.
   8. Lock the customer wallet and verify sufficient balance.
   9. Allocate the Order ID before the debit, then call `DebitWallet` with that Order ID as its immutable reference; obtain `ledger_entry_id`.
   10. Insert the immutable Commercial Order with service, traveler, price, form, policy, and debit snapshots; attach the documents.
-  11. Create the service execution with the captured policy version through the internal contract.
+  11. Call the Purchasing-owned `ExecutionCreator` port. Its Fulfillment implementation creates the service execution with the captured policy version inside this transaction.
   12. Insert audit, in-app notification, and required outbox records.
   13. Store the order response in the idempotency attempt and commit.
 - **Observable Behavior**: Returns HTTP 201 Created with order reference, summary, paid amount, and execution tracking ID. Customer wallet is debited; order appears in "My Orders".
@@ -139,16 +139,17 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
 - **Form Version Outdated**: HTTP 409 Conflict, code `form.version_outdated`.
 - **Fulfillment Policy Missing**: HTTP 422, code `service.fulfillment_policy_missing`.
 - **Traveler Ownership Violation**: HTTP 404 Not Found, code `traveler.not_found`.
+- **Invalid Document Attachment**: HTTP 422, code `document.invalid_attachment`; no debit, Order, or Execution is written.
 
 ---
 
 ## 10. Cross-Domain Interactions
 
 - **Service Catalog**: Authoritative pricing and availability verified.
-- **Application Forms**: Schema validation and snapshotting.
+- **Application Forms**: Shape validation and schema snapshotting; it does not authorize document state.
 - **Travelers**: Ownership validation and `TravelerSnapshot` generation.
-- **Documents**: Attachment and verification of clean status.
+- **Documents**: `OwnedDocuments::assertCleanOwned` authorizes and attaches clean owned references with required classifications.
 - **Wallet**: Atomic debiting and ledger synchronization.
-- **Fulfillment**: Spawns independent operational fulfillment record.
+- **Fulfillment**: Implements `ExecutionCreator` owned by Purchasing and spawns the independent operational record without a reverse Purchasing dependency.
 - **Notifications**: Creates the in-app confirmation atomically and queues enabled external channels through Outbox.
 - **Audit**: Log entry recorded for commercial purchase transaction.

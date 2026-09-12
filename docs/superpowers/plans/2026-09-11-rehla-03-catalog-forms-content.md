@@ -24,16 +24,17 @@
 **Files:**
 - Create: `packages/Rehla/Catalog/src/database/migrations/*_create_catalog_tables.php`
 - Create: `packages/Rehla/Catalog/src/Enums/ServiceStatus.php`
-- Create: `packages/Rehla/Catalog/src/Data/{ServiceData,ServiceQuote,ServiceSnapshot}.php`
-- Create: `packages/Rehla/Catalog/src/Actions/{CreateService,UpdateServiceContent,ChangeServicePrice,PublishService,DeactivateService,ReorderServices}.php`
-- Create: `packages/Rehla/Catalog/src/Queries/{ListPublishedServices,GetServiceDetails,GetCurrentServiceQuote}.php`
-- Create: `packages/Rehla/Catalog/src/Contracts/ServiceCatalog.php`
+- Create: `packages/Rehla/Catalog/src/Data/{ServiceData,ServiceQuote,ServiceSnapshot,FulfillmentPolicyData}.php`
+- Create: `packages/Rehla/Catalog/src/Actions/{CreateService,UpdateServiceContent,ChangeServicePrice,PublishService,DeactivateService,ReorderServices,SaveFulfillmentPolicyDraft,PublishFulfillmentPolicy}.php`
+- Create: `packages/Rehla/Catalog/src/Queries/{ListPublishedServices,GetServiceDetails,GetCurrentServiceQuote,GetPublishedFulfillmentPolicy}.php`
+- Create: `packages/Rehla/Catalog/src/Contracts/{ServiceCatalog,PublishedFulfillmentPolicyReader}.php`
 - Test: `packages/Rehla/Catalog/tests/Feature/ServiceLifecycleTest.php`
 - Test: `packages/Rehla/Catalog/tests/Integration/PriceHistoryTest.php`
 
 **Interfaces:**
 - Produces: `ServiceCatalog::currentQuote(string $serviceId): ServiceQuote`.
 - Produces `ServiceQuote(serviceId, priceMinor, currency, quoteVersion, available)` و`ServiceSnapshot(name, descriptions, expectedDuration, notes, requirements)`.
+- Produces: `PublishedFulfillmentPolicyReader::forService(string $serviceId): FulfillmentPolicyData`؛ السياسة وإصداراتها مملوكة لـCatalog ولا تعتمد Purchasing على Fulfillment لقراءتها.
 
 - [ ] **Step 1: اكتب اختبارات lifecycle والسعر**
 
@@ -70,13 +71,16 @@ service_price_history: id, service_id, price_minor, currency, version,
                        changed_by, effective_at
 service_requirements: id, service_id, text_en, text_ar, sort_order
 service_media: id, service_id, document_id, alt_en, alt_ar, sort_order
+fulfillment_policy_drafts: id, service_id unique, policy jsonb, updated_by, timestamps
+fulfillment_policy_versions: id, service_id, version, policy jsonb, checksum,
+                             published_by, published_at, created_at
 ```
 
-يفرض check أن `price_minor >= 0` و`currency='SDG'`. `ChangeServicePrice` يقفل service، يزيد `price_version`، يحدث السعر، يضيف history وAudit في معاملة واحدة.
+يفرض check أن `price_minor >= 0` و`currency='SDG'`. `ChangeServicePrice` يقفل service، يزيد `price_version`، يحدث السعر، يضيف history وAudit في معاملة واحدة. ينشر `PublishFulfillmentPolicy` نسخة immutable وفق `specs/contracts/service-fulfillment-sop.md`، ويمنع PostgreSQL UPDATE/DELETE للنسخة المنشورة.
 
 - [ ] **Step 4: أثبت النشر والتعطيل والترتيب**
 
-اختبر منع نشر خدمة بلااسمين أووصف أوrequirement أوسعر أوصورة clean/public. اختبر أن التعطيل يخفي الخدمة من listing ويترك details التاريخية متاحة للعقود الداخلية.
+اختبر منع نشر خدمة بلااسمين أووصف أوrequirement أوسعر أوصورة clean/public. اختبر أن التعطيل يخفي الخدمة من listing ويترك details التاريخية متاحة للعقود الداخلية. اختبر version/checksum وحماية policy المنشورة وبقاء Orders/Executions القديمة على النسخة الملتقطة.
 
 Run: `php artisan test packages/Rehla/Catalog/tests`
 
@@ -105,7 +109,7 @@ git commit -m "feat(catalog): add service lifecycle prices and requirements"
 
 **Interfaces:**
 - Produces: `GetPublishedForm::handle(string $serviceId): PublishedFormData`.
-- Produces: `FormSubmissionValidator::validate(string $formVersionId, array $answers, array $documentIds): ValidatedSubmission`.
+- Produces: `FormSubmissionValidator::validate(string $formVersionId, array $answers): ValidatedSubmission`؛ يعيد answers مطبعة ومراجع `document_id` opaque وتصنيفاتها المطلوبة دون استدعاء Documents.
 
 - [ ] **Step 1: اكتب data set لكل الأنواع الأحد عشر**
 
@@ -147,7 +151,7 @@ Expected: FAIL لكل الأنواع قبل التنفيذ.
 }
 ```
 
-`select` و`radio` يحتاجان options غير فارغة وفريدة، وfile/image يمران عبر `OwnedDocuments`، وبقية الأنواع تستخدم validators صريحة لا نصوص قواعد قابلة للتنفيذ من admin.
+`select` و`radio` يحتاجان options غير فارغة وفريدة. يتحقق Forms في file/image من cardinality وصيغة opaque `document_id` فقط ويستخرج purpose/mime المطلوبة في `ValidatedSubmission`؛ لا يعتمد Forms على Documents ولا يفحص الملكية أو`clean`. تستدعي Purchasing لاحقًا `OwnedDocuments::assertCleanOwned`. بقية الأنواع تستخدم validators صريحة لا نصوص قواعد قابلة للتنفيذ من admin.
 
 - [ ] **Step 4: أضف حماية PostgreSQL للمنشور**
 
@@ -224,4 +228,3 @@ Expected: PASS.
 git add packages/Rehla/Catalog packages/Rehla/Forms packages/Rehla/Content docs/requirements/rehla-phase-1-acceptance.csv
 git commit -m "feat(content): add localized public pages"
 ```
-

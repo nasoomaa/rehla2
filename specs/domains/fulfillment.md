@@ -99,7 +99,8 @@ The Fulfillment and Service Execution domain owns the operational processing lif
 
 ## 6. Commands and Actions
 
-### 6.1 CreateExecution (Internal Contract Command)
+### 6.1 CreateExecution (Purchasing Port Implementation)
+- **Boundary**: `ExecutionCreator` owned by Purchasing is implemented by `Fulfillment\Infrastructure\PurchasingExecutionCreator` and bound in `FulfillmentServiceProvider`. Purchasing does not import Fulfillment.
 - **Preconditions**: Called within the atomic `SubmitOrder` transaction by Purchasing domain.
 - **Inputs**: Order ID, Account ID, Service ID, Form Version ID, captured Fulfillment Policy Version ID, Form Answers, Document IDs.
 - **Expected Outcome**: New execution record created with initial status `received`; initial status changelog entry appended.
@@ -191,7 +192,7 @@ The Fulfillment and Service Execution domain owns the operational processing lif
 
 ## 10. Cross-Domain Interactions
 
-- **Orders & Purchasing Domain**: Orders instantiate execution records with the immutable fulfillment-policy version captured at checkout.
+- **Orders & Purchasing Domain**: Purchasing calls its own `ExecutionCreator` port; `PurchasingExecutionCreator` writes the execution using the immutable Catalog-owned policy version captured at checkout and never commits independently.
 - **Documents Domain**: Application attachments, customer response files, and final issued visas are stored and verified clean via Documents.
 - **Notifications Domain**: Every customer-visible status change creates an atomic in-app record and queues enabled external channels through Outbox.
 - **Audit Domain**: Every operational status transition, note addition, and cancellation reason is recorded.

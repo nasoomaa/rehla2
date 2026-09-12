@@ -28,11 +28,14 @@
 - Create: `packages/Rehla/Wallet/src/Data/{WalletBalance,WalletEntryData,DebitResult,CreditResult}.php`
 - Create: `packages/Rehla/Wallet/src/Contracts/{WalletReader,WalletCreditor,WalletDebitor}.php`
 - Create: `packages/Rehla/Wallet/src/Actions/{OpenWallet,CreditWallet,DebitWallet,ReverseWalletEntry}.php`
+- Create: `packages/Rehla/Wallet/src/Infrastructure/IdentityRegistrationWalletInitializer.php`
+- Modify: `packages/Rehla/Wallet/src/Providers/WalletServiceProvider.php`
 - Create: `packages/Rehla/Wallet/src/Queries/{GetWalletBalance,ListWalletEntries}.php`
 - Test: `packages/Rehla/Wallet/tests/Integration/WalletLedgerTest.php`
 - Test: `packages/Rehla/Wallet/tests/Integration/ConcurrentDebitTest.php`
 
 **Interfaces:**
+- Implements: `Rehla\Identity\Contracts\RegistrationWalletInitializer`؛ ينشئ محفظة الحساب داخل معاملة التسجيل المستدعية.
 - Produces: `WalletCreditor::credit(CreditWalletData): CreditResult`.
 - Produces: `WalletDebitor::debit(DebitWalletData): DebitResult`.
 - البيانات تشمل `accountId`, `amount: Money`, `referenceType`, `referenceId`, `idempotencyKey`.
@@ -50,6 +53,15 @@ it('derives every balance change from one immutable ledger entry', function (): 
     $entryId = DB::table('wallet_ledger_entries')->value('id');
     expect(fn () => DB::table('wallet_ledger_entries')->where('id', $entryId)->delete())
         ->toThrow(QueryException::class);
+});
+
+it('creates the account and wallet atomically during registration', function (): void {
+    $user = registerCustomer();
+    expect(DB::table('wallets')->where('account_id', $user->id)->value('balance_minor'))->toBe(0);
+
+    failNextWalletInsert();
+    expect(fn () => registerCustomer(email: 'rollback@example.test'))->toThrow(QueryException::class)
+        ->and(DB::table('users')->where('email', 'rollback@example.test')->exists())->toBeFalse();
 });
 ```
 
@@ -69,7 +81,7 @@ wallet_ledger_entries: id uuid, wallet_id, type, amount_minor bigint,
          idempotency_key, reverses_entry_id nullable, created_at
 ```
 
-أضف checks للعملة وamount الموجب وbalance غير السالب، وunique `(wallet_id,reference_type,reference_id,type)` و`(wallet_id,idempotency_key)`. يمنع trigger UPDATE وDELETE على ledger. تقفل Credit وDebit صف wallet بـ`FOR UPDATE` وتضيف ledger وتحدث balance في المعاملة الموجودة دون فتح commit مستقل.
+أضف checks للعملة وamount الموجب وbalance غير السالب، وunique `(wallet_id,reference_type,reference_id,type)` و`(wallet_id,idempotency_key)`. يمنع trigger UPDATE وDELETE على ledger. تقفل Credit وDebit صف wallet بـ`FOR UPDATE` وتضيف ledger وتحدث balance في المعاملة الموجودة دون فتح commit مستقل. يطبق `IdentityRegistrationWalletInitializer` منفذ Identity ويستخدم `OpenWallet` idempotently ثم يربطه `WalletServiceProvider`. أثبت أن فشل wallet أوnotification أوaudit يرجع المستخدم والمحفظة والإشعار معًا.
 
 - [ ] **Step 4: أثبت التزامن والـidempotency**
 

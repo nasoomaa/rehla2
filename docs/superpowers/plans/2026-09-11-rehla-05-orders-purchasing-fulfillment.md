@@ -149,6 +149,7 @@ git commit -m "feat(purchasing): define purchase contracts and idempotency"
 - Create: `packages/Rehla/Fulfillment/src/Enums/ExecutionStatus.php`
 - Create: `packages/Rehla/Fulfillment/src/Data/{ExecutionDetails,TransitionExecutionData}.php`
 - Create: `packages/Rehla/Fulfillment/src/Actions/{CreateExecution,TransitionExecution,AddInternalNote,RequestCustomerAction}.php`
+- Create: `packages/Rehla/Fulfillment/src/Infrastructure/PurchasingExecutionCreator.php`
 - Create: `packages/Rehla/Fulfillment/src/Queries/{GetOwnedExecution,GetExecutionForOperations}.php`
 - Modify: `packages/Rehla/Fulfillment/src/Providers/FulfillmentServiceProvider.php`
 - Test: `packages/Rehla/Fulfillment/tests/Unit/ExecutionStateMachineTest.php`
@@ -213,11 +214,11 @@ execution_documents: execution_id, document_id, purpose, attached_at
 ```php
 $this->app->bind(
     \Rehla\Purchasing\Contracts\ExecutionCreator::class,
-    \Rehla\Fulfillment\Actions\CreateExecution::class,
+    \Rehla\Fulfillment\Infrastructure\PurchasingExecutionCreator::class,
 );
 ```
 
-أضف fulfillment policy بإصدارات draft/published غير قابلة للتعديل بعد النشر وفق `specs/contracts/service-fulfillment-sop.md`. يضيف الإنشاء `received` ونسخة policy وhistory في معاملة المستدعي بلا commit. يسجل Transition Audit والإشعار الذري وOutbox للقنوات الخارجية. إلغاء Execution لا يستدعي Wallet ولاينشئ refund.
+يحول `PurchasingExecutionCreator` بيانات منفذ Purchasing إلى Action داخلية. يضيف الإنشاء `received` ونسخة policy المنشورة الملتقطة من Catalog وhistory في معاملة المستدعي بلا commit. يسجل Transition Audit والإشعار الذري وOutbox للقنوات الخارجية. لا تضف `Purchasing -> Fulfillment` إلى Composer؛ Fulfillment هي التي تعتمد على Purchasing لتطبيق المنفذ. إلغاء Execution لا يستدعي Wallet ولاينشئ refund.
 
 - [ ] **Step 5: اختبر الصلاحيات والتاريخ**
 
@@ -296,7 +297,7 @@ git commit -m "feat(fulfillment): add customer action responses"
 - Test: `packages/Rehla/Purchasing/tests/Integration/SubmitOrderRollbackTest.php`
 
 **Interfaces:**
-- Consumes: locked `ServiceCatalog::currentQuote`, `GetPublishedForm::handle`, `GetPublishedFulfillmentPolicy::handle`, `FormSubmissionValidator::validate`, `GetOwnedTravelerSnapshot::handle`, `OwnedDocuments::assertCleanOwned`, `WalletDebitor::debit`, `OrderWriter::createPaid`, `ExecutionCreator::create`, `AuditWriter::append`, `CreateInAppNotification`, `OutboxWriter::append`.
+- Consumes: locked `ServiceCatalog::currentQuote`, Catalog-owned `PublishedFulfillmentPolicyReader`, `GetPublishedForm::handle`, `FormSubmissionValidator::validate`, `GetOwnedTravelerSnapshot::handle`, `OwnedDocuments::assertCleanOwned`, `WalletDebitor::debit`, `OrderWriter::createPaid`, Purchasing-owned `ExecutionCreator::create`, `AuditWriter::append`, `CreateInAppNotification`, `OutboxWriter::append`.
 - Produces: `SubmitOrder::handle(SubmitOrderData): SubmitOrderResult`.
 
 - [ ] **Step 1: اكتب happy-path atomic contract**
@@ -332,10 +333,15 @@ return DB::transaction(function () use ($data, $fingerprint): SubmitOrderResult 
     $form = $this->forms->handle($data->serviceId);
     $policy = $this->fulfillmentPolicies->handle($data->serviceId);
     $traveler = $this->travelers->handle($data->accountId, $data->travelerId);
-    $submission = $this->validator->validate($form->id, $data->answers, $data->documentIds);
+    $submission = $this->validator->validate($form->id, $data->answers);
+    $documents = $this->documents->assertCleanOwned(
+        $submission->documentIds,
+        $data->accountId,
+        $submission->requiredDocumentClassifications,
+    );
     $orderId = $this->orders->nextId();
     $debit = $this->wallet->debit(DebitWalletData::forPurchase($orderId, $data, $quote));
-    $order = $this->orders->createPaid(CreatePaidOrderData::from($orderId, $data, $quote, $form, $policy, $traveler, $submission, $debit));
+    $order = $this->orders->createPaid(CreatePaidOrderData::from($orderId, $data, $quote, $form, $policy, $traveler, $submission, $documents, $debit));
     $execution = $this->executions->create(CreateExecutionData::from($order, $form, $policy, $submission));
     $this->audit->append(AppendAuditData::orderSubmitted($data, $order, $execution));
     $this->outbox->append(OutboxMessageData::orderSubmitted($order, $execution));
@@ -347,7 +353,7 @@ return DB::transaction(function () use ($data, $fingerprint): SubmitOrderResult 
 
 - [ ] **Step 4: اختبر claims ورسائل الأخطاء**
 
-اختبر service disabled، price changed، form changed، traveler غير مملوك، answer ناقص، document غيرclean/غيرمملوك، ورصيد غير كاف. توقع الرموز الثابتة وغياب debit/order/execution.
+اختبر service disabled، price changed، form changed، traveler غير مملوك، answer ناقص، document غيرclean/غيرمملوك/بتصنيف مخالف، ورصيد غير كاف. أخطاء المستندات تعيد `document.invalid_attachment` من Documents/Purchasing ولا تعيد Forms خطأ ملكية أوscan. توقع الرموز الثابتة وغياب debit/order/execution.
 
 Run: `php artisan test packages/Rehla/Purchasing/tests/Integration/SubmitOrderTest.php`
 

@@ -64,6 +64,7 @@ The Wallet and Financial Ledger domain owns customer pre-funded balances, transa
 - **Inputs**: Account ID.
 - **Expected Outcome**: New wallet initialized with `current_balance_minor = 0`, status `active`, currency `SDG`.
 - **Observable Behavior**: Customer sees 0.00 SDG initial balance on dashboard.
+- **Public Boundary**: Wallet implements `RegistrationWalletInitializer` owned by Identity. Its `initialize(string $accountId): void` adapter joins the caller's registration transaction, is safe against duplicate `(account_id)` creation, and never commits independently.
 
 ### 6.2 CreditWallet (System Contract Command)
 - **Preconditions**:
@@ -144,6 +145,7 @@ The Wallet and Financial Ledger domain owns customer pre-funded balances, transa
 
 ## 10. Cross-Domain Interactions
 
+- **Identity Domain**: Calls the Identity-owned `RegistrationWalletInitializer` port synchronously during registration; the Wallet implementation writes the empty wallet in the same registration transaction.
 - **Top-Ups Domain**: Top-up approval triggers `CreditWallet`.
 - **Purchasing & Orders Domain**: Order checkout triggers `DebitWallet` inside the atomic purchase transaction.
 - **Reporting Domain**: Reads ledger entries to compute financial volume metrics.

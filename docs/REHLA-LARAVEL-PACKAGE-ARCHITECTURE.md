@@ -126,16 +126,16 @@ rehla3/
 |---|---|---|
 | `Core` | قيم وأدوات مستقلة يحتاجها أكثر من مجال | لا جداول أعمال؛ `Money` وIDs وClock ونتائج الأخطاء |
 | `Identity` | الحسابات والموظفون والأدوار والقدرات | users، staff profiles، roles، abilities، assignments |
-| `Catalog` | الخدمات والأسعار والمتطلبات والصور والترتيب والتفعيل | services، service requirements، service media، price history |
+| `Catalog` | الخدمات والأسعار والمتطلبات والصور والترتيب والتفعيل وسياسات التنفيذ المنشورة | services، service requirements، service media، price history، fulfillment policy versions |
 | `Forms` | مسودات نماذج الخدمات وإصداراتها المنشورة والتحقق منها | form drafts، form versions، schemas/checksums |
 | `Travelers` | المسافر وملكيته وتطبيع الجواز وتفرده | travelers |
 | `Documents` | metadata للملفات والملكية والتصنيف والتخزين الخاص والعام | documents، upload sessions، retention state |
 | `Wallet` | المحافظ والرصيد والقيود غير القابلة للتعديل والتسوية | wallets، wallet ledger entries، reconciliation runs |
-| `TopUps` | البنوك وطلبات التحويل ومراجعتها | bank accounts، top-up requests، reviews، receipt links |
+| `TopUps` | البنوك وإعداد الحد الأدنى وطلبات التحويل ومراجعتها | bank accounts، top-up settings، top-up requests، receipt links |
 | `Orders` | السجل التجاري الثابت ولقطات الشراء | orders، service/traveler/price snapshots، debit reference |
 | `Fulfillment` | تنفيذ الخدمة وحالاتها وإجاباتها ومطلوبات العميل | executions، responses، status history، notes، action requests، document links |
 | `Purchasing` | تنسيق إرسال الطلب والـidempotency والمعاملة المشتركة | purchase attempts/idempotency records |
-| `Notifications` | الإشعارات داخل التطبيق وOutbox ومحاولات التسليم | outbox messages، deliveries، in-app notifications |
+| `Notifications` | الإشعارات داخل التطبيق وOutbox ومحاولات التسليم | outbox messages، outbox delivery attempts، in-app notifications |
 | `Content` | صفحات ومحتوى الموقع العام | pages، localized content |
 | `Audit` | سجل القرارات الحساسة غير القابل للمحو | audit entries |
 | `Reporting` | قراءات ومؤشرات القسم 62 | read models أو materialized views؛ لا يكتب سجلات المصدر |
@@ -465,6 +465,22 @@ packages/Rehla/Admin/
 
 ## 8. العمليات الحرجة
 
+### 8.0 تسجيل العميل الذري
+
+مالك العملية: `Identity/Actions/RegisterCustomer`.
+
+```text
+begin transaction
+  → insert account
+  → append Audit through AuditWriter
+  → call Identity-owned RegistrationWalletInitializer
+  → call Identity-owned RegistrationNotificationRecorder
+  → commit
+  → optionally emit CustomerRegistered for analytics
+```
+
+تنفذ Wallet المنفذ الأول وتنفذ Notifications الثاني، ويسجلهما Service Provider الخاص بكل حزمة. تستدعي Identity المنفذين synchronously على اتصال PostgreSQL ومعاملة التسجيل نفسيهما، ولا تعتمد على event لإنشاء المحفظة أوإشعار الترحيب. أي فشل يرجع الحساب والمحفظة والإشعار وOutbox وAudit معًا. لا توجد network I/O قبل commit.
+
 ### 8.1 اعتماد شحن المحفظة
 
 مالك العملية: `TopUps/Actions/ApproveTopUp`.
@@ -495,12 +511,12 @@ Authenticate + authorize account
   → insert/lock scoped idempotency key and verify request fingerprint
   → lock wallet and authoritative service/form pointers
   → verify service availability and accepted current price
-  → verify published immutable form version and answers
+  → verify published immutable form version and answer shapes
   → verify traveler ownership and normalized data
-  → verify document ownership, validity and required files
+  → call Documents OwnedDocuments::assertCleanOwned for extracted opaque IDs
   → debit Wallet and append ledger entry
   → create immutable commercial Order snapshots
-  → create Fulfillment execution and initial status history
+  → call Purchasing-owned ExecutionCreator, implemented by Fulfillment
   → append Audit and Notification Outbox records
   → store idempotent result
   → commit

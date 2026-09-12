@@ -86,6 +86,12 @@ The Notifications and Outbox domain manages customer communication, atomic in-ap
 
 ## 6. Commands and Actions
 
+### 6.0 RecordRegistrationWelcome (Identity Port Adapter)
+- **Boundary**: Notifications implements `RegistrationNotificationRecorder` owned by Identity.
+- **Inputs**: Account ID, Locale, Correlation ID.
+- **Expected Outcome**: Writes the welcome in-app notification and an Outbox row for each enabled asynchronous channel in the caller's registration transaction.
+- **Failure Atomicity**: The adapter performs no external I/O and never commits independently. Any failure propagates so the registration transaction rolls back.
+
 ### 6.1 RecordNotificationEvent (Internal System Contract)
 - **Preconditions**: Called within an enclosing database transaction by a business domain.
 - **Inputs**: Event Name, Deduplication Key, Recipient Account ID, In-App Data (Title EN/AR, Body EN/AR, Link), External Dispatch Data (channel targets).
@@ -157,7 +163,7 @@ The Notifications and Outbox domain manages customer communication, atomic in-ap
 
 ## 10. Cross-Domain Interactions
 
-- **Identity Domain**: Listens for `CustomerRegistered` to send welcome messages.
+- **Identity Domain**: Calls the Identity-owned `RegistrationNotificationRecorder` port synchronously; Notifications implements it and records the welcome notification in the registration transaction. A later `CustomerRegistered` analytics event is optional and does not drive required messages.
 - **Top-Ups Domain**: Approval/rejection actions create atomic in-app records and required external deliveries.
 - **Orders Domain**: Purchase submission creates its in-app confirmation and required external deliveries.
 - **Fulfillment Domain**: Status transitions and customer action requests create in-app records and required external deliveries.

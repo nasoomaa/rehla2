@@ -63,7 +63,7 @@ The Identity and Access Management domain owns customer accounts, staff user pro
 ### 6.1 RegisterCustomer
 - **Preconditions**: Normalized email is not registered to any account.
 - **Inputs**: Full Name, Email, Password, Password Confirmation, Preferred Language (`en` or `ar`).
-- **Expected Outcome**: New customer account, empty wallet, notification preferences, welcome in-app notification, and any external-channel outbox record commit atomically.
+- **Expected Outcome**: New customer account, empty wallet, welcome in-app notification, and any enabled external-channel outbox record commit atomically.
 - **Observable Behavior**: On Web: customer is authenticated and redirected to dashboard. On API: HTTP 201 Created returned with account profile and initial Bearer token.
 - **State Changes**: New account record inserted with status `active`.
 - **Validation Rules**:
@@ -73,7 +73,9 @@ The Identity and Access Management domain owns customer accounts, staff user pro
   - Preferred Language: `en` or `ar` (defaults to `en`).
 - **Authorization**: Public endpoint; strict IP-based and subnet rate limiting (max 5 requests per minute).
 - **Failure Behavior**: Validation failure returns HTTP 422 with field errors. Duplicate email returns HTTP 422 with generic error `"An account with this email already exists."`
-- **Side Effects**: Emits `CustomerRegistered` inside the transaction. Wallet handles it synchronously in-process before commit; external channel delivery remains asynchronous through the outbox. Failure to create the wallet rolls back registration.
+- **Required Collaborators**: Identity owns `RegistrationWalletInitializer::initialize(string $accountId): void` and `RegistrationNotificationRecorder::recordWelcome(string $accountId, string $locale, string $correlationId): void`. `RegisterCustomer` calls both synchronously, after inserting the account and before commit, on the same PostgreSQL connection and transaction context. It also calls `AuditWriter` in that transaction.
+- **Failure Atomicity**: If wallet initialization, welcome-notification recording, Outbox recording, or Audit insertion fails, the exception rolls back the entire registration transaction, including the account. No participant commits independently.
+- **After-Commit Event**: An optional `CustomerRegistered` event may be emitted after commit for analytics only. No invariant or required customer-visible effect depends on that event.
 
 ### 6.2 AuthenticateCustomer
 - **Preconditions**: Account exists and is in `active` status.
@@ -135,5 +137,6 @@ The Identity and Access Management domain owns customer accounts, staff user pro
 
 ## 10. Cross-Domain Interactions
 
-- **Wallet Domain**: A synchronous in-process `CustomerRegistered` handler initializes the empty wallet in the registration transaction. Identity does not import Wallet internals.
-- **Audit Domain**: All staff logins, failed staff login attempts, role reassignments, and account suspensions write immutable entries to the Audit domain.
+- **Wallet Domain**: Implements Identity's `RegistrationWalletInitializer`; Identity calls the port synchronously in the registration transaction without importing Wallet internals.
+- **Notifications Domain**: Implements Identity's `RegistrationNotificationRecorder`; it writes the welcome in-app notification and enabled-channel Outbox records synchronously in the registration transaction, without external I/O.
+- **Audit Domain**: Identity depends on `AuditWriter`. Registration, staff logins, failed staff login attempts, role reassignments, and account suspensions write immutable entries in their owning transactions.

@@ -90,7 +90,7 @@ Customer clicks **"Order Now"** on the service details page for "UAE 30-Day Tour
      - `status = 'paid'`
      - `service_snapshot = { name: "UAE 30-Day Tourist Visa", price: 2500000, ... }`
      - `traveler_snapshot = { name: "Ahmed Mohammed Osman", passport: "P01234567", dob: "1990-08-20" }`
-   - Calls `Fulfillment\Contracts\CreateExecution`:
+   - Calls the Purchasing-owned `ExecutionCreator`; `Fulfillment\Infrastructure\PurchasingExecutionCreator` implements it:
      - Inserts `service_executions` record linked to order #1001 with initial status `received`.
      - Appends initial status changelog entry (`received`).
    - Appends purchase record to `audit_entries`.
