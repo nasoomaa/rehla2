@@ -53,7 +53,7 @@
 - Consumes: PHP8.5، Composer، PostgreSQL18 المتاحان على المضيف.
 - Produces: تطبيق Laravel يقلع من الجذر وبيئة اختبار اسم قاعدة بياناتها `rehla_testing`.
 
-- [ ] **Step 1: أنشئ Laravel في مجلد مؤقت وانسخه إلى الجذر**
+- [x] **Step 1: أنشئ Laravel في مجلد مؤقت وانسخه إلى الجذر**
 
 ```bash
 composer create-project laravel/laravel:^13.0 /tmp/rehla-laravel-host
@@ -64,7 +64,7 @@ composer require --dev pestphp/pest:^4.7.8 pestphp/pest-plugin-laravel:^4.1 lara
 
 لا تستبدل `.env.testing` محليًا موجودًا ولا تضعه في Git. تبقى القيم الآمنة المشتركة في `phpunit.xml` و`.env.example`، وتبقى الأسرار محلية.
 
-- [ ] **Step 2: أنشئ اختبار إقلاع مضيف فاشلًا سلوكيًا**
+- [x] **Step 2: أنشئ اختبار إقلاع مضيف فاشلًا سلوكيًا**
 
 ```php
 <?php
@@ -76,29 +76,29 @@ it('boots the Rehla host in testing mode', function (): void {
 });
 ```
 
-- [ ] **Step 3: تحقق من RED بعد اكتمال bootstrap**
+- [x] **Step 3: تحقق من RED بعد اكتمال bootstrap**
 
 Run: `php artisan test tests/Feature/HostBootTest.php`
 
 Expected: FAIL لأن scaffold الافتراضي لا يضبط PostgreSQL و`rehla_testing` بعد؛ غياب `artisan` أوbootstrap أوautoload ليس RED مقبولًا.
 
-- [ ] **Step 4: اضبط عقد بيئة الاختبار الملتزم**
+- [x] **Step 4: اضبط عقد بيئة الاختبار الملتزم**
 
 اضبط `phpunit.xml` على `DB_CONNECTION=pgsql` و`DB_DATABASE=rehla_testing`، واحتفظ بـ`APP_ENV=testing` و`CACHE_STORE=array` و`MAIL_MAILER=array` و`QUEUE_CONNECTION=database`. حدّث `.env.example` بقيم PostgreSQL غير سرية؛ يجوز أن يضيف المطور القيم نفسها إلى `.env.testing` المحلي المستبعد من Git.
 
-- [ ] **Step 5: ثبت الإصدارات وحقق الإقلاع**
+- [x] **Step 5: ثبت الإصدارات وحقق الإقلاع**
 
 Run: `composer show laravel/framework && php artisan test tests/Feature/HostBootTest.php`
 
 Expected: Laravel13.x وPASS.
 
-- [ ] **Step 6: ابنِ أصول المضيف**
+- [x] **Step 6: ابنِ أصول المضيف**
 
 Run: `npm ci && npm run build`
 
 Expected: Vite build ناجح بلا ملفات مفقودة.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add .editorconfig .gitattributes .gitignore .env.example README.md artisan app bootstrap composer.json composer.lock config database package.json package-lock.json phpunit.xml public resources routes storage tests vite.config.js
@@ -138,7 +138,7 @@ git commit -m "build: bootstrap Laravel host"
 - Consumes: قسم القرارات وسجل القبول في الخطة الرئيسية.
 - Produces: قرارات ثابتة وصف قبول لكل متطلب ذري يمكن فحصه آليًا.
 
-- [ ] **Step 1: اكتب اختبار بنية السجل**
+- [x] **Step 1: اكتب اختبار بنية السجل**
 
 ```php
 <?php
@@ -160,13 +160,13 @@ it('maps every product section and mandatory atomic family', function (): void {
 });
 ```
 
-- [ ] **Step 2: شغل الاختبار الأحمر**
+- [x] **Step 2: شغل الاختبار الأحمر**
 
 Run: `php artisan test tests/Architecture/AcceptanceRegisterTest.php`
 
 Expected: FAIL لأن ADRs وCSV غير موجودة.
 
-- [ ] **Step 3: اكتب ADRs والسجل بالقيم المعتمدة**
+- [x] **Step 3: اكتب ADRs والسجل بالقيم المعتمدة**
 
 استخدم رأس CSV التالي حرفيًا، وأنشئ صفوفًا ذرية تغطي R01–R65 والعائلات المحددة في الخطة الرئيسية:
 
@@ -176,13 +176,13 @@ acceptance_id,source_requirement,package,interface,db_invariant,test_file,test_n
 
 استخدم `planned` لكل صف، واترك `evidence` فارغًا حتى ينجح اختباره. لا تترك `package` أو`interface` أو`test_file` أو`test_name` فارغة للمتطلبات الداخلة في الإصدار الأول.
 
-- [ ] **Step 4: تحقق من اكتمال السجل**
+- [x] **Step 4: تحقق من اكتمال السجل**
 
 Run: `php artisan test tests/Architecture/AcceptanceRegisterTest.php`
 
 Expected: PASS مع وجود 65عائلة R وكل IDs الإلزامية.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add docs/adr docs/requirements tests/Architecture/AcceptanceRegisterTest.php
@@ -226,7 +226,7 @@ git commit -m "docs: lock phase one product decisions"
 - Consumes: `docs/architecture/rehla-package-map.json` بإصدار schema 2، و`docs/architecture/rehla-package-contract-map.json`، و`docs/architecture/table-ownership.json`.
 - Produces: Composer package `rehla/<lowercase-name>` وnamespace `Rehla\<Package>\` لكل عقدة.
 
-- [ ] **Step 1: اكتب اختبار اكتشاف الحزم**
+- [x] **Step 1: اكتب اختبار اكتشاف الحزم**
 
 ```php
 <?php
@@ -242,13 +242,13 @@ it('discovers every declared Rehla package provider', function (): void {
 });
 ```
 
-- [ ] **Step 2: شغل الاختبار الأحمر**
+- [x] **Step 2: شغل الاختبار الأحمر**
 
 Run: `php artisan test tests/Architecture/PackageDiscoveryTest.php`
 
 Expected: FAIL على أول provider غير موجود.
 
-- [ ] **Step 3: أنشئ manifests والـproviders من الخريطة**
+- [x] **Step 3: أنشئ manifests والـproviders من الخريطة**
 
 يجعل `scripts/create-rehla-packages.php` كل manifest يحتوي:
 
@@ -272,19 +272,19 @@ $this->loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-'.strtolower($p
 
 يقرأ اختبار الحزمة ملفات اللغة recursively ويقارن مجموعة المفاتيح وشكل كل قيمة (`array` أوscalar). يقرأ `PackageTranslationContractTest` كل provider ويفشل إذا لم يحمل namespace الحزمة من `src/resources/lang`، أوغاب أحد ملفي اللغة، أووجد نص مرئي صريح في Actions أوControllers أوJobs أوPolicies أوFilament definitions خارج allowlist للثوابت التقنية وfixtures الاختبارية.
 
-- [ ] **Step 4: حدث autoload ونفذ الاختبار**
+- [x] **Step 4: حدث autoload ونفذ الاختبار**
 
 Run: `php scripts/create-rehla-packages.php && composer update rehla/web rehla/api rehla/admin --with-all-dependencies && composer dump-autoload && php artisan test tests/Architecture/PackageDiscoveryTest.php tests/Architecture/PackageTranslationContractTest.php`
 
 Expected: PASS لكل 19 provider و19 namespace وثنائي لغة متكافئ.
 
-- [ ] **Step 5: تحقق من اكتشاف اختبارات الحزم**
+- [x] **Step 5: تحقق من اكتشاف اختبارات الحزم**
 
 Run: `php artisan test packages/Rehla`
 
 Expected: 19 smoke tests ناجحة على الأقل.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add composer.json composer.lock scripts packages tests/Architecture/PackageDiscoveryTest.php
@@ -324,7 +324,7 @@ git commit -m "build: establish Rehla package workspace"
 - Consumes: الخرائط الثلاث وComposer manifests وPHP source tree وmigrations.
 - Produces: فشل CI عند cycle أوrequire/import غير مسموح أوحافة بلا عقد أوModel متسرب أوجدول له مالكان أوكاتب غير المالك.
 
-- [ ] **Step 1: اكتب حالات RED تشمل bypasses**
+- [x] **Step 1: اكتب حالات RED تشمل bypasses**
 
 أنشئ fixtures مؤقتة أثناء الاختبار لاستيرادات مباشرة ومؤهلة وgrouped، مثل:
 
@@ -336,23 +336,23 @@ $model = new \Rehla\Orders\Models\Order();
 
 وتوقع أن يبلغ الحارس الحزمة والملف والرمز المحظور، وأن يقبل `Rehla\Wallet\Contracts\DebitWallet`.
 
-- [ ] **Step 2: شغل اختبارات الحارس وتحقق من RED**
+- [x] **Step 2: شغل اختبارات الحارس وتحقق من RED**
 
 Run: `php artisan test tests/Architecture/PackageDependencyTest.php tests/Architecture/ModelBoundaryTest.php tests/Architecture/MigrationOwnershipTest.php`
 
 Expected: FAIL لأن الحراس والملكية غير مكتملة.
 
-- [ ] **Step 3: نفذ parser يعتمد tokens وComposer JSON**
+- [x] **Step 3: نفذ parser يعتمد tokens وComposer JSON**
 
 اقرأ `T_NAME_QUALIFIED`, `T_NAME_FULLY_QUALIFIED`, `T_USE` وgrouped imports عبر `token_get_all` بدل regex. قارن الحزمة المستوردة بقائمة المستهلك في JSON، وقارن `require` في كل manifest بالحواف نفسها مساواة تامة. امنع أي `Models` عبر الحزم حتى لو كان الاعتماد نفسه مسموحًا. تحقق من أن كل حافة لها سجل وحيد في contract map وأن كل surface مملوك للـprovider. افحص migrations بحثًا عن `Schema::create` وقارنها بخريطة الملكية، وافشل عند جدول غير مسجل أومالك ثان أوwriter ليس المالك.
 
-- [ ] **Step 4: أثبت المنع والقبول**
+- [x] **Step 4: أثبت المنع والقبول**
 
 Run: `php artisan test tests/Architecture`
 
 Expected: PASS للحالات الصحيحة وحالات الالتفاف والـfalse positives.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add tests/Architecture docs/architecture/table-ownership.json
@@ -407,7 +407,7 @@ git commit -m "test: enforce package architecture boundaries"
 **Interfaces:**
 - Produces: `Money::sdg(int $minor)`, `Money::add`, `Money::subtract`, `Money::isLessThan`; `OpaqueId::generate/fromString`; `Clock::now(): CarbonImmutable`; و`ProblemCode` بقيم عامة lower dot notation.
 
-- [ ] **Step 1: اكتب اختبارات Money الفاشلة**
+- [x] **Step 1: اكتب اختبارات Money الفاشلة**
 
 ```php
 it('keeps SDG arithmetic in integer minor units', function (): void {
@@ -423,13 +423,13 @@ it('rejects negative construction and subtraction below zero', function (): void
 });
 ```
 
-- [ ] **Step 2: شغل RED**
+- [x] **Step 2: شغل RED**
 
 Run: `php artisan test packages/Rehla/Core/tests/Unit`
 
 Expected: FAIL لأن الأنواع غير موجودة.
 
-- [ ] **Step 3: نفذ Money بلا float**
+- [x] **Step 3: نفذ Money بلا float**
 
 ```php
 final readonly class Money
@@ -449,13 +449,13 @@ final readonly class Money
 
 أكمل `add/subtract/isLessThan` مع فحص overflow ورفض النتيجة السالبة. يدعم الإصدار الأول SDG فقط. عرّف `ProblemCode` بالقيم العامة: `wallet.insufficient_balance`, `service.unavailable`, `service.price_changed`, `form.version_changed`, `traveler.passport_conflict`, `top_up.reference_used`, `idempotency.key_reused`, `operation.in_progress`, `document.not_clean`, `auth.forbidden_resource`. يجب أن تطابق كل قيمة regex القانوني للأكواد العامة.
 
-- [ ] **Step 4: شغل اختبارات Core والتحليل**
+- [x] **Step 4: شغل اختبارات Core والتحليل**
 
 Run: `php artisan test packages/Rehla/Core && composer analyse`
 
 Expected: PASS ومنع أي parameter أوproperty مالية من نوع float.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/Rehla/Core
@@ -494,7 +494,7 @@ git commit -m "feat(core): add money time identifiers and error contracts"
 **Interfaces:**
 - Produces: guard يرفض driver غير pgsql أوdatabase لا تنتهي `_testing`؛ factory لاتصالين مستقلين لاختبارات السباق؛ ودليل اتصال فعلي بـPostgreSQL 18.
 
-- [ ] **Step 1: اكتب اختبار guard الأحمر**
+- [x] **Step 1: اكتب اختبار guard الأحمر**
 
 ```php
 it('rejects an unsafe integration database', function (): void {
@@ -503,13 +503,13 @@ it('rejects an unsafe integration database', function (): void {
 });
 ```
 
-- [ ] **Step 2: شغل RED**
+- [x] **Step 2: شغل RED**
 
 Run: `php artisan test tests/Architecture/TestingDatabaseGuardTest.php`
 
 Expected: FAIL لأن guard غير موجود.
 
-- [ ] **Step 3: نفذ guard واتصالين حقيقيين**
+- [x] **Step 3: نفذ guard واتصالين حقيقيين**
 
 ```php
 public static function check(): void
@@ -524,17 +524,17 @@ public static function check(): void
 
 يجبر `PostgresConnections` اتصالين جديدين إلى القاعدة نفسها، ولا يستخدم test wrapper transaction في اختبارات concurrency.
 
-- [ ] **Step 4: أضف scripts وCI**
+- [x] **Step 4: أضف scripts وCI**
 
 أضف scripts المحددة في الخطة الرئيسية. يشغل CI PostgreSQL18 service، `composer install --no-interaction --prefer-dist`، `npm ci`، fresh migrations، `composer verify` و`npm run build`. لا تضف Dockerfile أوتشغيلًا container-native للمشروع.
 
-- [ ] **Step 5: شغل بوابة الخطة**
+- [x] **Step 5: شغل بوابة الخطة**
 
 Run: `php artisan migrate:fresh --env=testing && composer verify && npm run build && git diff --check`
 
 Expected: كل الأوامر PASS، وكل tests داخل الحزم مكتشفة.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add tests phpunit.xml composer.json .github/workflows/ci.yml

@@ -2,9 +2,9 @@
 
 This document is the proposed architectural contract for implementing the requirements defined in [Rihla Project Concept and User Journey](REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md) using Laravel. It covers the first release, the Web and REST API interfaces, the administration panel, package boundaries, data ownership, transactions, authorization, storage, jobs, testing, and future expansion.
 
-Document status: **Target design; the packages and application foundation have not yet been created.**
+Document status: **Foundation and Core are implemented; implementation plans 02 through 10 remain planned.**
 
-Full executable build plan: [Rehla Platform Implementation Plan](superpowers/plans/2026-09-11-rehla-platform-build.md), consisting of seven ordered plans and 34 tasks with RED/GREEN cycles and verification gates.
+Full executable build plan: [Rehla Platform Implementation Plan](superpowers/plans/2026-09-11-rehla-platform-build.md), consisting of ten ordered implementation plans and 51 tasks with RED/GREEN cycles and verification gates.
 
 ## 1. Architectural Decision
 
