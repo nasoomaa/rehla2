@@ -131,6 +131,7 @@ git commit -m "build: bootstrap Laravel host"
 - Create: `docs/adr/0003-authentication-and-mfa.md`
 - Create: `docs/adr/0004-document-lifecycle.md`
 - Create: `docs/requirements/rehla-phase-1-acceptance.csv`
+- Modify: `tests/Pest.php`
 - Create: `tests/Architecture/AcceptanceRegisterTest.php`
 
 **Interfaces:**

@@ -408,7 +408,8 @@ def expected_plan_manifest_rows(contract: dict[str, object]) -> list[dict[str, s
             owners = ";".join(record["owned_packages"])
             prerequisites = ";".join(record["depends_on"])
             requirement_ids = ";".join(requirements_by_plan[str(record["id"])])
-            status = "planned"
+            status = str(record.get("execution_status", "planned"))
+            require(status in {"planned", "in_progress", "completed"}, f"invalid plan status: {status}")
         else:
             require(
                 path.name in NON_IMPLEMENTATION_PLAN_METADATA,

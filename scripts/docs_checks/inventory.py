@@ -52,6 +52,10 @@ def classify(path: Path) -> str:
         return "product"
     if relative == "docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md":
         return "architecture"
+    if relative.startswith("docs/adr/"):
+        return "architecture-decision"
+    if relative.startswith("docs/requirements/"):
+        return "acceptance-register"
     if relative.startswith("docs/architecture/"):
         return "machine-map"
     if relative.startswith("docs/superpowers/specs/"):
@@ -78,8 +82,10 @@ def classify(path: Path) -> str:
 
 def evidence_group(path: Path) -> str:
     kind = classify(path)
-    if kind in {"architecture", "machine-map", "design"}:
+    if kind in {"architecture", "architecture-decision", "machine-map", "design"}:
         return "package-and-contract-alignment"
+    if kind == "acceptance-register":
+        return "audit-evidence"
     if kind == "plan":
         return "implementation-plans"
     if kind == "review":
@@ -149,7 +155,7 @@ def validate_audit_summary(
     ]
     for row in expected_rows:
         require(row in text, f"final audit has stale or missing coverage row: {row}")
-    for fragment in ("19 package", "28/28", "65/65", "9 skills", "`planned`", "لم يُنشأ"):
+    for fragment in ("19 package", "28/28", "65/65", "9 skills", "`planned`", "لا يعني اكتمال المشروع"):
         require(fragment in text, f"final audit missing scope or status evidence: {fragment}")
 
 

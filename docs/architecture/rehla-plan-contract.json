@@ -5,6 +5,7 @@
     {
       "id": "01-foundation-core",
       "order": 1,
+      "execution_status": "in_progress",
       "path": "docs/superpowers/plans/2026-09-11-rehla-01-foundation-core.md",
       "depends_on": [],
       "outcome": "Laravel host, package workspace, Core, architecture and PostgreSQL gates",

@@ -2,8 +2,9 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
 
-from scripts.docs_checks.common import CheckFailure
+from scripts.docs_checks.common import ROOT, CheckFailure
 from scripts.docs_checks.inventory import (
+    classify,
     validate_audit_summary,
     validate_relative_links,
     validate_requirement_ids,
@@ -42,8 +43,15 @@ class InventoryTest(TestCase):
             "| `docs/` و`specs/` عدا manifest الوثائق نفسه | 7 | 100 |",
             "| `.agents/README.md` والمهارات التسع | 2 | 20 |",
             "| الإجمالي المراجع في هذا التدقيق | 9 | 120 |",
-            "19 package; 28/28; 65/65; 9 skills; `planned`; لم يُنشأ",
+            "19 package; 28/28; 65/65; 9 skills; `planned`; لا يعني اكتمال المشروع",
         ])
         validate_audit_summary(text, 7, 100, 2, 20)
         with self.assertRaisesRegex(CheckFailure, "scope or status evidence"):
             validate_audit_summary(text.replace("`planned`", "completed"), 7, 100, 2, 20)
+
+    def test_execution_evidence_document_types_are_classified(self) -> None:
+        self.assertEqual(classify(ROOT / "docs/adr/0001-example.md"), "architecture-decision")
+        self.assertEqual(
+            classify(ROOT / "docs/requirements/phase-one.csv"),
+            "acceptance-register",
+        )
