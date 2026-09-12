@@ -33,7 +33,8 @@ def read_csv(path: Path) -> list[dict[str, str]]:
 
 def relative_markdown_links(path: Path) -> list[Path]:
     links: list[Path] = []
-    for target in re.findall(r"(?<!!)\[[^]]*]\(([^)]+)\)", read_text(path)):
+    content = re.sub(r"(?ms)^```[^\n]*\n.*?^```\s*$", "", read_text(path))
+    for target in re.findall(r"(?<!!)\[[^]]*]\(([^)]+)\)", content):
         clean = target.split("#", 1)[0].strip()
         if clean.startswith("<") and clean.endswith(">"):
             clean = clean[1:-1]

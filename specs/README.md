@@ -4,6 +4,8 @@ This directory contains the complete, implementation-independent specification c
 
 This corpus serves as the authoritative source of truth for downstream `iterative-development`, requirements extraction, story decomposition, behavior scenario generation, and system verification.
 
+تطبق قواعد الأسبقية والتغيير في [GOVERNANCE.md](GOVERNANCE.md). خريطة التنفيذ تبدأ من [معمارية Laravel](../docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md)، ويضبط [تصميم محاذاة الحزم والعقود](../docs/superpowers/specs/2026-09-12-rehla-package-structure-and-contract-alignment-design.md) الخرائط الآلية الثلاث: [الاعتمادات](../docs/architecture/rehla-package-map.json)، [عقود الحواف](../docs/architecture/rehla-package-contract-map.json)، و[ملكية الجداول](../docs/architecture/table-ownership.json). يثبت `python3 -m scripts.docs_checks.run --group all` اتساق corpus والخرائط والخطط.
+
 ---
 
 ## Directory Structure
@@ -54,6 +56,8 @@ specs/
     ├── idempotency-and-deduplication.md           # Idempotency key evaluation, fingerprint matching, conflicts
     └── reporting-metrics-calculations.md          # Deterministic test fixtures for all 12 platform metrics
 ```
+
+هذه البنية مكتملة لمسؤولية المواصفات السلوكية. لا يضاف `foundation/` أو`architecture/` هنا؛ `product-overview.md` هو أساس المنتج، ومعمارية التنفيذ والخرائط مملوكة لـ`docs/` كما تحدد الحوكمة.
 
 ---
 

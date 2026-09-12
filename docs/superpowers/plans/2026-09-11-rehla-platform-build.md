@@ -12,6 +12,8 @@
 
 **Coverage:** `docs/superpowers/plans/2026-09-11-rehla-plan-coverage.csv`
 
+**Program Contract:** `docs/architecture/rehla-plan-contract.json` هو سجل الترتيب وملكية الحزم والمهام وبوابات التسليم؛ جميع مهام Laravel في هذه الملفات `planned` حتى ينتج التنفيذ واختباراته أدلة فعلية.
+
 ## Global Constraints
 
 - مرجع المنتج الملزم هو `docs/REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md` بأقسامه R01–R65.

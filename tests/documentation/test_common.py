@@ -30,3 +30,12 @@ class CommonChecksTest(TestCase):
                 relative_markdown_links(root / "source.md"),
                 [Path("target.md")],
             )
+
+    def test_markdown_links_inside_fenced_examples_are_ignored(self) -> None:
+        with TemporaryDirectory() as directory:
+            source = Path(directory) / "source.md"
+            source.write_text(
+                "```markdown\n[example](missing.md)\n```\n[real](target.md)\n",
+                encoding="utf-8",
+            )
+            self.assertEqual(relative_markdown_links(source), [Path("target.md")])

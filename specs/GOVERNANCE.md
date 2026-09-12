@@ -6,8 +6,9 @@ When two documents disagree, apply this order:
 
 1. `docs/REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md` defines the approved product intent and requirements R01–R65.
 2. Files under `specs/` refine that intent into testable behavior. They may resolve ambiguity but may not silently add a product capability.
-3. `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md` defines Laravel package boundaries and implementation placement.
-4. Implementation plans define delivery order only and may not change product behavior.
+3. `docs/superpowers/specs/2026-09-12-rehla-package-structure-and-contract-alignment-design.md` and the machine maps `docs/architecture/rehla-package-map.json`, `rehla-package-contract-map.json`, and `table-ownership.json` define package dependencies, public edges, and data ownership.
+4. `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md` defines Laravel package placement and implementation mechanisms within those maps.
+5. `docs/architecture/rehla-plan-contract.json` and the ten implementation plans define delivery order and evidence routing only; they may not change product behavior.
 
 A conflict must be resolved in the higher-authority document or recorded explicitly before implementation.
 
@@ -22,6 +23,10 @@ A conflict must be resolved in the higher-authority document or recorded explici
 - `coverage-manifest.csv` proves coverage of requirements R01–R65.
 
 Laravel packages, namespaces, dependency direction, deployment topology, and framework choices belong in the architecture document. SQL or framework snippets in this corpus are allowed only when they make a behavioral contract precise; the stated behavior remains authoritative over the illustrative mechanism.
+
+لا يحتاج هذا المجلد إلى مجلدي `foundation/` أو`architecture/`: أساس المنتج موجود في `product-overview.md`، وقواعد الأعمال في المجالات والعقود، بينما معمارية Laravel والخرائط الآلية لها مالك واضح تحت `docs/`. يمنع تكرارها داخل `specs/` كي لا تنحرف نسختان.
+
+يشغل المدقق الكامل من جذر المستودع عبر `python3 -m scripts.docs_checks.run --group all`. يجب أن تمر مجموعات package وapi وsemantics وinventory وplans قبل قبول أي تغيير في corpus أوالخطط.
 
 ## 3. Canonical conventions
 

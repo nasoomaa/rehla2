@@ -1,14 +1,14 @@
 requirement_id,primary_plan,task,verification
-R01,2026-09-11-rehla-platform-build.md,Program baseline,release readiness review
-R02,2026-09-11-rehla-platform-build.md,Program baseline,R63 end-to-end gate
-R03,2026-09-11-rehla-platform-build.md,Program baseline,architecture acceptance
-R04,2026-09-11-rehla-platform-build.md,Atomic acceptance register,AcceptanceRegisterTest
-R05,2026-09-11-rehla-platform-build.md,Atomic acceptance register,AcceptanceRegisterTest
-R06,2026-09-11-rehla-platform-build.md,File boundaries and plan suite,package and end-to-end gates
+R01,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",release readiness review
+R02,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",R63 end-to-end gate
+R03,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",architecture acceptance
+R04,2026-09-11-rehla-01-foundation-core.md,Task 2: Record Decisions and Atomic Acceptance Register,AcceptanceRegisterTest
+R05,2026-09-11-rehla-09-admin-control-panel.md,Task 1: Filament Operations Panel,AcceptanceRegisterTest
+R06,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",package and end-to-end gates
 R07,2026-09-11-rehla-03-catalog-forms-content.md,Task 1: Service Catalog and Price History,ServiceLifecycleTest
 R08,2026-09-11-rehla-03-catalog-forms-content.md,Task 2: Draft and Published Form Versions,FieldValidationTest
 R09,2026-09-11-rehla-03-catalog-forms-content.md,Task 2: Draft and Published Form Versions,PublishedFormImmutabilityTest
-R10,2026-09-11-rehla-07-interfaces-operations-release.md,Task 1: Public Web Authentication and Account Shell,AccountIsolationTest
+R10,2026-09-11-rehla-07-customer-web.md,"Task 1: Public Web, Authentication and Account Shell",AccountIsolationTest
 R11,2026-09-11-rehla-02-identity-platform-services.md,Task 4: Travelers and Passport Uniqueness,TravelerOwnershipTest
 R12,2026-09-11-rehla-02-identity-platform-services.md,Task 4: Travelers and Passport Uniqueness,PassportUniquenessTest
 R13,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 1: Immutable Paid Order and Snapshots,OrderImmutabilityTest
@@ -21,46 +21,46 @@ R19,2026-09-11-rehla-04-wallet-topups.md,Task 3: Atomic Approval and Rejection,A
 R20,2026-09-11-rehla-04-wallet-topups.md,Task 3: Atomic Approval and Rejection,ConcurrentApprovalTest
 R21,2026-09-11-rehla-04-wallet-topups.md,Task 3: Atomic Approval and Rejection,RejectTopUpTest
 R22,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 5: Atomic and Idempotent SubmitOrder,SubmitOrderTest
-R23,2026-09-11-rehla-07-interfaces-operations-release.md,Task 1: Public Web Authentication and Account Shell,PublicWebTest
+R23,2026-09-11-rehla-07-customer-web.md,"Task 1: Public Web, Authentication and Account Shell",PublicWebTest
 R24,2026-09-11-rehla-06-reporting-integrations.md,Task 3: Integration Adapters and WhatsApp Inquiry Contract,WhatsAppInquiryLinkTest
-R25,2026-09-11-rehla-07-interfaces-operations-release.md,Task 2: Web Top-up Purchase and Order Tracking Journeys,PurchaseJourneyTest
-R26,2026-09-11-rehla-07-interfaces-operations-release.md,Task 2: Web Top-up Purchase and Order Tracking Journeys,PurchaseJourneyTest
+R25,2026-09-11-rehla-07-customer-web.md,"Task 2: Web Top-up, Purchase and Order Tracking Journeys",PurchaseJourneyTest
+R26,2026-09-11-rehla-07-customer-web.md,"Task 2: Web Top-up, Purchase and Order Tracking Journeys",PurchaseJourneyTest
 R27,2026-09-11-rehla-03-catalog-forms-content.md,Task 2: Draft and Published Form Versions,FieldValidationTest
-R28,2026-09-11-rehla-07-interfaces-operations-release.md,Task 2: Web Top-up Purchase and Order Tracking Journeys,PurchaseJourneyTest
+R28,2026-09-11-rehla-07-customer-web.md,"Task 2: Web Top-up, Purchase and Order Tracking Journeys",PurchaseJourneyTest
 R29,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 5: Atomic and Idempotent SubmitOrder,SubmitOrderTest
 R30,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 5: Atomic and Idempotent SubmitOrder,SubmitOrderTest
 R31,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 5: Atomic and Idempotent SubmitOrder,SubmitOrderConcurrencyTest
 R32,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 5: Atomic and Idempotent SubmitOrder,SubmitOrderRollbackTest
 R33,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 1: Immutable Paid Order and Snapshots,OrderImmutabilityTest
 R34,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 3: Fulfillment State Machine and Execution Creation,CreateExecutionTest
-R35,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Tasks 1 and 3,Order and execution separation tests
+R35,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 1: Immutable Paid Order and Snapshots,Order and execution separation tests
 R36,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 3: Fulfillment State Machine and Execution Creation,ExecutionStateMachineTest
 R37,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 4: Customer Action Requests and Responses,CustomerActionResponseTest
-R38,2026-09-11-rehla-07-interfaces-operations-release.md,Task 2: Web Top-up Purchase and Order Tracking Journeys,CustomerActionJourneyTest
-R39,2026-09-11-rehla-06-reporting-integrations.md,Task 2: Outbox Worker In-app Projector and Dead Letters,InAppNotificationTest
-R40,2026-09-11-rehla-07-interfaces-operations-release.md,Task 5: Filament Operations Panel,AdminCapabilityMatrixTest
+R38,2026-09-11-rehla-07-customer-web.md,"Task 2: Web Top-up, Purchase and Order Tracking Journeys",CustomerActionJourneyTest
+R39,2026-09-11-rehla-06-reporting-integrations.md,"Task 2: Outbox Worker, External Delivery and Dead Letters",InAppNotificationTest
+R40,2026-09-11-rehla-09-admin-control-panel.md,Task 1: Filament Operations Panel,AdminCapabilityMatrixTest
 R41,2026-09-11-rehla-03-catalog-forms-content.md,Task 1: Service Catalog and Price History,ServiceLifecycleTest
 R42,2026-09-11-rehla-03-catalog-forms-content.md,Task 2: Draft and Published Form Versions,FormPublishingTest
-R43,2026-09-11-rehla-07-interfaces-operations-release.md,Task 5: Filament Operations Panel,AdminCapabilityMatrixTest
+R43,2026-09-11-rehla-09-admin-control-panel.md,Task 1: Filament Operations Panel,AdminCapabilityMatrixTest
 R44,2026-09-11-rehla-04-wallet-topups.md,Task 3: Atomic Approval and Rejection,ApproveTopUpTest
 R45,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 3: Fulfillment State Machine and Execution Creation,ExecutionStateMachineTest
 R46,2026-09-11-rehla-02-identity-platform-services.md,Task 2: Append-only Audit Trail,AuditImmutabilityTest
-R47,2026-09-11-rehla-02-identity-platform-services.md,Task 1: Identity Sessions and Capabilities,AuthorizationTest
+R47,2026-09-11-rehla-02-identity-platform-services.md,"Task 1: Identity, Sessions and Capabilities",AuthorizationTest
 R48,2026-09-11-rehla-02-identity-platform-services.md,Task 3: Private Document Lifecycle,DocumentLifecycleTest
 R49,2026-09-11-rehla-03-catalog-forms-content.md,Task 1: Service Catalog and Price History,ServiceLifecycleTest
-R50,2026-09-11-rehla-07-interfaces-operations-release.md,Task 3: API Foundation Authentication and Problem Details,ProblemDetailsTest
-R51,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Tasks 1 3 and 5,status separation integration tests
-R52,2026-09-11-rehla-07-interfaces-operations-release.md,Task 9: Security Performance and Final R01-R65 Release Gate,phase-one-acceptance.spec.ts
-R53,2026-09-11-rehla-07-interfaces-operations-release.md,Task 9: Security Performance and Final R01-R65 Release Gate,phase-one-acceptance.spec.ts family scenario
+R50,2026-09-11-rehla-08-customer-api.md,"Task 1: API Foundation, Authentication and Problem Details",ProblemDetailsTest
+R51,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 1: Immutable Paid Order and Snapshots,status separation integration tests
+R52,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",phase-one-acceptance.spec.ts
+R53,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",phase-one-acceptance.spec.ts family scenario
 R54,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 1: Immutable Paid Order and Snapshots,OrderImmutabilityTest
-R55,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Tasks 1 and 5,order snapshot and price conflict tests
+R55,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 1: Immutable Paid Order and Snapshots,order snapshot and price conflict tests
 R56,2026-09-11-rehla-04-wallet-topups.md,Task 2: Bank Accounts and Top-up Submission,SubmitTopUpTest
 R57,2026-09-11-rehla-04-wallet-topups.md,Task 3: Atomic Approval and Rejection,ConcurrentApprovalTest
 R58,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 5: Atomic and Idempotent SubmitOrder,SubmitOrderConcurrencyTest
 R59,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 5: Atomic and Idempotent SubmitOrder,SubmitOrderConcurrencyTest
 R60,2026-09-11-rehla-01-foundation-core.md,Task 4: Enforce Package Boundaries and Table Ownership,PackageDependencyTest
-R61,2026-09-11-rehla-07-interfaces-operations-release.md,Task 6: Localization RTL Accessibility and Browser Journeys,accessibility.spec.ts
+R61,2026-09-11-rehla-10-operations-security-release.md,"Task 1: Localization, RTL, Accessibility and Browser Journeys",accessibility.spec.ts
 R62,2026-09-11-rehla-06-reporting-integrations.md,Task 1: Product Metrics Contract and Read Models,ProductMetricsTest
-R63,2026-09-11-rehla-07-interfaces-operations-release.md,Task 9: Security Performance and Final R01-R65 Release Gate,phase-one-acceptance.spec.ts
+R63,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",phase-one-acceptance.spec.ts
 R64,2026-09-11-rehla-01-foundation-core.md,Task 4: Enforce Package Boundaries and Table Ownership,PackageDependencyTest and public contracts
-R65,2026-09-11-rehla-07-interfaces-operations-release.md,Task 9: Security Performance and Final R01-R65 Release Gate,phase-one-acceptance.spec.ts
+R65,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",phase-one-acceptance.spec.ts
