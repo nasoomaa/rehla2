@@ -1,0 +1,27 @@
+{
+    "name": "rehla/core",
+    "description": "Rehla Core package",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.5",
+        "illuminate/support": "^13.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rehla\\Core\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rehla\\Core\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Rehla\\Core\\Providers\\CoreServiceProvider"
+            ]
+        }
+    }
+}

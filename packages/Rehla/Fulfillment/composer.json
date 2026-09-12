@@ -1,0 +1,35 @@
+{
+    "name": "rehla/fulfillment",
+    "description": "Rehla Fulfillment package",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.5",
+        "illuminate/support": "^13.0",
+        "rehla/core": "@dev",
+        "rehla/identity": "@dev",
+        "rehla/orders": "@dev",
+        "rehla/forms": "@dev",
+        "rehla/documents": "@dev",
+        "rehla/purchasing": "@dev",
+        "rehla/audit": "@dev",
+        "rehla/notifications": "@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rehla\\Fulfillment\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rehla\\Fulfillment\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Rehla\\Fulfillment\\Providers\\FulfillmentServiceProvider"
+            ]
+        }
+    }
+}

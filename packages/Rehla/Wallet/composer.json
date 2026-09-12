@@ -1,0 +1,30 @@
+{
+    "name": "rehla/wallet",
+    "description": "Rehla Wallet package",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.5",
+        "illuminate/support": "^13.0",
+        "rehla/core": "@dev",
+        "rehla/identity": "@dev",
+        "rehla/audit": "@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rehla\\Wallet\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rehla\\Wallet\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Rehla\\Wallet\\Providers\\WalletServiceProvider"
+            ]
+        }
+    }
+}

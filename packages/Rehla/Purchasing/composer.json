@@ -1,0 +1,37 @@
+{
+    "name": "rehla/purchasing",
+    "description": "Rehla Purchasing package",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.5",
+        "illuminate/support": "^13.0",
+        "rehla/core": "@dev",
+        "rehla/identity": "@dev",
+        "rehla/catalog": "@dev",
+        "rehla/forms": "@dev",
+        "rehla/travelers": "@dev",
+        "rehla/documents": "@dev",
+        "rehla/wallet": "@dev",
+        "rehla/orders": "@dev",
+        "rehla/audit": "@dev",
+        "rehla/notifications": "@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rehla\\Purchasing\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rehla\\Purchasing\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Rehla\\Purchasing\\Providers\\PurchasingServiceProvider"
+            ]
+        }
+    }
+}

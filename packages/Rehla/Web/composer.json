@@ -1,0 +1,41 @@
+{
+    "name": "rehla/web",
+    "description": "Rehla Web package",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.5",
+        "illuminate/support": "^13.0",
+        "rehla/core": "@dev",
+        "rehla/identity": "@dev",
+        "rehla/catalog": "@dev",
+        "rehla/forms": "@dev",
+        "rehla/travelers": "@dev",
+        "rehla/documents": "@dev",
+        "rehla/wallet": "@dev",
+        "rehla/topups": "@dev",
+        "rehla/orders": "@dev",
+        "rehla/fulfillment": "@dev",
+        "rehla/purchasing": "@dev",
+        "rehla/notifications": "@dev",
+        "rehla/content": "@dev",
+        "rehla/integrations": "@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rehla\\Web\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rehla\\Web\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Rehla\\Web\\Providers\\WebServiceProvider"
+            ]
+        }
+    }
+}

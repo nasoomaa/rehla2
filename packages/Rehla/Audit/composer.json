@@ -1,0 +1,28 @@
+{
+    "name": "rehla/audit",
+    "description": "Rehla Audit package",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.5",
+        "illuminate/support": "^13.0",
+        "rehla/core": "@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rehla\\Audit\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rehla\\Audit\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Rehla\\Audit\\Providers\\AuditServiceProvider"
+            ]
+        }
+    }
+}

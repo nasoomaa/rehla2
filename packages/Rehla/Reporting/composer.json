@@ -1,0 +1,33 @@
+{
+    "name": "rehla/reporting",
+    "description": "Rehla Reporting package",
+    "type": "library",
+    "license": "proprietary",
+    "require": {
+        "php": "^8.5",
+        "illuminate/support": "^13.0",
+        "rehla/core": "@dev",
+        "rehla/identity": "@dev",
+        "rehla/travelers": "@dev",
+        "rehla/topups": "@dev",
+        "rehla/orders": "@dev",
+        "rehla/fulfillment": "@dev"
+    },
+    "autoload": {
+        "psr-4": {
+            "Rehla\\Reporting\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Rehla\\Reporting\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "Rehla\\Reporting\\Providers\\ReportingServiceProvider"
+            ]
+        }
+    }
+}
