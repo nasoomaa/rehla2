@@ -29,7 +29,8 @@
         "Travelers",
         "Notifications"
       ],
-      "release_gate": "02-identity-platform-services focused and expanded verification passes with recorded evidence"
+      "release_gate": "02-identity-platform-services focused and expanded verification passes with recorded evidence",
+      "execution_status": "in_progress"
     },
     {
       "id": "03-catalog-forms-content",
@@ -1107,7 +1108,7 @@
       "owner": "Audit",
       "migration_plan": "02-identity-platform-services",
       "migration_task": "Task 1",
-      "migration_path": "packages/Rehla/Audit/src/database/migrations/*_audit_entries.php"
+      "migration_path": "packages/Rehla/Audit/src/database/migrations/*_create_audit_entries_table.php"
     },
     "bank_accounts": {
       "owner": "TopUps",

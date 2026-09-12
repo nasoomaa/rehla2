@@ -19,7 +19,7 @@ Only this package may create migrations for or write its owned tables. Consumers
 - `AuditWriter`: `Rehla\Audit\Contracts\AuditWriter`
 - `AuditLogReader`: `Rehla\Audit\Contracts\AuditLogReader`
 
-These are contract-map declarations for later owner tasks; the Foundation scaffold does not implement domain behavior prematurely.
+`AuditWriter` is implemented by `AppendAuditEntry`. It joins the caller-owned transaction, recursively removes secret fields, and stores the stable correlation identifier with the immutable entry.
 
 ## Runtime contract
 

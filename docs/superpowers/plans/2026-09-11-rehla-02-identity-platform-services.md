@@ -42,6 +42,11 @@
 
 
 **Files:**
+- Modify: `docs/requirements/rehla-phase-1-acceptance.csv`
+- Modify: `scripts/create-rehla-packages.php`
+- Modify: `packages/Rehla/Audit/composer.json`
+- Modify: `packages/Rehla/Audit/README.md`
+- Modify: `packages/Rehla/Audit/src/Providers/AuditServiceProvider.php`
 - Create: `packages/Rehla/Audit/src/database/migrations/*_create_audit_entries_table.php`
 - Create: `packages/Rehla/Audit/src/database/migrations/*_protect_audit_entries.php`
 - Create: `packages/Rehla/Audit/src/Data/AppendAuditData.php`
@@ -65,7 +70,7 @@
 - Consumes: Core IDs وClock فقط.
 - Produces: `AuditWriter::append(AppendAuditData): string` يعيد audit UUID.
 
-- [ ] **Step 1: اكتب اختبار append والحماية المباشرة**
+- [x] **Step 1: اكتب اختبار append والحماية المباشرة**
 
 ```php
 it('cannot update or delete an audit entry even with direct SQL', function (): void {
@@ -81,15 +86,15 @@ it('cannot update or delete an audit entry even with direct SQL', function (): v
 });
 ```
 
-- [ ] **Step 2: شغل RED على PostgreSQL**
+- [x] **Step 2: شغل RED على PostgreSQL**
 
 Run: `php artisan test packages/Rehla/Audit/tests/Integration/AuditImmutabilityTest.php`
 
 Expected: FAIL قبل وجود الجدول/trigger.
 
-- [ ] **Step 3: نفذ append-only storage**
+- [x] **Step 3: نفذ append-only storage**
 
-أنشئ `audit_entries(id uuid, actor_type, actor_id nullable, action, subject_type, subject_id, metadata jsonb, ip_hash nullable, user_agent_hash nullable, occurred_at)` بلا `updated_at`. أضف PostgreSQL function واحدة ترفع exception على UPDATE أوDELETE وtrigger يستدعيها.
+أنشئ `audit_entries(id uuid, actor_type, actor_id nullable, action, subject_type, subject_id, metadata jsonb, old_state jsonb nullable, new_state jsonb nullable, reason nullable, correlation_id uuid, ip_hash nullable, user_agent_hash nullable, occurred_at)` بلا `updated_at`. أضف PostgreSQL function واحدة ترفع exception على UPDATE أوDELETE وtrigger يستدعيها.
 
 ```php
 interface AuditWriter
@@ -98,15 +103,15 @@ interface AuditWriter
 }
 ```
 
-لا تخزن passwords أوtokens أومحتوى مستندات داخل metadata.
+لا تخزن passwords أوtokens أوMFA secrets أومحتوى مستندات داخل metadata أوstate snapshots؛ ينظف الكاتب هذه المفاتيح recursively قبل الإدخال.
 
-- [ ] **Step 4: شغل الاختبارات وراجع migration fresh**
+- [x] **Step 4: شغل الاختبارات وراجع migration fresh**
 
 Run: `php artisan migrate:fresh --env=testing && php artisan test packages/Rehla/Audit`
 
 Expected: INSERT ينجح وUPDATE/DELETE يفشلان.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/Rehla/Audit

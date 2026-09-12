@@ -110,7 +110,7 @@ R42.01,R42,Forms,CreateDraftFormAction,draft_version_editable,packages/Rehla/For
 R43.01,R43,Admin,AdminAuthorizationGuard,mfa_required_for_sensitive_roles,packages/Rehla/Admin/tests/Unit/AdminCapabilityMatrixTest.php,enforces TOTP for administrative capabilities,planned,,
 R44.01,R44,TopUps,TopUpReviewQueue,topup_review_lock,packages/Rehla/TopUps/tests/Unit/ApproveTopUpTest.php,locks top up during staff review,planned,,
 R45.01,R45,Fulfillment,AssignExecutionStaffAction,assigned_staff_recorded,packages/Rehla/Fulfillment/tests/Unit/ExecutionStateMachineTest.php,records assigned staff on execution,planned,,
-R46.01,R46,Audit,LogAuditEventAction,audit_log_immutable,packages/Rehla/Audit/tests/Integration/AuditImmutabilityTest.php,cannot update or delete an audit entry even with direct SQL,planned,,
+R46.01,R46,Audit,AppendAuditEntry,audit_log_immutable,packages/Rehla/Audit/tests/Integration/AuditImmutabilityTest.php,rejects direct updates at the PostgreSQL boundary,green,php artisan test packages/Rehla/Audit/tests; PASS 7 tests 19 assertions; packages/Rehla/Audit/tests/Integration/AuditImmutabilityTest.php,
 R47.01,R47,Identity,Ability::admin.overview.view,declared_ability_denied_by_default,packages/Rehla/Identity/tests/Integration/AuthorizationTest.php,authorizes only the declared admin.overview.view ability,planned,,
 R47.02,R47,Identity,Ability::services.view,declared_ability_denied_by_default,packages/Rehla/Identity/tests/Integration/AuthorizationTest.php,authorizes only the declared services.view ability,planned,,
 R47.03,R47,Identity,Ability::services.manage,declared_ability_denied_by_default,packages/Rehla/Identity/tests/Integration/AuthorizationTest.php,authorizes only the declared services.manage ability,planned,,

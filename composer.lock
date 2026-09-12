@@ -3377,9 +3377,10 @@
             "dist": {
                 "type": "path",
                 "url": "packages/Rehla/Audit",
-                "reference": "1fa28d0686ea4069fc637904722e67236501f8c2"
+                "reference": "c5b93f59c0d918661d4196115f458713961c6fb1"
             },
             "require": {
+                "illuminate/database": "^13.0",
                 "illuminate/support": "^13.0",
                 "php": "^8.5",
                 "rehla/core": "@dev"

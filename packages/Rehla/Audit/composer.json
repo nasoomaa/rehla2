@@ -6,6 +6,7 @@
     "require": {
         "php": "^8.5",
         "illuminate/support": "^13.0",
+        "illuminate/database": "^13.0",
         "rehla/core": "@dev"
     },
     "autoload": {
