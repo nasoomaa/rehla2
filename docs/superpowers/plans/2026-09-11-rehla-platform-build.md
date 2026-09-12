@@ -15,7 +15,7 @@
 ## Global Constraints
 
 - مرجع المنتج الملزم هو `docs/REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md` بأقسامه R01–R65.
-- خريطة الاعتماد المقروءة آليًا هي `docs/architecture/rehla-package-map.json`.
+- مصادر الحقيقة المعمارية المقروءة آليًا هي `docs/architecture/rehla-package-map.json` للاعتمادات المباشرة، و`docs/architecture/rehla-package-contract-map.json` للأسطح العامة واتجاه المعاملة والفشل لكل حافة، و`docs/architecture/table-ownership.json` لمالك كل جدول وقراء Reporting.
 - مسار الحزم حساس لحالة الأحرف: `packages/Rehla/<Package>`.
 - يبقى في جذر كل حزمة `composer.json` و`README.md` و`src/` و`tests/` فقط؛ توضع إعدادات الحزمة وترحيلاتها ومواردها ومساراتها وOpenAPI تحت `src/`، وتبقى الاختبارات في الجذر عبر `autoload-dev`.
 - يكون مزود كل حزمة في `src/Providers/<Package>ServiceProvider.php` ويحمل موارد الحزمة صراحة من مواضعها تحت `src/`.

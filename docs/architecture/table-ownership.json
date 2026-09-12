@@ -1,0 +1,332 @@
+{
+  "schema_version": 1,
+  "meaning": "Each Phase 1 table has exactly one owning package. Other packages write only through the owner public contracts; Reporting receives read-only access only where listed.",
+  "tables": {
+    "abilities": {
+      "owner": "Identity",
+      "writers": [
+        "Identity"
+      ],
+      "reporting_readers": []
+    },
+    "audit_entries": {
+      "owner": "Audit",
+      "writers": [
+        "Audit"
+      ],
+      "reporting_readers": []
+    },
+    "bank_accounts": {
+      "owner": "TopUps",
+      "writers": [
+        "TopUps"
+      ],
+      "reporting_readers": []
+    },
+    "content_pages": {
+      "owner": "Content",
+      "writers": [
+        "Content"
+      ],
+      "reporting_readers": []
+    },
+    "customer_action_requests": {
+      "owner": "Fulfillment",
+      "writers": [
+        "Fulfillment"
+      ],
+      "reporting_readers": [
+        "Reporting"
+      ]
+    },
+    "customer_action_responses": {
+      "owner": "Fulfillment",
+      "writers": [
+        "Fulfillment"
+      ],
+      "reporting_readers": []
+    },
+    "documents": {
+      "owner": "Documents",
+      "writers": [
+        "Documents"
+      ],
+      "reporting_readers": []
+    },
+    "execution_documents": {
+      "owner": "Fulfillment",
+      "writers": [
+        "Fulfillment"
+      ],
+      "reporting_readers": []
+    },
+    "execution_internal_notes": {
+      "owner": "Fulfillment",
+      "writers": [
+        "Fulfillment"
+      ],
+      "reporting_readers": []
+    },
+    "execution_status_history": {
+      "owner": "Fulfillment",
+      "writers": [
+        "Fulfillment"
+      ],
+      "reporting_readers": [
+        "Reporting"
+      ]
+    },
+    "form_drafts": {
+      "owner": "Forms",
+      "writers": [
+        "Forms"
+      ],
+      "reporting_readers": []
+    },
+    "form_versions": {
+      "owner": "Forms",
+      "writers": [
+        "Forms"
+      ],
+      "reporting_readers": []
+    },
+    "fulfillment_policy_drafts": {
+      "owner": "Catalog",
+      "writers": [
+        "Catalog"
+      ],
+      "reporting_readers": []
+    },
+    "fulfillment_policy_versions": {
+      "owner": "Catalog",
+      "writers": [
+        "Catalog"
+      ],
+      "reporting_readers": []
+    },
+    "notifications": {
+      "owner": "Notifications",
+      "writers": [
+        "Notifications"
+      ],
+      "reporting_readers": []
+    },
+    "order_form_snapshots": {
+      "owner": "Orders",
+      "writers": [
+        "Orders"
+      ],
+      "reporting_readers": []
+    },
+    "order_service_snapshots": {
+      "owner": "Orders",
+      "writers": [
+        "Orders"
+      ],
+      "reporting_readers": [
+        "Reporting"
+      ]
+    },
+    "order_traveler_snapshots": {
+      "owner": "Orders",
+      "writers": [
+        "Orders"
+      ],
+      "reporting_readers": []
+    },
+    "orders": {
+      "owner": "Orders",
+      "writers": [
+        "Orders"
+      ],
+      "reporting_readers": [
+        "Reporting"
+      ]
+    },
+    "outbox_delivery_attempts": {
+      "owner": "Notifications",
+      "writers": [
+        "Notifications"
+      ],
+      "reporting_readers": []
+    },
+    "outbox_messages": {
+      "owner": "Notifications",
+      "writers": [
+        "Notifications"
+      ],
+      "reporting_readers": []
+    },
+    "personal_access_tokens": {
+      "owner": "Identity",
+      "writers": [
+        "Identity"
+      ],
+      "reporting_readers": []
+    },
+    "purchase_attempts": {
+      "owner": "Purchasing",
+      "writers": [
+        "Purchasing"
+      ],
+      "reporting_readers": []
+    },
+    "role_ability": {
+      "owner": "Identity",
+      "writers": [
+        "Identity"
+      ],
+      "reporting_readers": []
+    },
+    "roles": {
+      "owner": "Identity",
+      "writers": [
+        "Identity"
+      ],
+      "reporting_readers": []
+    },
+    "service_executions": {
+      "owner": "Fulfillment",
+      "writers": [
+        "Fulfillment"
+      ],
+      "reporting_readers": [
+        "Reporting"
+      ]
+    },
+    "service_media": {
+      "owner": "Catalog",
+      "writers": [
+        "Catalog"
+      ],
+      "reporting_readers": []
+    },
+    "service_price_history": {
+      "owner": "Catalog",
+      "writers": [
+        "Catalog"
+      ],
+      "reporting_readers": []
+    },
+    "service_requirements": {
+      "owner": "Catalog",
+      "writers": [
+        "Catalog"
+      ],
+      "reporting_readers": []
+    },
+    "services": {
+      "owner": "Catalog",
+      "writers": [
+        "Catalog"
+      ],
+      "reporting_readers": []
+    },
+    "staff_profiles": {
+      "owner": "Identity",
+      "writers": [
+        "Identity"
+      ],
+      "reporting_readers": []
+    },
+    "top_up_requests": {
+      "owner": "TopUps",
+      "writers": [
+        "TopUps"
+      ],
+      "reporting_readers": [
+        "Reporting"
+      ]
+    },
+    "top_up_settings": {
+      "owner": "TopUps",
+      "writers": [
+        "TopUps"
+      ],
+      "reporting_readers": []
+    },
+    "travelers": {
+      "owner": "Travelers",
+      "writers": [
+        "Travelers"
+      ],
+      "reporting_readers": [
+        "Reporting"
+      ]
+    },
+    "upload_sessions": {
+      "owner": "Documents",
+      "writers": [
+        "Documents"
+      ],
+      "reporting_readers": []
+    },
+    "user_role": {
+      "owner": "Identity",
+      "writers": [
+        "Identity"
+      ],
+      "reporting_readers": []
+    },
+    "users": {
+      "owner": "Identity",
+      "writers": [
+        "Identity"
+      ],
+      "reporting_readers": [
+        "Reporting"
+      ]
+    },
+    "wallet_ledger_entries": {
+      "owner": "Wallet",
+      "writers": [
+        "Wallet"
+      ],
+      "reporting_readers": []
+    },
+    "wallet_reconciliation_runs": {
+      "owner": "Wallet",
+      "writers": [
+        "Wallet"
+      ],
+      "reporting_readers": []
+    },
+    "wallets": {
+      "owner": "Wallet",
+      "writers": [
+        "Wallet"
+      ],
+      "reporting_readers": []
+    }
+  },
+  "objects": {
+    "reporting_product_metrics": {
+      "owner": "Reporting",
+      "kind": "view_or_query_projection",
+      "source_writes": false
+    },
+    "reporting_orders_by_service": {
+      "owner": "Reporting",
+      "kind": "view_or_query_projection",
+      "source_writes": false
+    },
+    "reporting_fulfillment_performance": {
+      "owner": "Reporting",
+      "kind": "view_or_query_projection",
+      "source_writes": false
+    }
+  },
+  "packages_without_phase_one_business_tables": [
+    "Core",
+    "Integrations",
+    "Reporting",
+    "Web",
+    "Api",
+    "Admin"
+  ],
+  "rules": {
+    "one_owner": true,
+    "cross_package_writes": "provider_command_only",
+    "mutable_models_cross_boundary": false
+  }
+}

@@ -264,26 +264,28 @@ flowchart TD
 | المستهلك | الحزم المسموح أن يعتمد عليها |
 |---|---|
 | Core | لا شيء من Rehla |
-| Identity | Core |
 | Audit | Core |
+| Identity | Core, Audit |
+| Documents | Core, Identity, Audit |
+| Travelers | Core, Identity, Audit |
+| Wallet | Core, Identity, Audit |
+| Notifications | Core, Identity, Audit |
 | Catalog | Core, Documents, Audit |
 | Forms | Core, Catalog, Audit |
-| Travelers | Core, Identity, Audit |
-| Documents | Core, Identity, Audit |
-| Wallet | Core, Identity, Audit |
-| Notifications | Core, Identity |
+| Content | Core, Identity, Audit |
 | TopUps | Core, Identity, Documents, Wallet, Audit, Notifications |
 | Orders | Core |
 | Purchasing | Core, Identity, Catalog, Forms, Travelers, Documents, Wallet, Orders, Audit, Notifications |
 | Fulfillment | Core, Identity, Orders, Forms, Documents, Purchasing, Audit, Notifications |
-| Content | Core, Identity, Audit |
-| Integrations | Core, Notifications, Fulfillment |
-| Reporting | عقود القراءة في Identity, Travelers, Catalog, TopUps, Orders, Fulfillment, Notifications |
+| Integrations | Core, Notifications |
+| Reporting | Core, Identity, Travelers, TopUps, Orders, Fulfillment |
 | Web | Core, Identity, Catalog, Forms, Travelers, Documents, Wallet, TopUps, Orders, Fulfillment, Purchasing, Notifications, Content, Integrations |
-| Api | Core, Identity, Catalog, Forms, Travelers, Documents, Wallet, TopUps, Orders, Fulfillment, Purchasing, Notifications |
+| Api | Core, Identity, Catalog, Forms, Travelers, Documents, Wallet, TopUps, Orders, Fulfillment, Purchasing, Notifications, Integrations |
 | Admin | Core, Identity, Catalog, Forms, Travelers, Documents, Wallet, TopUps, Orders, Fulfillment, Notifications, Content, Audit, Reporting |
 
-أي اعتماد غير موجود في الجدول يحتاج تحديثًا معللًا لهذه الوثيقة واختبار Architecture قبل إدخاله. النسخة المقروءة آليًا هي [rehla-package-map.json](architecture/rehla-package-map.json)، ومنها يتحقق CI من manifests وimports والدورات والترتيب الطوبولوجي.
+هذه المصفوفة تلغي اعتماد `Integrations -> Fulfillment`؛ يبقى التكامل منفذ قناة يعرّفه `Notifications` ولا يقرأ التنفيذ. كما تلغي قراءات `Reporting` المباشرة من `Catalog` و`Notifications`، وتضيف `Audit` إلى `Identity` و`Notifications`، وتضيف `Integrations` إلى `Api` لبناء رابط الاستفسار عبر عقد معلن. سياسة التنفيذ وإصداراتها ملك `Catalog` ويقرأها `Purchasing` منه، بينما يعرّف `Purchasing` منفذ إنشاء التنفيذ الذي تنفذه حزمة `Fulfillment`، وبذلك لا تنشأ دورة بينهما.
+
+أي اعتماد غير موجود في الجدول يحتاج تحديثًا معللًا لهذه الوثيقة واختبارات Architecture قبل إدخاله. مصادر الحقيقة المقروءة آليًا هي [خريطة الاعتماد](architecture/rehla-package-map.json)، و[خريطة العقود لكل حافة](architecture/rehla-package-contract-map.json)، و[خريطة ملكية الجداول](architecture/table-ownership.json). يتحقق CI من مساواة Composer imports بالحواف الـ98، ومن وجود سطح عام لكل حافة، ومن عدم وجود دورات أو كتابة عبر مالك الجدول.
 
 قواعد ملزمة:
 

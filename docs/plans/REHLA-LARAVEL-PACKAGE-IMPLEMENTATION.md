@@ -1,6 +1,6 @@
 # خطة تنفيذ معمارية Laravel بالحزم لرحلة
 
-مرجع البنية: [REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md](../REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md). مرجع المنتج: [REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md](../REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md). خريطة الاعتمادات: [rehla-package-map.json](../architecture/rehla-package-map.json).
+مرجع البنية: [REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md](../REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md). مرجع المنتج: [REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md](../REHLA-PROJECT-CONCEPT-AND-USER-JOURNEY.md). مصادر الحقيقة الآلية: [خريطة الاعتمادات](../architecture/rehla-package-map.json)، و[خريطة عقود الحواف](../architecture/rehla-package-contract-map.json)، و[ملكية الجداول](../architecture/table-ownership.json).
 
 الخطة التنفيذية التفصيلية وفق Superpowers تبدأ من [Rehla Platform Implementation Plan](../superpowers/plans/2026-09-11-rehla-platform-build.md). يبقى هذا الملف خريطة مراحل مختصرة؛ الملفات السبعة المرتبطة من الخطة الرئيسية هي المرجع التنفيذي للملفات والعقود ودورات RED/GREEN وأوامر التحقق.
 
@@ -14,7 +14,8 @@
 - لا أثر خارجي داخل المعاملات.
 - لا حزم Cart/Inventory/Shipping/MultiCurrency/Refunds في الإصدار الأول.
 - كل خطوة تحدث سجل R01–R65؛ عبارة «مكتمل» تحتاج دليل اختبار فعلي.
-- يجب أن تطابق اعتمادات Composer خريطة الحزم، ويجب أن يكون ترتيب التنفيذ topological order صالحًا لها.
+- يجب أن تطابق اعتمادات Composer خريطة الحزم ذات 19 حزمة و98 حافة، وأن يملك كل اعتماد سجل عقد مطابقًا، وأن يكون ترتيب التنفيذ topological order صالحًا لها.
+- كل جدول موجود في خريطة الملكية له كاتب واحد هو الحزمة المالكة؛ تعبر الكتابة الحدود بعقد أوAction عام للمالك فقط.
 - يحتوي جذر الحزمة ملفات metadata و`src/` و`tests/` فقط؛ تقع `config/database/resources/routes/openapi` الخاصة بها تحت `src/`، ويقع Service Provider تحت `src/Providers/`.
 
 ## شبكة التنفيذ المصححة

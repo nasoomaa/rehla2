@@ -1,0 +1,1405 @@
+{
+  "schema_version": 1,
+  "meaning": "Every direct dependency edge has an explicit public surface, call mode, transaction owner, write rule, and failure rule.",
+  "surface_groups": {
+    "CorePrimitives": {
+      "owner": "Core",
+      "namespaces": [
+        "Rehla\\Core\\Money\\Money",
+        "Rehla\\Core\\Identifiers\\OpaqueId",
+        "Rehla\\Core\\Time\\Clock",
+        "Rehla\\Core\\Errors\\ProblemCode"
+      ]
+    },
+    "AuditWriter": {
+      "owner": "Audit",
+      "namespaces": [
+        "Rehla\\Audit\\Contracts\\AuditWriter"
+      ]
+    },
+    "AuditLogReader": {
+      "owner": "Audit",
+      "namespaces": [
+        "Rehla\\Audit\\Contracts\\AuditLogReader"
+      ]
+    },
+    "IdentityAuthorization": {
+      "owner": "Identity",
+      "namespaces": [
+        "Rehla\\Identity\\Contracts\\AuthorizesActor"
+      ]
+    },
+    "IdentityRegistration": {
+      "owner": "Identity",
+      "namespaces": [
+        "Rehla\\Identity\\Actions\\RegisterCustomer"
+      ]
+    },
+    "IdentityReader": {
+      "owner": "Identity",
+      "namespaces": [
+        "Rehla\\Identity\\Contracts\\IdentityReader"
+      ]
+    },
+    "RegistrationWalletPort": {
+      "owner": "Identity",
+      "namespaces": [
+        "Rehla\\Identity\\Contracts\\RegistrationWalletInitializer"
+      ]
+    },
+    "RegistrationNotificationPort": {
+      "owner": "Identity",
+      "namespaces": [
+        "Rehla\\Identity\\Contracts\\RegistrationNotificationRecorder"
+      ]
+    },
+    "DocumentsOwned": {
+      "owner": "Documents",
+      "namespaces": [
+        "Rehla\\Documents\\Contracts\\OwnedDocuments"
+      ]
+    },
+    "DocumentDownload": {
+      "owner": "Documents",
+      "namespaces": [
+        "Rehla\\Documents\\Contracts\\DocumentDownloadAuthorizer"
+      ]
+    },
+    "DocumentReference": {
+      "owner": "Documents",
+      "namespaces": [
+        "Rehla\\Documents\\Data\\DocumentReference"
+      ]
+    },
+    "TravelerReader": {
+      "owner": "Travelers",
+      "namespaces": [
+        "Rehla\\Travelers\\Contracts\\TravelerReader"
+      ]
+    },
+    "TravelerSnapshot": {
+      "owner": "Travelers",
+      "namespaces": [
+        "Rehla\\Travelers\\Contracts\\TravelerSnapshotReader"
+      ]
+    },
+    "WalletReader": {
+      "owner": "Wallet",
+      "namespaces": [
+        "Rehla\\Wallet\\Contracts\\WalletReader"
+      ]
+    },
+    "WalletCreditor": {
+      "owner": "Wallet",
+      "namespaces": [
+        "Rehla\\Wallet\\Contracts\\WalletCreditor"
+      ]
+    },
+    "WalletDebitor": {
+      "owner": "Wallet",
+      "namespaces": [
+        "Rehla\\Wallet\\Contracts\\WalletDebitor"
+      ]
+    },
+    "NotificationsOutbox": {
+      "owner": "Notifications",
+      "namespaces": [
+        "Rehla\\Notifications\\Contracts\\OutboxWriter"
+      ]
+    },
+    "NotificationReader": {
+      "owner": "Notifications",
+      "namespaces": [
+        "Rehla\\Notifications\\Contracts\\NotificationReader"
+      ]
+    },
+    "NotificationRecorder": {
+      "owner": "Notifications",
+      "namespaces": [
+        "Rehla\\Notifications\\Contracts\\NotificationRecorder"
+      ]
+    },
+    "NotificationChannelPort": {
+      "owner": "Notifications",
+      "namespaces": [
+        "Rehla\\Notifications\\Contracts\\NotificationChannel"
+      ]
+    },
+    "CatalogService": {
+      "owner": "Catalog",
+      "namespaces": [
+        "Rehla\\Catalog\\Contracts\\ServiceCatalog"
+      ]
+    },
+    "CatalogQuote": {
+      "owner": "Catalog",
+      "namespaces": [
+        "Rehla\\Catalog\\Contracts\\ServiceQuoteReader"
+      ]
+    },
+    "CatalogFulfillmentPolicy": {
+      "owner": "Catalog",
+      "namespaces": [
+        "Rehla\\Catalog\\Contracts\\PublishedFulfillmentPolicyReader"
+      ]
+    },
+    "FormsPublished": {
+      "owner": "Forms",
+      "namespaces": [
+        "Rehla\\Forms\\Contracts\\PublishedFormReader"
+      ]
+    },
+    "FormsValidator": {
+      "owner": "Forms",
+      "namespaces": [
+        "Rehla\\Forms\\Contracts\\FormSubmissionValidator"
+      ]
+    },
+    "FormsAdmin": {
+      "owner": "Forms",
+      "namespaces": [
+        "Rehla\\Forms\\Contracts\\FormAdminCommands"
+      ]
+    },
+    "ContentPublished": {
+      "owner": "Content",
+      "namespaces": [
+        "Rehla\\Content\\Contracts\\PublishedContentReader"
+      ]
+    },
+    "ContentAdmin": {
+      "owner": "Content",
+      "namespaces": [
+        "Rehla\\Content\\Contracts\\ContentAdminCommands"
+      ]
+    },
+    "TopUpsReader": {
+      "owner": "TopUps",
+      "namespaces": [
+        "Rehla\\TopUps\\Contracts\\TopUpReader"
+      ]
+    },
+    "TopUpsAdmin": {
+      "owner": "TopUps",
+      "namespaces": [
+        "Rehla\\TopUps\\Contracts\\TopUpAdminCommands"
+      ]
+    },
+    "BankAccountReader": {
+      "owner": "TopUps",
+      "namespaces": [
+        "Rehla\\TopUps\\Contracts\\BankAccountReader"
+      ]
+    },
+    "OrdersWriter": {
+      "owner": "Orders",
+      "namespaces": [
+        "Rehla\\Orders\\Contracts\\OrderWriter"
+      ]
+    },
+    "OrdersReader": {
+      "owner": "Orders",
+      "namespaces": [
+        "Rehla\\Orders\\Contracts\\OrderReader"
+      ]
+    },
+    "OrdersReporting": {
+      "owner": "Orders",
+      "namespaces": [
+        "Rehla\\Orders\\Contracts\\OrderReportingSource"
+      ]
+    },
+    "PurchasingSubmit": {
+      "owner": "Purchasing",
+      "namespaces": [
+        "Rehla\\Purchasing\\Actions\\SubmitOrder"
+      ]
+    },
+    "ExecutionCreatorPort": {
+      "owner": "Purchasing",
+      "namespaces": [
+        "Rehla\\Purchasing\\Contracts\\ExecutionCreator"
+      ]
+    },
+    "FulfillmentReader": {
+      "owner": "Fulfillment",
+      "namespaces": [
+        "Rehla\\Fulfillment\\Contracts\\ExecutionReader"
+      ]
+    },
+    "FulfillmentAdmin": {
+      "owner": "Fulfillment",
+      "namespaces": [
+        "Rehla\\Fulfillment\\Contracts\\FulfillmentAdminCommands"
+      ]
+    },
+    "FulfillmentReporting": {
+      "owner": "Fulfillment",
+      "namespaces": [
+        "Rehla\\Fulfillment\\Contracts\\FulfillmentReportingSource"
+      ]
+    },
+    "IntegrationsInquiry": {
+      "owner": "Integrations",
+      "namespaces": [
+        "Rehla\\Integrations\\Contracts\\InquiryLinkBuilder"
+      ]
+    },
+    "ReportingMetrics": {
+      "owner": "Reporting",
+      "namespaces": [
+        "Rehla\\Reporting\\Contracts\\ProductMetricsReader"
+      ]
+    }
+  },
+  "dependencies": [
+    {
+      "consumer": "Audit",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Identity",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Identity",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Identity",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Catalog",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Catalog",
+      "provider": "Documents",
+      "surfaces": [
+        "DocumentReference"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Catalog",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Catalog",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Catalog",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Forms",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Forms",
+      "provider": "Catalog",
+      "surfaces": [
+        "CatalogService"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Forms",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Forms",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Forms",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Travelers",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Travelers",
+      "provider": "Identity",
+      "surfaces": [
+        "IdentityAuthorization",
+        "IdentityReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Travelers",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Travelers",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Travelers",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Documents",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Documents",
+      "provider": "Identity",
+      "surfaces": [
+        "IdentityAuthorization",
+        "IdentityReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Documents",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Documents",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Documents",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Wallet",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Wallet",
+      "provider": "Identity",
+      "surfaces": [
+        "RegistrationWalletPort"
+      ],
+      "mode": "implementation_binding",
+      "transaction_owner": "Identity",
+      "write_rule": "implements_provider_owned_port",
+      "failure_rule": "abort_owner_transaction"
+    },
+    {
+      "consumer": "Wallet",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Wallet",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Notifications",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Notifications",
+      "provider": "Identity",
+      "surfaces": [
+        "RegistrationNotificationPort"
+      ],
+      "mode": "implementation_binding",
+      "transaction_owner": "Identity",
+      "write_rule": "implements_provider_owned_port",
+      "failure_rule": "abort_owner_transaction"
+    },
+    {
+      "consumer": "Notifications",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Notifications",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "TopUps",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "TopUps",
+      "provider": "Identity",
+      "surfaces": [
+        "IdentityAuthorization",
+        "IdentityReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "TopUps",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "TopUps",
+      "provider": "Documents",
+      "surfaces": [
+        "DocumentsOwned"
+      ],
+      "mode": "sync",
+      "transaction_owner": "TopUps",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "TopUps",
+      "provider": "Wallet",
+      "surfaces": [
+        "WalletCreditor"
+      ],
+      "mode": "sync",
+      "transaction_owner": "TopUps",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "TopUps",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "TopUps",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "TopUps",
+      "provider": "Notifications",
+      "surfaces": [
+        "NotificationRecorder",
+        "NotificationsOutbox"
+      ],
+      "mode": "sync",
+      "transaction_owner": "TopUps",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Orders",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Purchasing",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Purchasing",
+      "provider": "Identity",
+      "surfaces": [
+        "IdentityAuthorization",
+        "IdentityReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Purchasing",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Purchasing",
+      "provider": "Catalog",
+      "surfaces": [
+        "CatalogQuote",
+        "CatalogFulfillmentPolicy"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Purchasing",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Purchasing",
+      "provider": "Forms",
+      "surfaces": [
+        "FormsPublished",
+        "FormsValidator"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Purchasing",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Purchasing",
+      "provider": "Travelers",
+      "surfaces": [
+        "TravelerSnapshot"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Purchasing",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Purchasing",
+      "provider": "Documents",
+      "surfaces": [
+        "DocumentsOwned"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Purchasing",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Purchasing",
+      "provider": "Wallet",
+      "surfaces": [
+        "WalletReader",
+        "WalletDebitor"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Purchasing",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Purchasing",
+      "provider": "Orders",
+      "surfaces": [
+        "OrdersWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Purchasing",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Purchasing",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Purchasing",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Purchasing",
+      "provider": "Notifications",
+      "surfaces": [
+        "NotificationRecorder",
+        "NotificationsOutbox"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Purchasing",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Fulfillment",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Fulfillment",
+      "provider": "Identity",
+      "surfaces": [
+        "IdentityAuthorization",
+        "IdentityReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Fulfillment",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Fulfillment",
+      "provider": "Orders",
+      "surfaces": [
+        "OrdersReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Fulfillment",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Fulfillment",
+      "provider": "Forms",
+      "surfaces": [
+        "FormsPublished"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Fulfillment",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Fulfillment",
+      "provider": "Documents",
+      "surfaces": [
+        "DocumentsOwned",
+        "DocumentDownload"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Fulfillment",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Fulfillment",
+      "provider": "Purchasing",
+      "surfaces": [
+        "ExecutionCreatorPort"
+      ],
+      "mode": "implementation_binding",
+      "transaction_owner": "Purchasing",
+      "write_rule": "implements_provider_owned_port",
+      "failure_rule": "abort_owner_transaction"
+    },
+    {
+      "consumer": "Fulfillment",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Fulfillment",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Fulfillment",
+      "provider": "Notifications",
+      "surfaces": [
+        "NotificationRecorder",
+        "NotificationsOutbox"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Fulfillment",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Content",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Content",
+      "provider": "Identity",
+      "surfaces": [
+        "IdentityAuthorization",
+        "IdentityReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Content",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Content",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditWriter"
+      ],
+      "mode": "sync",
+      "transaction_owner": "Content",
+      "write_rule": "provider_command_only",
+      "failure_rule": "abort_consumer_operation"
+    },
+    {
+      "consumer": "Integrations",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "value_objects_only",
+      "failure_rule": "propagate_typed_failure"
+    },
+    {
+      "consumer": "Integrations",
+      "provider": "Notifications",
+      "surfaces": [
+        "NotificationChannelPort"
+      ],
+      "mode": "adapter_binding",
+      "transaction_owner": "none",
+      "write_rule": "no_business_writes",
+      "failure_rule": "record_delivery_failure_for_retry"
+    },
+    {
+      "consumer": "Reporting",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "reporting_read",
+      "transaction_owner": "none",
+      "write_rule": "no_source_writes",
+      "failure_rule": "fail_query_without_source_write"
+    },
+    {
+      "consumer": "Reporting",
+      "provider": "Identity",
+      "surfaces": [
+        "IdentityReader"
+      ],
+      "mode": "reporting_read",
+      "transaction_owner": "none",
+      "write_rule": "no_source_writes",
+      "failure_rule": "fail_query_without_source_write"
+    },
+    {
+      "consumer": "Reporting",
+      "provider": "Travelers",
+      "surfaces": [
+        "TravelerReader"
+      ],
+      "mode": "reporting_read",
+      "transaction_owner": "none",
+      "write_rule": "no_source_writes",
+      "failure_rule": "fail_query_without_source_write"
+    },
+    {
+      "consumer": "Reporting",
+      "provider": "TopUps",
+      "surfaces": [
+        "TopUpsReader"
+      ],
+      "mode": "reporting_read",
+      "transaction_owner": "none",
+      "write_rule": "no_source_writes",
+      "failure_rule": "fail_query_without_source_write"
+    },
+    {
+      "consumer": "Reporting",
+      "provider": "Orders",
+      "surfaces": [
+        "OrdersReporting"
+      ],
+      "mode": "reporting_read",
+      "transaction_owner": "none",
+      "write_rule": "no_source_writes",
+      "failure_rule": "fail_query_without_source_write"
+    },
+    {
+      "consumer": "Reporting",
+      "provider": "Fulfillment",
+      "surfaces": [
+        "FulfillmentReporting"
+      ],
+      "mode": "reporting_read",
+      "transaction_owner": "none",
+      "write_rule": "no_source_writes",
+      "failure_rule": "fail_query_without_source_write"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Identity",
+      "surfaces": [
+        "IdentityRegistration",
+        "IdentityReader",
+        "IdentityAuthorization"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Catalog",
+      "surfaces": [
+        "CatalogService",
+        "CatalogQuote"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Forms",
+      "surfaces": [
+        "FormsPublished"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Travelers",
+      "surfaces": [
+        "TravelerReader",
+        "TravelerSnapshot"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Documents",
+      "surfaces": [
+        "DocumentDownload",
+        "DocumentReference"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Wallet",
+      "surfaces": [
+        "WalletReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "TopUps",
+      "surfaces": [
+        "TopUpsReader",
+        "BankAccountReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Orders",
+      "surfaces": [
+        "OrdersReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Fulfillment",
+      "surfaces": [
+        "FulfillmentReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Purchasing",
+      "surfaces": [
+        "PurchasingSubmit"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Notifications",
+      "surfaces": [
+        "NotificationReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Content",
+      "surfaces": [
+        "ContentPublished"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Web",
+      "provider": "Integrations",
+      "surfaces": [
+        "IntegrationsInquiry"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Identity",
+      "surfaces": [
+        "IdentityRegistration",
+        "IdentityReader",
+        "IdentityAuthorization"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Catalog",
+      "surfaces": [
+        "CatalogService",
+        "CatalogQuote"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Forms",
+      "surfaces": [
+        "FormsPublished"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Travelers",
+      "surfaces": [
+        "TravelerReader",
+        "TravelerSnapshot"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Documents",
+      "surfaces": [
+        "DocumentDownload",
+        "DocumentReference"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Wallet",
+      "surfaces": [
+        "WalletReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "TopUps",
+      "surfaces": [
+        "TopUpsReader",
+        "BankAccountReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Orders",
+      "surfaces": [
+        "OrdersReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Fulfillment",
+      "surfaces": [
+        "FulfillmentReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Purchasing",
+      "surfaces": [
+        "PurchasingSubmit"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Notifications",
+      "surfaces": [
+        "NotificationReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Api",
+      "provider": "Integrations",
+      "surfaces": [
+        "IntegrationsInquiry"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Core",
+      "surfaces": [
+        "CorePrimitives"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Identity",
+      "surfaces": [
+        "IdentityReader",
+        "IdentityAuthorization"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Catalog",
+      "surfaces": [
+        "CatalogService",
+        "CatalogFulfillmentPolicy"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Forms",
+      "surfaces": [
+        "FormsPublished",
+        "FormsAdmin"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Travelers",
+      "surfaces": [
+        "TravelerReader",
+        "TravelerSnapshot"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Documents",
+      "surfaces": [
+        "DocumentDownload",
+        "DocumentReference"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Wallet",
+      "surfaces": [
+        "WalletReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "TopUps",
+      "surfaces": [
+        "TopUpsReader",
+        "TopUpsAdmin",
+        "BankAccountReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Orders",
+      "surfaces": [
+        "OrdersReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Fulfillment",
+      "surfaces": [
+        "FulfillmentReader",
+        "FulfillmentAdmin"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Notifications",
+      "surfaces": [
+        "NotificationReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Content",
+      "surfaces": [
+        "ContentPublished",
+        "ContentAdmin"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Audit",
+      "surfaces": [
+        "AuditLogReader"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    },
+    {
+      "consumer": "Admin",
+      "provider": "Reporting",
+      "surfaces": [
+        "ReportingMetrics"
+      ],
+      "mode": "sync",
+      "transaction_owner": "none",
+      "write_rule": "provider_contract_only",
+      "failure_rule": "propagate_typed_domain_failure"
+    }
+  ],
+  "inversions": [
+    {
+      "port": "Rehla\\Identity\\Contracts\\RegistrationWalletInitializer",
+      "owner": "Identity",
+      "implemented_by": "Rehla\\Wallet\\Infrastructure\\IdentityRegistrationWalletInitializer",
+      "binding_provider": "Rehla\\Wallet\\Providers\\WalletServiceProvider",
+      "transaction_owner": "Identity"
+    },
+    {
+      "port": "Rehla\\Identity\\Contracts\\RegistrationNotificationRecorder",
+      "owner": "Identity",
+      "implemented_by": "Rehla\\Notifications\\Infrastructure\\IdentityRegistrationNotificationRecorder",
+      "binding_provider": "Rehla\\Notifications\\Providers\\NotificationsServiceProvider",
+      "transaction_owner": "Identity"
+    },
+    {
+      "port": "Rehla\\Purchasing\\Contracts\\ExecutionCreator",
+      "owner": "Purchasing",
+      "implemented_by": "Rehla\\Fulfillment\\Infrastructure\\PurchasingExecutionCreator",
+      "binding_provider": "Rehla\\Fulfillment\\Providers\\FulfillmentServiceProvider",
+      "transaction_owner": "Purchasing"
+    },
+    {
+      "port": "Rehla\\Notifications\\Contracts\\NotificationChannel",
+      "owner": "Notifications",
+      "implemented_by": "Rehla\\Integrations\\Channels\\ConfiguredNotificationChannel",
+      "binding_provider": "Rehla\\Integrations\\Providers\\IntegrationsServiceProvider",
+      "transaction_owner": "none"
+    }
+  ],
+  "rules": {
+    "edge_coverage": "exactly_equal_to_rehla_package_map",
+    "mutable_models_cross_boundary": false,
+    "cross_package_writes": "provider_contract_only",
+    "external_io_in_database_transaction": false
+  }
+}

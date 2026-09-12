@@ -155,7 +155,7 @@ git commit -m "docs: lock phase one product decisions"
 - Create: `tests/Architecture/PackageDiscoveryTest.php`
 
 **Interfaces:**
-- Consumes: `docs/architecture/rehla-package-map.json`.
+- Consumes: `docs/architecture/rehla-package-map.json` بإصدار schema 2، و`docs/architecture/rehla-package-contract-map.json`، و`docs/architecture/table-ownership.json`.
 - Produces: Composer package `rehla/<lowercase-name>` وnamespace `Rehla\<Package>\` لكل عقدة.
 
 - [ ] **Step 1: اكتب اختبار اكتشاف الحزم**
@@ -194,7 +194,7 @@ Expected: FAIL على أول provider غير موجود.
 }
 ```
 
-يستبدل الاسم والnamespace لكل حزمة، ويضيف `require` وفق الخريطة فقط. يضيف الجذر repository من النوع `path` على `packages/Rehla/*` ويطلب `rehla/web`, `rehla/api`, `rehla/admin` بـ`@dev`؛ تسحب اعتمادياتها بقية الحزم وتسجل providers كلها.
+يتحقق المولد من `schema_version == 2` ومن 19 حزمة و98 حافة ومن غياب الدورات، ثم يستبدل الاسم والnamespace لكل حزمة ويضيف `require` مساويًا تمامًا لقائمة المستهلك في الخريطة. يضيف الجذر repository من النوع `path` على `packages/Rehla/*` ويطلب `rehla/web`, `rehla/api`, `rehla/admin` بـ`@dev`؛ تسحب اعتمادياتها بقية الحزم وتسجل providers كلها. يفشل اختبار الاكتشاف إذا كان Composer manifest ينقص حافة أو يزيدها.
 
 - [ ] **Step 4: حدث autoload ونفذ الاختبار**
 
@@ -221,11 +221,13 @@ git commit -m "build: establish Rehla package workspace"
 - Create: `tests/Architecture/PackageDependencyTest.php`
 - Create: `tests/Architecture/ModelBoundaryTest.php`
 - Create: `tests/Architecture/MigrationOwnershipTest.php`
-- Create: `docs/architecture/table-ownership.json`
+- Consume: `docs/architecture/rehla-package-map.json`
+- Consume: `docs/architecture/rehla-package-contract-map.json`
+- Consume: `docs/architecture/table-ownership.json`
 
 **Interfaces:**
-- Consumes: package map وComposer manifests وPHP source tree.
-- Produces: فشل CI عند cycle أوrequire/import غير مسموح أوModel متسرب أوجدول له مالكان.
+- Consumes: الخرائط الثلاث وComposer manifests وPHP source tree وmigrations.
+- Produces: فشل CI عند cycle أوrequire/import غير مسموح أوحافة بلا عقد أوModel متسرب أوجدول له مالكان أوكاتب غير المالك.
 
 - [ ] **Step 1: اكتب حالات RED تشمل bypasses**
 
@@ -247,7 +249,7 @@ Expected: FAIL لأن الحراس والملكية غير مكتملة.
 
 - [ ] **Step 3: نفذ parser يعتمد tokens وComposer JSON**
 
-اقرأ `T_NAME_QUALIFIED`, `T_NAME_FULLY_QUALIFIED`, `T_USE` وgrouped imports عبر `token_get_all` بدل regex. قارن الحزمة المستوردة بقائمة المستهلك في JSON. امنع أي `Models` عبر الحزم حتى لو كان الاعتماد نفسه مسموحًا. افحص migrations بحثًا عن `Schema::create` وسجل المالك الوحيد في `table-ownership.json`.
+اقرأ `T_NAME_QUALIFIED`, `T_NAME_FULLY_QUALIFIED`, `T_USE` وgrouped imports عبر `token_get_all` بدل regex. قارن الحزمة المستوردة بقائمة المستهلك في JSON، وقارن `require` في كل manifest بالحواف نفسها مساواة تامة. امنع أي `Models` عبر الحزم حتى لو كان الاعتماد نفسه مسموحًا. تحقق من أن كل حافة لها سجل وحيد في contract map وأن كل surface مملوك للـprovider. افحص migrations بحثًا عن `Schema::create` وقارنها بخريطة الملكية، وافشل عند جدول غير مسجل أومالك ثان أوwriter ليس المالك.
 
 - [ ] **Step 4: أثبت المنع والقبول**
 
