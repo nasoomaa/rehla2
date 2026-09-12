@@ -614,7 +614,7 @@
     {
       "requirement_id": "R10",
       "owner_plan": "07-customer-web",
-      "owner_task": "Task 1: Public Web Authentication and Account Shell",
+      "owner_task": "Task 2: Customer Authentication and Account Shell",
       "acceptance_source": "specs/domains/identity-and-access.md",
       "verification": "AccountIsolationTest",
       "final_evidence_plan": "10-operations-security-release"
@@ -718,7 +718,7 @@
     {
       "requirement_id": "R23",
       "owner_plan": "07-customer-web",
-      "owner_task": "Task 1: Public Web Authentication and Account Shell",
+      "owner_task": "Task 1: Public Catalog, Content and Inquiry",
       "acceptance_source": "specs/domains/service-catalog.md",
       "verification": "PublicWebTest",
       "final_evidence_plan": "10-operations-security-release"
@@ -734,7 +734,7 @@
     {
       "requirement_id": "R25",
       "owner_plan": "07-customer-web",
-      "owner_task": "Task 2: Web Top-up Purchase and Order Tracking Journeys",
+      "owner_task": "Task 5: Service Checkout and Atomic Submission",
       "acceptance_source": "specs/journeys/journey-05-service-order-and-instant-purchase.md",
       "verification": "PurchaseJourneyTest",
       "final_evidence_plan": "10-operations-security-release"
@@ -742,7 +742,7 @@
     {
       "requirement_id": "R26",
       "owner_plan": "07-customer-web",
-      "owner_task": "Task 2: Web Top-up Purchase and Order Tracking Journeys",
+      "owner_task": "Task 5: Service Checkout and Atomic Submission",
       "acceptance_source": "specs/domains/travelers.md",
       "verification": "PurchaseJourneyTest",
       "final_evidence_plan": "10-operations-security-release"
@@ -758,7 +758,7 @@
     {
       "requirement_id": "R28",
       "owner_plan": "07-customer-web",
-      "owner_task": "Task 2: Web Top-up Purchase and Order Tracking Journeys",
+      "owner_task": "Task 5: Service Checkout and Atomic Submission",
       "acceptance_source": "specs/domains/orders-and-purchasing.md",
       "verification": "PurchaseJourneyTest",
       "final_evidence_plan": "10-operations-security-release"
@@ -838,7 +838,7 @@
     {
       "requirement_id": "R38",
       "owner_plan": "07-customer-web",
-      "owner_task": "Task 2: Web Top-up Purchase and Order Tracking Journeys",
+      "owner_task": "Task 6: Order, Execution and Customer-Action Tracking",
       "acceptance_source": "specs/contracts/customer-rest-api-v1.md",
       "verification": "CustomerActionJourneyTest",
       "final_evidence_plan": "10-operations-security-release"
@@ -934,7 +934,7 @@
     {
       "requirement_id": "R50",
       "owner_plan": "08-customer-api",
-      "owner_task": "Task 1: API Foundation Authentication and Problem Details",
+      "owner_task": "Task 1: API Foundation, Customer Authentication and Problem Details",
       "acceptance_source": "specs/cross-cutting/localization-accessibility-and-errors.md",
       "verification": "ProblemDetailsTest",
       "final_evidence_plan": "10-operations-security-release"

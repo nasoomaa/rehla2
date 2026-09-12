@@ -12,6 +12,7 @@ from scripts.docs_checks.plan_quality import (
     validate_task_completeness,
     validate_cross_plan_gates,
     validate_table_task_schedule,
+    validate_interface_task_sets,
     validate_plan_sequence,
     validate_requirement_coverage,
 )
@@ -112,8 +113,10 @@ loadTranslationsFrom and rehla-core
         with self.assertRaisesRegex(CheckFailure, "duplicate executable task"):
             validate_no_duplicate_tasks(
                 {
-                    "07-customer-web": "### Task 1: Shared task\n",
-                    "08-customer-api": "### Task 3: Shared  task\n",
+                    "07-customer-web": (
+                        "### Task 1: Shared task\n"
+                        "### Task 3: Shared  task\n"
+                    ),
                 }
             )
 
@@ -158,6 +161,13 @@ loadTranslationsFrom and rehla-core
                     contract,
                     {"02-identity-platform-services": "### Task 1: Identity\nno table yet\n"},
                 )
+
+    def test_interface_plans_require_all_eight_ordered_tasks(self) -> None:
+        with self.assertRaisesRegex(CheckFailure, "07-customer-web.*task set mismatch"):
+            validate_interface_task_sets({
+                "07-customer-web": "### Task 1: Public Catalog, Content and Inquiry\n",
+                "08-customer-api": "",
+            })
 
     def test_requirements_are_exactly_r01_through_r65(self) -> None:
         contract = fixture_contract()

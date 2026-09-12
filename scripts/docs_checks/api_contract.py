@@ -116,7 +116,7 @@ def check_error_codes() -> None:
         "specs/domains/orders-and-purchasing.md",
         "specs/journeys/journey-08-order-submission-edge-cases.md",
         "specs/test-vectors/idempotency-and-deduplication.md",
-        "docs/superpowers/plans/2026-09-11-rehla-07-interfaces-operations-release.md",
+        "docs/superpowers/plans/2026-09-11-rehla-08-customer-api.md",
     ]
     invalid: list[str] = []
     for relative in paths:
@@ -144,6 +144,8 @@ def check() -> None:
         architecture_path,
         architecture_route_block(read_text(architecture_path)),
     )
+    api_plan_path = ROOT / "docs/superpowers/plans/2026-09-11-rehla-08-customer-api.md"
+    check_operation_set(api_plan_path, read_text(api_plan_path))
     check_tracing()
     check_error_codes()
-    print("  28/28 operations, 8 parameter names, trace/correlation semantics, public codes")
+    print("  28/28 operations in spec, architecture, and plan; 8 parameters; trace/correlation and codes")

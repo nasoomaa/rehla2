@@ -8,7 +8,7 @@ R06,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Perfor
 R07,2026-09-11-rehla-03-catalog-forms-content.md,Task 1: Service Catalog and Price History,ServiceLifecycleTest
 R08,2026-09-11-rehla-03-catalog-forms-content.md,Task 2: Draft and Published Form Versions,FieldValidationTest
 R09,2026-09-11-rehla-03-catalog-forms-content.md,Task 2: Draft and Published Form Versions,PublishedFormImmutabilityTest
-R10,2026-09-11-rehla-07-customer-web.md,"Task 1: Public Web, Authentication and Account Shell",AccountIsolationTest
+R10,2026-09-11-rehla-07-customer-web.md,Task 2: Customer Authentication and Account Shell,AccountIsolationTest
 R11,2026-09-11-rehla-02-identity-platform-services.md,Task 4: Travelers and Passport Uniqueness,TravelerOwnershipTest
 R12,2026-09-11-rehla-02-identity-platform-services.md,Task 4: Travelers and Passport Uniqueness,PassportUniquenessTest
 R13,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 1: Immutable Paid Order and Snapshots,OrderImmutabilityTest
@@ -21,12 +21,12 @@ R19,2026-09-11-rehla-04-wallet-topups.md,Task 3: Atomic Approval and Rejection,A
 R20,2026-09-11-rehla-04-wallet-topups.md,Task 3: Atomic Approval and Rejection,ConcurrentApprovalTest
 R21,2026-09-11-rehla-04-wallet-topups.md,Task 3: Atomic Approval and Rejection,RejectTopUpTest
 R22,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 5: Atomic and Idempotent SubmitOrder,SubmitOrderTest
-R23,2026-09-11-rehla-07-customer-web.md,"Task 1: Public Web, Authentication and Account Shell",PublicWebTest
+R23,2026-09-11-rehla-07-customer-web.md,"Task 1: Public Catalog, Content and Inquiry",PublicWebTest
 R24,2026-09-11-rehla-06-reporting-integrations.md,Task 3: Integration Adapters and WhatsApp Inquiry Contract,WhatsAppInquiryLinkTest
-R25,2026-09-11-rehla-07-customer-web.md,"Task 2: Web Top-up, Purchase and Order Tracking Journeys",PurchaseJourneyTest
-R26,2026-09-11-rehla-07-customer-web.md,"Task 2: Web Top-up, Purchase and Order Tracking Journeys",PurchaseJourneyTest
+R25,2026-09-11-rehla-07-customer-web.md,Task 5: Service Checkout and Atomic Submission,PurchaseJourneyTest
+R26,2026-09-11-rehla-07-customer-web.md,Task 5: Service Checkout and Atomic Submission,PurchaseJourneyTest
 R27,2026-09-11-rehla-03-catalog-forms-content.md,Task 2: Draft and Published Form Versions,FieldValidationTest
-R28,2026-09-11-rehla-07-customer-web.md,"Task 2: Web Top-up, Purchase and Order Tracking Journeys",PurchaseJourneyTest
+R28,2026-09-11-rehla-07-customer-web.md,Task 5: Service Checkout and Atomic Submission,PurchaseJourneyTest
 R29,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 5: Atomic and Idempotent SubmitOrder,SubmitOrderTest
 R30,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 5: Atomic and Idempotent SubmitOrder,SubmitOrderTest
 R31,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 5: Atomic and Idempotent SubmitOrder,SubmitOrderConcurrencyTest
@@ -36,7 +36,7 @@ R34,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 3: Fulfillment Sta
 R35,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 1: Immutable Paid Order and Snapshots,Order and execution separation tests
 R36,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 3: Fulfillment State Machine and Execution Creation,ExecutionStateMachineTest
 R37,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 4: Customer Action Requests and Responses,CustomerActionResponseTest
-R38,2026-09-11-rehla-07-customer-web.md,"Task 2: Web Top-up, Purchase and Order Tracking Journeys",CustomerActionJourneyTest
+R38,2026-09-11-rehla-07-customer-web.md,"Task 6: Order, Execution and Customer-Action Tracking",CustomerActionJourneyTest
 R39,2026-09-11-rehla-06-reporting-integrations.md,"Task 2: Outbox Worker, External Delivery and Dead Letters",InAppNotificationTest
 R40,2026-09-11-rehla-09-admin-control-panel.md,Task 1: Filament Operations Panel,AdminCapabilityMatrixTest
 R41,2026-09-11-rehla-03-catalog-forms-content.md,Task 1: Service Catalog and Price History,ServiceLifecycleTest
@@ -48,7 +48,7 @@ R46,2026-09-11-rehla-02-identity-platform-services.md,Task 2: Append-only Audit 
 R47,2026-09-11-rehla-02-identity-platform-services.md,"Task 1: Identity, Sessions and Capabilities",AuthorizationTest
 R48,2026-09-11-rehla-02-identity-platform-services.md,Task 3: Private Document Lifecycle,DocumentLifecycleTest
 R49,2026-09-11-rehla-03-catalog-forms-content.md,Task 1: Service Catalog and Price History,ServiceLifecycleTest
-R50,2026-09-11-rehla-08-customer-api.md,"Task 1: API Foundation, Authentication and Problem Details",ProblemDetailsTest
+R50,2026-09-11-rehla-08-customer-api.md,"Task 1: API Foundation, Customer Authentication and Problem Details",ProblemDetailsTest
 R51,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 1: Immutable Paid Order and Snapshots,status separation integration tests
 R52,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",phase-one-acceptance.spec.ts
 R53,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",phase-one-acceptance.spec.ts family scenario

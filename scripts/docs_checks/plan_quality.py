@@ -46,6 +46,29 @@ TASK_COMPLETENESS_LABELS = [
     "Commit:",
 ]
 
+EXPECTED_INTERFACE_TASKS = {
+    "07-customer-web": [
+        "Public Catalog, Content and Inquiry",
+        "Customer Authentication and Account Shell",
+        "Traveler and Wallet Views",
+        "Top-Up Submission and Receipt Replacement",
+        "Service Checkout and Atomic Submission",
+        "Order, Execution and Customer-Action Tracking",
+        "Private Documents and In-App Notifications",
+        "Bilingual Accessible Browser Acceptance",
+    ],
+    "08-customer-api": [
+        "API Foundation, Customer Authentication and Problem Details",
+        "Public Service Catalog Contract",
+        "Travelers, Wallet and Bank Accounts",
+        "Top-Up Submission and Receipt Replacement",
+        "Upload Lifecycle and Private Document Delivery",
+        "Order Submission, Orders and Execution Actions",
+        "Customer Notifications",
+        "OpenAPI Equality and Transport Release Gate",
+    ],
+}
+
 
 def validate_plan_sequence(contract: dict[str, object]) -> None:
     plans = contract.get("implementation_plans", [])
@@ -126,15 +149,15 @@ def validate_package_tasks(contract: dict[str, object], plan_texts: dict[str, st
 
 
 def validate_no_duplicate_tasks(plan_texts: dict[str, str]) -> None:
-    owners: dict[str, str] = {}
     for plan_id, text in plan_texts.items():
+        titles: set[str] = set()
         for title in re.findall(r"(?m)^### Task \d+:\s*(.+?)\s*$", text):
             normalized = " ".join(title.casefold().split())
             require(
-                normalized not in owners,
-                f"duplicate executable task '{title}' in {owners.get(normalized)} and {plan_id}",
+                normalized not in titles,
+                f"duplicate executable task '{title}' in {plan_id}",
             )
-            owners[normalized] = plan_id
+            titles.add(normalized)
 
 
 def validate_task_completeness(plan_id: str, text: str) -> None:
@@ -175,6 +198,12 @@ def validate_cross_plan_gates(contract: dict[str, object]) -> None:
         require(opened in order and closed in order, f"{gate_id}: unknown gate plan")
         require(order[opened] <= order[closed], f"{gate_id}: closes before it opens")
         require(bool(str(gate.get("evidence", ""))), f"{gate_id}: evidence required")
+
+
+def validate_interface_task_sets(plan_texts: dict[str, str]) -> None:
+    for plan_id, expected in EXPECTED_INTERFACE_TASKS.items():
+        actual = re.findall(r"(?m)^### Task \d+:\s*(.+?)\s*$", plan_texts[plan_id])
+        require(actual == expected, f"{plan_id}: interface task set mismatch: {actual}")
 
 
 def validate_requirement_coverage(contract: dict[str, object]) -> None:
@@ -296,6 +325,7 @@ def validate_live_paths(contract: dict[str, object]) -> None:
     validate_no_duplicate_tasks(plan_texts)
     validate_requirement_task_references(contract, plan_texts)
     validate_table_task_schedule(contract, plan_texts)
+    validate_interface_task_sets(plan_texts)
     legacy = ROOT / "docs/superpowers/plans/2026-09-11-rehla-07-interfaces-operations-release.md"
     legacy_text = read_text(legacy)
     require("### Task" not in legacy_text, "deprecated interface plan contains executable tasks")
