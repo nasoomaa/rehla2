@@ -142,11 +142,15 @@ git commit -m "feat(audit): add immutable audit trail"
 - Create: `packages/Rehla/Identity/src/database/migrations/*_create_identity_tables.php`
 - Create: `packages/Rehla/Identity/src/database/migrations/*_create_personal_access_tokens_table.php`
 - Create: `packages/Rehla/Identity/src/Models/{User,StaffProfile,Role,Ability}.php`
+- Create: `packages/Rehla/Identity/src/Auth/StaffEloquentUserProvider.php`
 - Create: `packages/Rehla/Identity/src/Enums/{AccountStatus,AbilityName}.php`
 - Create: `packages/Rehla/Identity/src/Data/{ActorData,ResourceRef,RegisterCustomerData,UserData}.php`
-- Create: `packages/Rehla/Identity/src/Actions/{RegisterCustomer,AssignRole,RevokeRole}.php`
+- Create: `packages/Rehla/Identity/src/Actions/{RegisterCustomer,AssignRole,RevokeRole,AuthorizeActor}.php`
 - Create: `packages/Rehla/Identity/src/Queries/{GetCurrentUser,FindCustomer}.php`
-- Create: `packages/Rehla/Identity/src/Contracts/{AuthorizesActor,RegistrationWalletInitializer,RegistrationNotificationRecorder}.php`
+- Create: `packages/Rehla/Identity/src/Contracts/{AuthorizesActor,IdentityReader,RegistrationWalletInitializer,RegistrationNotificationRecorder}.php`
+- Modify: `packages/Rehla/Identity/{composer.json,README.md}`
+- Modify: `packages/Rehla/Identity/src/Providers/IdentityServiceProvider.php`
+- Modify: `scripts/create-rehla-packages.php`
 - Modify: `config/auth.php`
 - Test: `packages/Rehla/Identity/tests/Feature/IdentityTest.php`
 - Test: `packages/Rehla/Identity/tests/Integration/AuthorizationTest.php`
@@ -164,6 +168,8 @@ git commit -m "feat(audit): add immutable audit trail"
 
 **Interfaces:**
 - Produces: `RegisterCustomer::handle(RegisterCustomerData): UserData`; `AuthorizesActor::allows(ActorData, AbilityName, ?ResourceRef): bool`.
+- Produces: `IdentityReader::findCustomer(string $accountId): ?UserData`; `FindCustomer` implements this read-only contract, while `GetCurrentUser::handle(): ?UserData` resolves the authenticated customer guard.
+- Produces: `AssignRole::handle(ActorData $actor, string $accountId, string $roleName, string $correlationId): void`; `RevokeRole` has the same signature. Both require `access.manage`, therefore a recent MFA challenge, and append Audit in their transaction.
 - Produces: `RegistrationWalletInitializer::initialize(string $accountId): void` و`RegistrationNotificationRecorder::recordWelcome(string $accountId, string $locale, string $correlationId): void`؛ Identity يملك المنفذين وتوفر Wallet وNotifications التنفيذين.
 - Produces the exact canonical registry in `specs/cross-cutting/security-and-privacy.md`; tests reject every undeclared alias.
 
@@ -195,7 +201,7 @@ Expected: FAIL لأن الجداول والأنواع غير موجودة.
 
 - [ ] **Step 3: أنشئ schema والعقود**
 
-أنشئ `users(id uuid, name, email citext unique, password, status, email_verified_at, timestamps)`، و`staff_profiles(user_id unique, mfa_confirmed_at)`، و`roles`, `abilities`, `role_ability`, `user_role`, و`personal_access_tokens` المملوك لـIdentity والمستخدم حصريًا لرموز Sanctum العميل. لا تستخدم عمود `is_admin`. اربط الصلاحيات بأسماء enum أعلاه، واحفظ passwords عبر Laravel Hash فقط.
+أنشئ `users(id uuid, name, email citext unique, password, status, preferred_locale, email_verified_at, timestamps)`، و`staff_profiles(user_id unique, department, is_active, mfa_confirmed_at)`، و`roles`, `abilities`, `role_ability`, `user_role`, و`personal_access_tokens` المتوافق مع Sanctum والمملوك لـIdentity والمستخدم حصريًا لرموز العميل. تضيف خطة API اعتماد Sanctum وسلوك إصدار وإلغاء الرموز عند بناء الناقل؛ لا تضف اعتمادًا خاملًا هنا. لا تستخدم عمود `is_admin`. اربط الصلاحيات بالسجل الحرفي ذي الثلاثين اسمًا في `AbilityName` وارفض أي alias، واحفظ passwords عبر Laravel Hash فقط.
 
 ```php
 interface AuthorizesActor
@@ -218,7 +224,7 @@ interface RegistrationNotificationRecorder
 
 - [ ] **Step 4: أثبت عزل customer/admin guards وMFA policy**
 
-اختبر أن customer session لا تدخل `/admin`، وأن staff بلا قدرة يحصل على403، وأن قدرات `topups.review`, `topups.settings.manage`, `access.manage`, `audit.view` تتطلب `mfa_confirmed_at` حديثة وفق نافذة أربع ساعات.
+سجل provider مستقلًا باسم `rehla-staff` لا يعيد إلا مستخدمًا active له `staff_profile` active، واربط guard `admin` به؛ يظل cookie/session middleware المستقل ضمن مهمة Admin التي تملك سطح HTTP. اختبر أن بيانات customer لا تنجح عبر admin guard، وأن staff بلا قدرة يُمنع، وأن قدرات `topups.review`, `topups.settings.manage`, `access.manage`, `audit.view` تتطلب `mfa_confirmed_at` حديثة وفق نافذة أربع ساعات.
 
 Run: `php artisan test packages/Rehla/Identity/tests`
 

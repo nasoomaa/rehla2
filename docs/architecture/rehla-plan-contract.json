@@ -904,7 +904,7 @@
     {
       "requirement_id": "R46",
       "owner_plan": "02-identity-platform-services",
-      "owner_task": "Task 2: Append-only Audit Trail",
+      "owner_task": "Task 1: Append-only Audit Trail",
       "acceptance_source": "specs/domains/audit.md",
       "verification": "AuditImmutabilityTest",
       "final_evidence_plan": "10-operations-security-release"
@@ -912,7 +912,7 @@
     {
       "requirement_id": "R47",
       "owner_plan": "02-identity-platform-services",
-      "owner_task": "Task 1: Identity Sessions and Capabilities",
+      "owner_task": "Task 2: Identity Sessions and Capabilities",
       "acceptance_source": "specs/cross-cutting/security-and-privacy.md",
       "verification": "AuthorizationTest",
       "final_evidence_plan": "10-operations-security-release"
@@ -1102,7 +1102,7 @@
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
       "migration_task": "Task 2",
-      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_abilities.php"
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_create_identity_tables.php"
     },
     "audit_entries": {
       "owner": "Audit",
@@ -1228,7 +1228,7 @@
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
       "migration_task": "Task 2",
-      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_personal_access_tokens.php"
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_create_personal_access_tokens_table.php"
     },
     "purchase_attempts": {
       "owner": "Purchasing",
@@ -1240,13 +1240,13 @@
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
       "migration_task": "Task 2",
-      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_role_ability.php"
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_create_identity_tables.php"
     },
     "roles": {
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
       "migration_task": "Task 2",
-      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_roles.php"
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_create_identity_tables.php"
     },
     "service_executions": {
       "owner": "Fulfillment",
@@ -1282,7 +1282,7 @@
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
       "migration_task": "Task 2",
-      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_staff_profiles.php"
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_create_identity_tables.php"
     },
     "top_up_requests": {
       "owner": "TopUps",
@@ -1312,13 +1312,13 @@
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
       "migration_task": "Task 2",
-      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_user_role.php"
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_create_identity_tables.php"
     },
     "users": {
       "owner": "Identity",
       "migration_plan": "02-identity-platform-services",
       "migration_task": "Task 2",
-      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_users.php"
+      "migration_path": "packages/Rehla/Identity/src/database/migrations/*_create_identity_tables.php"
     },
     "wallet_ledger_entries": {
       "owner": "Wallet",
