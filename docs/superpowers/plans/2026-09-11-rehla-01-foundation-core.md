@@ -58,8 +58,8 @@
 ```bash
 composer create-project laravel/laravel:^13.0 /tmp/rehla-laravel-host
 rsync -a --exclude=.git --exclude=.env /tmp/rehla-laravel-host/ ./
-composer require --dev pestphp/pest pestphp/pest-plugin-laravel larastan/larastan
-php artisan pest:install
+composer require --dev pestphp/pest:^4.7.8 pestphp/pest-plugin-laravel:^4.1 larastan/larastan:^3.12 --with-all-dependencies
+./vendor/bin/pest --init
 ```
 
 لا تستبدل `.env.testing` محليًا موجودًا ولا تضعه في Git. تبقى القيم الآمنة المشتركة في `phpunit.xml` و`.env.example`، وتبقى الأسرار محلية.
