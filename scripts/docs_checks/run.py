@@ -11,6 +11,7 @@ GROUPS = {
     "api": "scripts.docs_checks.api_contract",
     "semantics": "scripts.docs_checks.semantic_contracts",
     "inventory": "scripts.docs_checks.inventory",
+    "plans": "scripts.docs_checks.plan_quality",
 }
 
 

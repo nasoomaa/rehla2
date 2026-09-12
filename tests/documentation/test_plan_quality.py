@@ -1,0 +1,77 @@
+from copy import deepcopy
+from unittest import TestCase
+
+from scripts.docs_checks.common import CheckFailure
+from scripts.docs_checks.plan_quality import (
+    EXPECTED_PLAN_IDS,
+    validate_package_owners,
+    validate_package_task,
+    validate_plan_sequence,
+)
+
+
+def fixture_contract() -> dict[str, object]:
+    plans = [
+        {
+            "id": plan_id,
+            "order": number,
+            "path": f"docs/superpowers/plans/{number:02d}.md",
+            "depends_on": [] if number == 1 else [EXPECTED_PLAN_IDS[number - 2]],
+            "outcome": f"Outcome {number}",
+            "owned_packages": [],
+            "release_gate": f"Gate {number}",
+        }
+        for number, plan_id in enumerate(EXPECTED_PLAN_IDS, start=1)
+    ]
+    return {
+        "schema_version": 1,
+        "implementation_plans": plans,
+        "packages": {
+            "Core": {
+                "owner_plan": "01-foundation-core",
+                "owner_task": "Task 5",
+                "mandatory_artifacts": [],
+                "required_test_kinds": ["unit"],
+            }
+        },
+    }
+
+
+class PlanContractTest(TestCase):
+    def test_sequence_requires_exactly_ten_unique_ordered_plans(self) -> None:
+        contract = fixture_contract()
+        contract["implementation_plans"] = contract["implementation_plans"][:-1]
+
+        with self.assertRaisesRegex(CheckFailure, "expected 10 implementation plans"):
+            validate_plan_sequence(contract)
+
+    def test_sequence_rejects_dependency_on_a_later_plan(self) -> None:
+        contract = fixture_contract()
+        plans = contract["implementation_plans"]
+        plans[0]["depends_on"] = [EXPECTED_PLAN_IDS[-1]]
+
+        with self.assertRaisesRegex(CheckFailure, "depends on later plan"):
+            validate_plan_sequence(contract)
+
+    def test_every_package_has_one_build_owner(self) -> None:
+        contract = fixture_contract()
+        broken = deepcopy(contract)
+        broken["packages"]["Core"]["owner_task"] = ""
+
+        with self.assertRaisesRegex(CheckFailure, "Core.*owner"):
+            validate_package_owners(broken, expected_packages={"Core"})
+
+    def test_package_task_requires_provider_locales_and_translation_test(self) -> None:
+        with self.assertRaisesRegex(CheckFailure, "resources/lang/ar/messages.php"):
+            validate_package_task(
+                "\n".join(
+                    [
+                        "packages/Rehla/Core/composer.json",
+                        "packages/Rehla/Core/README.md",
+                        "packages/Rehla/Core/src/Providers/CoreServiceProvider.php",
+                        "packages/Rehla/Core/src/resources/lang/en/messages.php",
+                        "packages/Rehla/Core/tests/Architecture/TranslationCompletenessTest.php",
+                    ]
+                ),
+                "Core",
+            )
