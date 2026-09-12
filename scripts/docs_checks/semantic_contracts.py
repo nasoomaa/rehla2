@@ -89,8 +89,54 @@ def check_execution_inversion() -> None:
     )
 
 
+def require_transaction_contract(path: str) -> None:
+    content = read_text(ROOT / path)
+    lowered = content.lower()
+    for fragment in ["transaction", "audit", "in-app", "outbox", "external network i/o"]:
+        require(fragment in lowered, f"{path}: transaction contract missing {fragment!r}")
+
+
+def check_transaction_and_retry_contracts() -> None:
+    reject_all(
+        "specs/journeys/journey-05-service-order-and-instant-purchase.md",
+        ["idempotency_keys"],
+    )
+    reject_all(
+        "specs/journeys/journey-08-order-submission-edge-cases.md",
+        ["idempotency_keys"],
+    )
+    require_all(
+        "specs/domains/orders-and-purchasing.md",
+        ["purchase_attempts", "price version", "form version"],
+    )
+    require_all(
+        "specs/contracts/outbox-and-notifications-delivery.md",
+        ["lock_token", "lease_expires_at", "former worker", "lease is still valid"],
+    )
+    require_all(
+        "specs/contracts/storage-and-document-pipeline.md",
+        ["cleanup claim", "fence", "idempotent retry"],
+    )
+    require_all("specs/domains/documents.md", ["%PDF-"])
+    reject_all(
+        "specs/domains/documents.md",
+        [
+            "First 4 bytes must be `%PDF`",
+            "deletes underlying storage blobs atomically",
+        ],
+    )
+    for path in [
+        "specs/domains/identity-and-access.md",
+        "specs/domains/top-ups.md",
+        "specs/domains/orders-and-purchasing.md",
+        "specs/domains/fulfillment.md",
+    ]:
+        require_transaction_contract(path)
+
+
 def check() -> None:
     check_registration_contracts()
     check_document_contracts()
     check_execution_inversion()
+    check_transaction_and_retry_contracts()
     print("  registration ports, document ownership, and execution inversion aligned")

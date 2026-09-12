@@ -68,7 +68,8 @@ Customer clicks **"Order Now"** on the service details page for "UAE 30-Day Tour
    - Client sends `POST /api/v1/order-submissions` with opaque service/traveler IDs, accepted price `2500000`, accepted price-version ID, form-version ID, and answers.
 7. **Purchasing orchestrator executes atomic transaction**:
    - Begins PostgreSQL transaction.
-   - Inserts or locks the unique customer/key purchase attempt, closing the concurrent missing-row race.
+   - Inserts or locks the `purchase_attempts` row under unique `(account_id, idempotency_key)`, closing the concurrent missing-row race.
+   - The canonical request fingerprint includes `accepted_price_version_id`, `form_version_id`, `fulfillment_policy_version_id`, ordered answers, and ordered document IDs.
    - Locks and verifies in order: service/current price version, published form pointer, published fulfillment-policy pointer, traveler, sorted documents, then wallet.
    - Re-verifies exact accepted price/version, validates answers against captured Form #4, captures the policy version, confirms ownership/clean documents, and checks balance.
    - Allocates the Order ID before creating its debit so the ledger reference is complete and immutable.
@@ -95,7 +96,7 @@ Customer clicks **"Order Now"** on the service details page for "UAE 30-Day Tour
      - Appends initial status changelog entry (`received`).
    - Appends purchase record to `audit_entries`.
    - Creates the in-app confirmation and enqueues `OrderSubmitted` for enabled external channels.
-   - Stores completed order response in `idempotency_keys`.
+   - Stores the captured version IDs and completed order response in `purchase_attempts`.
    - Commits database transaction.
 8. **Client receives confirmation**:
    - Server returns HTTP 201 Created with order reference `"ORD-202609-1001"` and execution ID.

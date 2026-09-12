@@ -95,6 +95,8 @@ The Fulfillment and Service Execution domain owns the operational processing lif
 
 `completed` and `cancelled` are terminal states; no further transitions are permitted once reached.
 
+Every execution creation, transition, customer-action response, completion, and cancellation commits its domain state/history, Audit entry, in-app notification, and required Outbox rows in the same PostgreSQL transaction. External network I/O is forbidden inside the transaction.
+
 ---
 
 ## 6. Commands and Actions

@@ -54,9 +54,10 @@ WHERE id = :message_id
   AND status = 'locked'
   AND locked_by = :worker_id
   AND lock_token = :lock_token
+  AND lease_expires_at > NOW()
 ```
 
-It sets `delivered`, `delivered_at`, and clears claim fields. A zero-row update means the worker lost its lease; it discards the result and must not overwrite the current owner's state.
+It sets `delivered`, `delivered_at`, and clears claim fields. The lease is still valid at the database clock when the update executes. A zero-row update means the worker lost its lease; it discards the result and must not overwrite the current owner's state. After another worker reclaims an expired lease, the former worker can neither deliver nor reschedule that row.
 
 A transient failure uses the same fence, sets `available_at` to an application-calculated UTC timestamp, records bounded safe diagnostic data, and clears claim fields. Attempts 1–4 use initial delays 30, 60, 120, and 240 seconds. Failure on attempt 5 moves the row to `dead_letter`, raises a monitoring alert, and appends an audit entry.
 

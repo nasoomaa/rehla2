@@ -44,6 +44,7 @@ The Top-Ups and Bank Transfers domain manages the funding pipeline for customer 
 5. **Rejection Safety**: Rejecting a top-up request records the decision, reviewer ID, timestamp, and rejection reason, but produces zero changes to the wallet balance.
 6. **Bank Account Historical Preservation**: Deactivating a platform bank account hides it from new customer top-ups, but preserves all historical top-up requests and audit records linked to it.
 7. **Reference Permanence**: The unique bank/reference pair is reserved by its original request in every state. Correcting an unreadable receipt replaces the receipt on that same `under_review` request and never creates a second request with the reference.
+8. **Transactional Decision Effects**: Each approval or rejection commits the Top-Up domain state, Audit entry, in-app notification, and required Outbox rows in the same PostgreSQL transaction; approval also commits exactly one Wallet credit. External network I/O is forbidden inside the transaction.
 
 ---
 

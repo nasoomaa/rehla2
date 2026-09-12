@@ -89,7 +89,7 @@ The platform deterministically handles complex concurrent submissions, network r
 2. **Event**: The server processes the request, debits the wallet, creates Order `ORD-1005`, but the customer's mobile cellular network drops before receiving the HTTP 201 response.
 3. **Retry**: The mobile client reconnects 10 seconds later and automatically retries the exact same HTTP POST request with `Idempotency-Key: "idemp-key-555"`.
 4. **Execution Sequence**:
-   - Transaction locks `idempotency_keys` for `("account_10", "idemp-key-555")`.
+   - Transaction locks `purchase_attempts` for `("account_10", "idemp-key-555")`.
    - Finds existing record with status `completed`.
    - Computes SHA-256 fingerprint of current payload and matches with stored fingerprint.
    - Transaction exits cleanly without executing `DebitWallet` or `CreateOrder`.
@@ -102,7 +102,7 @@ The platform deterministically handles complex concurrent submissions, network r
 ### Scenario E: Idempotency Key Reused with Different Payload
 1. **Trigger**: A buggy client uses `Idempotency-Key: "idemp-key-555"` (which created Order `ORD-1005` for Ahmed), but sends a payload specifying traveler **Sarah**.
 2. **Execution Sequence**:
-   - Server locks `idempotency_keys` for `("account_10", "idemp-key-555")`.
+   - Server locks `purchase_attempts` for `("account_10", "idemp-key-555")`.
    - Finds existing record.
    - Computes SHA-256 fingerprint of new payload; detects mismatch with stored fingerprint.
    - Transaction rolls back immediately.

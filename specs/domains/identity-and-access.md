@@ -35,6 +35,7 @@ The Identity and Access Management domain owns customer accounts, staff user pro
 4. **Least Privilege**: Staff users receive only explicitly assigned abilities; new staff profiles possess zero permissions upon creation.
 5. **MFA Enforcement for High-Risk Abilities**: Exercising `topups.review`, `topups.settings.manage`, `access.manage`, or `audit.view` requires a verified TOTP challenge no older than four hours.
 6. **Account Ownership Immutability**: The link between an account and its historical records (orders, wallet, travelers) is permanent and cannot be transferred to another user.
+7. **Transactional Registration Effects**: Account state, Audit, wallet initialization, welcome in-app notification, and required Outbox rows commit in the same PostgreSQL transaction. External network I/O is forbidden inside the transaction.
 
 ---
 

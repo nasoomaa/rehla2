@@ -70,7 +70,10 @@ Upload ──► Private Staging ──► Magic Byte Verification ──► Ima
 
 - **Orphan Pruning (24-Hour Rule)**:
   - Any document in `clean` or `pending_scan` status that remains unattached to a parent entity (TopUp, Order, Execution) for more than 24 hours is considered abandoned.
-  - The hourly scheduler deletes the storage blob and marks the database record purged.
+  - In a short transaction, the hourly scheduler locks an eligible record, creates a cleanup claim with a fresh `cleanup_claim_token` and lease, and changes it to `cleanup_claimed`.
+  - After commit, it deletes the storage blob. A missing blob is treated as success for an idempotent retry.
+  - In a second short transaction, it applies the token fence (`id`, `cleanup_claim_token`, unexpired/current claim) and marks the record `purged`. A zero-row update is stale and changes nothing.
+  - A failed blob deletion leaves the cleanup claim recoverable after lease expiry. Attachment refuses `cleanup_claimed`, so database state and object storage never pretend to share one atomic transaction.
 - **Rejected File Retention (30-Day Audit Rule)**:
   - Files marked `rejected` are isolated in a quarantine bucket for exactly 30 days to facilitate security analysis and abuse tracking, after which they are permanently expunged.
 - **Attached Document Retention**:
@@ -105,3 +108,4 @@ Expires: 0
 - **Quota Exceeded**: Returns HTTP 413 Payload Too Large with code `document.file_too_large`.
 - **Invalid Header / Corrupt File**: Returns HTTP 422 with code `document.verification_failed` and message: `"The uploaded file is corrupt or does not match its declared type."`
 - **Unauthorized Retrieval**: Returns HTTP 404 Not Found if the document belongs to another account, or HTTP 403 Forbidden if staff lacks `documents.view_sensitive`.
+- **Cleanup Failure**: Retains the fenced cleanup claim for retry and records bounded diagnostics; it does not mark the record purged while the blob still exists.

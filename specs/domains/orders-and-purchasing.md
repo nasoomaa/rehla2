@@ -31,7 +31,9 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
   - Status (permanently `paid`).
   - Created Timestamp (UTC).
 - **Scoped Idempotency Key**: A unique string provided in the `Idempotency-Key` HTTP header, scoped to the authenticated `account_id`.
-- **Request Fingerprint**: A SHA-256 hash of canonical service ID, traveler ID, accepted price and price version, form version, ordered answers, and referenced document IDs.
+- **Request Fingerprint**: A SHA-256 hash of canonical service ID, traveler ID, accepted price and `accepted_price_version_id`, `form_version_id`, `fulfillment_policy_version_id`, ordered answers, and referenced document IDs.
+- **Purchase Attempt**: A `purchase_attempts` row scoped by unique `(account_id, idempotency_key)` containing the canonical fingerprint, status, the three captured version IDs, and the stored response/result references. It is inserted or locked before all other checkout resources.
+- **Captured Versions**: The accepted price version, form version, and fulfillment policy version are part of both the fingerprint and the successful stored result.
 - **One Traveler per Order**: A single commercial order represents exactly one service for exactly one traveler.
 
 ---
@@ -46,6 +48,7 @@ The Orders and Purchasing domain coordinates the atomic checkout pipeline, idemp
 6. **Idempotency Guarantee**:
    - Resubmitting with the same idempotency key and identical payload returns the existing order result (HTTP 200/201).
    - Resubmitting with the same idempotency key but a different payload returns HTTP 409 Conflict with code `idempotency.key_reused`.
+7. **Transactional Effects**: The Order state, debit, Execution, Audit entry, in-app notification, required Outbox rows, and completed purchase attempt commit in the same PostgreSQL transaction. External network I/O is forbidden inside the transaction.
 
 ---
 

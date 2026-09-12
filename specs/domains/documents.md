@@ -59,7 +59,7 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
         ▼
       Clean ──► Attached (Follows parent retention; never orphan-pruned)
         │
-        └─────► Unattached (Pruned after 24 hours)
+        └─────► Cleanup Claimed ──► Purged
 ```
 
 - **Pending Scan**: File has landed in private staging storage; scanning and magic byte verification in progress.
@@ -67,6 +67,8 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
 - **Clean**: Passed validation and malware inspection; available for attachment to orders or top-up requests.
 - **Rejected**: Failed verification (e.g. extension mismatch, malware detected, polyglot exploit); blocked from attachment.
 - **Attached**: Linked to a submitted Top-Up Request, Commercial Order, or Fulfillment Execution. Cannot be purged as an orphan.
+- **Cleanup Claimed**: Fenced by a fresh token and lease; cannot be attached. Blob deletion occurs outside the database transaction.
+- **Purged**: The current cleanup claimant confirmed the blob is absent and finalized metadata.
 
 ---
 
@@ -109,7 +111,7 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
 
 ### 6.5 PruneOrphanDocuments (System Scheduled Job)
 - **Preconditions**: Scheduled maintenance job (hourly).
-- **Expected Outcome**: Identifies documents in `clean` or `pending_scan` status that have remained unattached for > 24 hours; deletes underlying storage blobs atomically and marks records expunged.
+- **Expected Outcome**: Uses a three-stage cleanup protocol: claim the locked orphan in a short transaction with a fresh `cleanup_claim_token` and lease; delete the blob after commit; then mark `purged` in a short transaction only when the token fence still matches. Blob-not-found is a successful idempotent retry. Failed deletion leaves a recoverable claim for lease expiry.
 - **Invariants**: Will NEVER delete a document in `attached` status.
 
 ---
@@ -117,11 +119,11 @@ The Documents domain manages file uploads, metadata tracking, secure storage par
 ## 7. Business Rules
 
 1. **Magic Bytes Validation**:
-   - PDF: First 4 bytes must be `%PDF` (`0x25 0x50 0x44 0x46`).
+   - PDF: The first 5 bytes must be `%PDF-` (`0x25 0x50 0x44 0x46 0x2D`).
    - JPEG: First 3 bytes must be `0xFF 0xD8 0xFF`.
    - PNG: First 8 bytes must be `0x89 0x50 0x4E 0x47 0x0D 0x0A 0x1A 0x0A`.
    Any mismatch between declared MIME type and magic bytes records a rejection reason and completes the quarantine pipeline as `rejected`.
-2. **Race Condition Protection**: Attachment locks the document record with `SELECT FOR UPDATE` within the checkout transaction. The orphan pruning job checks attachment status within a transaction, preventing a file verified during checkout from being purged mid-flight.
+2. **Race Condition Protection**: Attachment and cleanup claim lock the document record with `SELECT FOR UPDATE`. Attachment refuses `cleanup_claimed`; cleanup cannot claim `attached`. Finalization requires the current token fence, preventing a stale cleaner from marking a reclaimed record purged.
 
 ---
 
