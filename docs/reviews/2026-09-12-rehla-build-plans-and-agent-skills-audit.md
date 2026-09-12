@@ -16,9 +16,9 @@
 
 | النطاق | الملفات | الأسطر | طريقة الإثبات |
 |---|---:|---:|---|
-| `docs/` و`specs/` عدا manifest الوثائق نفسه | 74 | 18060 | توليد ديناميكي ومقارنة set/line count |
+| `docs/` و`specs/` عدا manifest الوثائق نفسه | 74 | 18061 | توليد ديناميكي ومقارنة set/line count |
 | `.agents/README.md` والمهارات التسع | 10 | 380 | فهرس مساوي للمجلد + validator رسمي ومحلي |
-| الإجمالي المراجع في هذا التدقيق | 84 | 18440 | لا توجد قراءة بالعينة |
+| الإجمالي المراجع في هذا التدقيق | 84 | 18441 | لا توجد قراءة بالعينة |
 
 يحصر [documentation manifest](2026-09-12-rehla-documentation-manifest.csv) كل ملف Markdown/CSV/JSON في `docs/` و`specs/` عدا نفسه. ويحصر manifest الخطط كل ملف Markdown داخل `docs/superpowers/plans`، بينما يثبت مدقق المهارات المجموعة الدقيقة تحت `.agents/skills`.
 

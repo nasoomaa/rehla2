@@ -312,6 +312,7 @@ git commit -m "build: establish Rehla package workspace"
 
 
 **Files:**
+- Create: `tests/Architecture/Support/ArchitectureScanner.php`
 - Create: `tests/Architecture/PackageDependencyTest.php`
 - Create: `tests/Architecture/ModelBoundaryTest.php`
 - Create: `tests/Architecture/MigrationOwnershipTest.php`
