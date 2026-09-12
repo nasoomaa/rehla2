@@ -1138,7 +1138,7 @@
       "owner": "Documents",
       "migration_plan": "02-identity-platform-services",
       "migration_task": "Task 3",
-      "migration_path": "packages/Rehla/Documents/src/database/migrations/*_documents.php"
+      "migration_path": "packages/Rehla/Documents/src/database/migrations/*_create_documents_tables.php"
     },
     "execution_documents": {
       "owner": "Fulfillment",
@@ -1306,7 +1306,7 @@
       "owner": "Documents",
       "migration_plan": "02-identity-platform-services",
       "migration_task": "Task 3",
-      "migration_path": "packages/Rehla/Documents/src/database/migrations/*_upload_sessions.php"
+      "migration_path": "packages/Rehla/Documents/src/database/migrations/*_create_documents_tables.php"
     },
     "user_role": {
       "owner": "Identity",

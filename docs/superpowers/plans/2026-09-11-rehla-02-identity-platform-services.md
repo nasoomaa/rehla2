@@ -260,11 +260,18 @@ git commit -m "feat(identity): add accounts roles and deny-by-default abilities"
 **Files:**
 - Create: `packages/Rehla/Documents/src/database/migrations/*_create_documents_tables.php`
 - Create: `packages/Rehla/Documents/src/Enums/{DocumentStatus,DocumentPurpose}.php`
-- Create: `packages/Rehla/Documents/src/Data/{BeginUploadData,DocumentRef}.php`
-- Create: `packages/Rehla/Documents/src/Contracts/{DocumentScanner,OwnedDocuments}.php`
+- Create: `packages/Rehla/Documents/src/Data/{BeginUploadData,StoreUploadData,ScanResult,DocumentReference}.php`
+- Create: `packages/Rehla/Documents/src/Contracts/{DocumentScanner,OwnedDocuments,DocumentDownloadAuthorizer}.php`
+- Create: `packages/Rehla/Documents/src/Exceptions/{DocumentAccessDenied,DocumentNotClean,InvalidDocumentUpload}.php`
 - Create: `packages/Rehla/Documents/src/Actions/{BeginUpload,StoreUpload,ScanDocument,AttachDocument,DeleteExpiredUploads}.php`
 - Create: `packages/Rehla/Documents/src/Queries/AuthorizeDocumentDownload.php`
 - Create: `packages/Rehla/Documents/src/Infrastructure/ClamAvDocumentScanner.php`
+- Create: `packages/Rehla/Documents/src/config/documents.php`
+- Modify: `packages/Rehla/Documents/{composer.json,README.md}`
+- Modify: `packages/Rehla/Documents/src/Providers/DocumentsServiceProvider.php`
+- Modify: `packages/Rehla/Core/src/Errors/ProblemCode.php`
+- Modify: `config/filesystems.php`
+- Modify: `scripts/create-rehla-packages.php`
 - Test: `packages/Rehla/Documents/tests/Feature/DocumentLifecycleTest.php`
 - Test: `packages/Rehla/Documents/tests/Integration/DocumentRaceTest.php`
 
@@ -280,8 +287,9 @@ git commit -m "feat(identity): add accounts roles and deny-by-default abilities"
 - Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Documents/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
-- Produces: `OwnedDocuments::assertCleanOwned(array $documentIds, string $ownerId, DocumentPurpose $purpose): array<DocumentRef>`.
-- Produces: private download response بعد Policy؛ لا ينتج storage path أوpublic URL.
+- Produces: `OwnedDocuments::assertCleanOwned(array $documentIds, string $ownerId, array $requiredPurposes): array<DocumentReference>`؛ تطابق قائمة الأغراض قائمة المعرفات موضعيًا، وتقفل المعرفات بترتيب ثابت وتحوّلها إلى `attached` داخل معاملة المستهلك.
+- Produces: `DocumentDownloadAuthorizer::authorize(string $documentId, ActorData $actor): StreamedResponse` بعد فحص owner أوstaff ability؛ لا ينتج storage path أوpublic URL.
+- Produces: `DocumentScanner::scan(string $absolutePath): ScanResult`; الاستدعاء الخارجي يحدث خارج المعاملة ويفشل مغلقًا.
 
 - [ ] **Step 1: اكتب اختبار دورة الحالات والملكية**
 
@@ -305,9 +313,9 @@ Expected: FAIL لغياب lifecycle.
 
 - [ ] **Step 3: أنشئ schema والتخزين الآمن**
 
-أنشئ `upload_sessions(id, owner_id, purpose, expires_at, claimed_at)` و`documents(id, upload_session_id, owner_id, purpose, disk, storage_key, original_name, detected_mime, size_bytes, sha256, status, rejection_code, scanned_at, attached_at, timestamps)`. استخدم أسماء تخزين عشوائية ولا تستخدم اسم العميل في المسار.
+أنشئ `upload_sessions(id, owner_id, purpose, expires_at, claimed_at)` و`documents(id, upload_session_id, owner_id, purpose, disk, storage_key, original_name, declared_mime, detected_mime, size_bytes, sha256, status, rejection_code, scan_token, scan_lease_expires_at, cleanup_claim_token, cleanup_lease_expires_at, scanned_at, attached_at, purged_at, timestamps)`. استخدم أسماء تخزين عشوائية ولا تستخدم اسم العميل في المسار. يسجل `private` disk بجذر غير عام و`serve=false` و`throw=true`.
 
-الحالات المسموحة: `pending_scan → quarantined → clean|rejected → attached`. لا يوجد انتقال من rejected إلىclean؛ يعاد الرفع بمعرف جديد.
+الحالات المسموحة: `pending_scan → quarantined → clean|rejected`; ثم `clean → attached|cleanup_claimed` و`pending_scan → cleanup_claimed` بعد 24 ساعة، و`rejected → cleanup_claimed` بعد 30 يومًا، و`cleanup_claimed → purged`. لا يوجد انتقال من rejected إلىclean؛ يعاد الرفع بمعرف جديد. يستخدم scan claim وcleanup claim token/lease لمنع عامل قديم من اعتماد نتيجة بعد انتهاء حجزه.
 
 - [ ] **Step 4: تحقق من البايتات والتنظيف والسباق**
 
