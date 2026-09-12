@@ -83,15 +83,29 @@ The Fulfillment and Service Execution domain owns the operational processing lif
        Issued visa attached)            Audit reason required)
 ```
 
-### Valid Transitions:
-- `received` ──► `under_review`
-- `under_review` ──► `processing`
-- `under_review` ──► `action_required`
-- `processing` ──► `action_required`
-- `action_required` ──► `action_received`
-- `action_received` ──► `processing` OR `under_review`
-- `under_review`, `processing`, or `action_received` ──► `completed`
-- Any non-terminal state (`received`, `under_review`, `processing`, `action_required`, `action_received`) ──► `cancelled`
+### Canonical Valid Transitions
+
+This list is the machine-readable authority shared with the SOP, implementation plan, and test vector:
+
+```text
+received -> under_review
+received -> processing
+under_review -> processing
+processing -> under_review
+under_review -> action_required
+processing -> action_required
+action_required -> action_received
+action_received -> under_review
+action_received -> processing
+under_review -> completed
+processing -> completed
+action_received -> completed
+received -> cancelled
+under_review -> cancelled
+processing -> cancelled
+action_required -> cancelled
+action_received -> cancelled
+```
 
 `completed` and `cancelled` are terminal states; no further transitions are permitted once reached.
 
@@ -141,10 +155,11 @@ Every execution creation, transition, customer-action response, completion, and 
 - **Authorization**: Scoped to owning customer.
 
 ### 6.5 CompleteExecution (Staff Command)
-- **Preconditions**: Staff has `executions.transition`; execution is in `under_review`, `processing`, or `action_received`; issued document (e.g. visa PDF) uploaded and verified clean.
-- **Inputs**: Execution ID, Issued Document ID, Completion Notes.
+- **Preconditions**: Staff has `executions.transition`; execution is in `under_review`, `processing`, or `action_received`; the transition is allowed by the captured policy.
+- **Inputs**: Execution ID, `issued_document_id` is optional, Completion Notes.
+- **Conditional document rule**: If `captured_policy.requires_issued_document = true`, the ID is mandatory and Documents must confirm owner/scope, `clean` status, and `issued_document` classification before attachment. If the flag is false, completion succeeds without an issued document.
 - **Expected Outcome**:
-  - Links issued document to execution.
+  - Links the issued document when one is required or supplied.
   - Transitions status to `completed`.
   - Creates the in-app completion and appends external-channel delivery to Outbox.
 - **Observable Behavior**: Customer receives a completion alert and can request the issued visa PDF. The execution is displayed as "Completed" while the Commercial Order remains `paid`.
@@ -188,7 +203,7 @@ Every execution creation, transition, customer-action response, completion, and 
 
 - **Invalid Transition**: HTTP 422, code `execution.invalid_transition`. Message: `"Cannot transition execution from [current] to [target]."`
 - **No Action Pending**: If customer submits response when status is not `action_required`, returns HTTP 409 with `execution.action_not_pending`.
-- **Missing Issued Document on Completion**: If completing an execution without attaching the required official document, returns HTTP 422 with `execution.missing_issued_document`.
+- **Missing Issued Document on Completion**: If the captured policy requires one and completion omits a valid official document, returns HTTP 422 with `execution.missing_issued_document`. A policy with `requires_issued_document = false` has one deterministic successful outcome without a document.
 
 ---
 

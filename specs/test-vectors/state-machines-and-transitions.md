@@ -12,7 +12,7 @@ This suite proves the deterministic validation of all state transitions across t
 2. Backward transitions are forbidden unless explicitly permitted by the operational workflow (e.g. `action_received` returning to `processing`).
 3. Skipping intermediate prerequisite states is forbidden.
 4. Transitioning to `action_required` requires non-empty instructions.
-5. Transitioning to `completed` requires a linked issued document.
+5. Transitioning to `completed` requires a clean linked `issued_document` exactly when the captured policy has `requires_issued_document = true`; it succeeds without one when the flag is false.
 6. Transitioning to `cancelled` requires a non-empty audit rationale.
 
 ---
@@ -31,6 +31,28 @@ This suite proves the deterministic validation of all state transitions across t
 ---
 
 ## 4. Service Execution Status Transition Matrix
+
+The canonical transition set parsed by contract checks is:
+
+```text
+received -> under_review
+received -> processing
+under_review -> processing
+processing -> under_review
+under_review -> action_required
+processing -> action_required
+action_required -> action_received
+action_received -> under_review
+action_received -> processing
+under_review -> completed
+processing -> completed
+action_received -> completed
+received -> cancelled
+under_review -> cancelled
+processing -> cancelled
+action_required -> cancelled
+action_received -> cancelled
+```
 
 | Case ID | Current State | Target State | Actor | Required Payload / Precondition | Expected Result | Rejection Code |
 |---|---|---|---|---|---|---|
@@ -59,5 +81,7 @@ This suite proves the deterministic validation of all state transitions across t
 | **EXE-TR23** | `under_review` | `cancelled` | Staff | Mandatory reason | **Valid** | Case cancelled |
 | **EXE-TR24** | `action_required` | `cancelled` | Staff | Mandatory reason | **Valid** | Case cancelled |
 | **EXE-TR25** | `action_received` | `cancelled` | Staff | Mandatory reason | **Valid** | Case cancelled |
+| **EXE-TR26** | `processing` | `completed` | Staff | Captured policy has `requires_issued_document = false`; no document ID | **Valid** | Case completed without an issued document |
+| **EXE-TR27** | `processing` | `completed` | Staff | Captured policy has `requires_issued_document = true`; no document ID | **Invalid** | `execution.missing_issued_document` |
 
 Every valid row is also evaluated against the execution's captured fulfillment-policy version. If the standard graph permits a transition but that service policy omits it, the deterministic outcome is `execution.invalid_transition`.

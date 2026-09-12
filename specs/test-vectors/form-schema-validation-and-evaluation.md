@@ -15,6 +15,8 @@ This suite proves the deterministic validation of customer submitted answers aga
 5. Document upload fields (`file_upload`, `image_upload`) validate only opaque `document_id` shape and cardinality. Documents/Purchasing separately validate existence, ownership, classification, and `clean` status.
 6. Undeclared fields (phantom fields not in the published schema) are rejected.
 
+This is **shape-only validation**: a single-value field accepts one non-empty opaque string, a multi-value field accepts an array whose count obeys the schema, and required fields reject missing or empty values. Forms returns the references and required classifications but never decides whether a document exists, belongs to the account, is `clean`, or can be attached. Those outcomes are covered by Documents and Purchasing tests, including the attachment/cleanup race.
+
 ---
 
 ## 3. Field Types Test Vectors Table

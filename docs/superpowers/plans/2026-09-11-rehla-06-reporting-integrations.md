@@ -44,20 +44,21 @@
 
 **Interfaces:**
 - Produces: `GetProductMetrics::handle(MetricFilter): ProductMetrics`.
-- `MetricFilter` يحمل `fromUtc`, `toUtc`, `displayTimezone='Africa/Khartoum'`.
+- `MetricFilter` يحمل `fromUtc`, `toUtc`, و`as_of: CarbonImmutable` الإلزامي، و`displayTimezone='Africa/Khartoum'`.
 
 - [ ] **Step 1: اكتب fixture معروفًا واختبارات المؤشرات**
 
 ```php
 it('calculates the twelve phase-one metrics from one fixed fixture', function (): void {
     seedReportingFixture();
-    $metrics = app(GetProductMetrics::class)->handle(period('2026-09-01', '2026-10-01'));
+    $metrics = app(GetProductMetrics::class)->handle(period('2026-09-01', '2026-10-01', asOf: '2026-10-01T00:00:00Z'));
 
     expect($metrics->registeredUsers)->toBe(4)
         ->and($metrics->savedTravelers)->toBe(6)
-        ->and($metrics->orderVolumeMinor)->toBe(10_000_00)
+        ->and($metrics->orderCount)->toBe(3)
+        ->and($metrics->orderGrossValueMinor)->toBe(10_000_00)
         ->and($metrics->topUpCompletionRate)->toBe(75.0)
-        ->and($metrics->topUpApprovalRatio)->toBe(2.0)
+        ->and($metrics->topUpApprovalRatio)->toBe(66.67)
         ->and($metrics->completedOrderPercentage)->toBe(50.0);
 });
 ```
@@ -71,21 +72,22 @@ Expected: FAIL قبل queries/views.
 - [ ] **Step 3: عرف المؤشرات الاثني عشر بدقة**
 
 ```text
-registered_users = users created in period
-saved_travelers = travelers created in period
-order_volume_minor = sum orders.amount_paid_minor created in period
-top_up_completion_rate = decided top-ups / submitted top-ups * 100
-average_review_seconds = avg(decided_at - submitted_at) for decided top-ups
-approval_rejection_ratio = approved count / rejected count; null if denominator zero
-orders_by_service = count orders grouped by service snapshot name and service_id
-average_fulfillment_seconds = avg(completed_at - execution.created_at) for completed
-customer_action_volume = count customer_action_requests created in period
-completed_order_percentage = completed executions / created executions * 100
-traveler_reuse_rate = travelers used by >1 order / travelers used by any order * 100
-repeat_customer_rate = accounts with >1 order / accounts with >=1 order * 100
+M01 registered_users = users created in cohort by as_of
+M02 saved_travelers = travelers created in cohort by as_of
+M03-A order_count = count paid orders created in cohort by as_of
+M03-B order_gross_value_minor = sum Orders.price_paid_minor for those orders
+M04 top_up_completion_rate = terminal submitted top-ups / all submitted top-ups
+M05 average_review_seconds = sum(decision_at - submitted_at) / terminal top-ups
+M06 transfer_approval_ratio = approved terminal top-ups / all terminal top-ups
+M07 orders_by_service = order_count and order_gross_value_minor grouped by immutable service snapshot
+M08 average_fulfillment_seconds = sum(completed_at - received_at) / completed executions
+M09 customer_action_volume = transitions into action_required by as_of
+M10 completed_order_percentage = completed executions / executions received in cohort
+M11 traveler_reuse_rate = travelers used by >1 paid order / travelers used by any paid order
+M12 repeat_customer_rate = accounts with >1 paid order / accounts with >=1 paid order
 ```
 
-تستخدم intervals نصف المفتوحة `[fromUtc,toUtc)`، وتعاد النسبة برقم عشري بدقة منزلتين أوnull عند غياب المقام. `order_volume_minor` قيمة مالية، بينما عدد الطلبات يظهر في `orders_by_service`.
+تستخدم كل query/filter `as_of: CarbonImmutable` مع intervals نصف المفتوحة `[fromUtc,toUtc)`. يعاد المقام الصفري `0.00%` للنسب أو`0` للمدة، ولا يعاد `null`. تستخدم الحسابات integer أوdecimal دقيقًا. يأتي `order_count` و`order_gross_value_minor` من Orders snapshots؛ لا تعتمد Reporting على Wallet ولا تقرأ ledger لحساب قيمة الطلب.
 
 - [ ] **Step 4: نفذ views/query والقراءة فقط**
 

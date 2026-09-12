@@ -559,6 +559,30 @@ AttachExecutionDocument
 
 كل أمر يتحقق من الفاعل والانتقال المسموح، ويكتب `execution_status_history` وAudit في المعاملة نفسها. `CancelExecution` لا يرد المال تلقائيًا لأن سياسة الاسترداد غير معرفة في الإصدار الأول.
 
+المجموعة القانونية الوحيدة للانتقالات هي:
+
+```text
+received -> under_review
+received -> processing
+under_review -> processing
+processing -> under_review
+under_review -> action_required
+processing -> action_required
+action_required -> action_received
+action_received -> under_review
+action_received -> processing
+under_review -> completed
+processing -> completed
+action_received -> completed
+received -> cancelled
+under_review -> cancelled
+processing -> cancelled
+action_required -> cancelled
+action_received -> cancelled
+```
+
+يستعمل التنفيذ نسخة السياسة الملتقطة. إذا كان `requires_issued_document = true` يتطلب الإكمال مستندًا clean بتصنيف `issued_document`؛ وإذا كان false يكون `issued_document_id` اختياريًا ويسمح بالإكمال بلا مستند.
+
 ## 9. نموذج البيانات والملكية
 
 ### المال

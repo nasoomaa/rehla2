@@ -116,8 +116,19 @@ Fulfillment Officer claims execution `exec-9988` from the operational fulfillmen
 
 ### Path 6A: Direct Completion Without Action Request
 1. Staff reviews original submission, finds all documents compliant.
-2. Execution transitions directly: `received -> under_review -> processing -> completed`.
-3. Customer receives completion notification without entering `action_required`.
+2. The captured policy has `requires_issued_document = true`, so staff supplies a clean `issued_document` before completion.
+3. Execution transitions directly: `received -> under_review -> processing -> completed`.
+4. Customer receives completion notification without entering `action_required`.
+
+### Path 6B: Completion for a Service Without an Issued Document
+1. The captured immutable policy has `requires_issued_document = false`.
+2. Staff transitions an eligible execution to `completed` without `issued_document_id`.
+3. The result is deterministically successful; the completion notification contains no download action and no document link is fabricated.
+
+### Path 6C: Required Issued Document Is Missing
+1. The captured immutable policy has `requires_issued_document = true`.
+2. Staff attempts completion without `issued_document_id`, or supplies a document that is not clean and classified `issued_document`.
+3. The command returns HTTP 422 with `execution.missing_issued_document`; status, history, Audit, notification, and Outbox remain unchanged.
 
 ---
 

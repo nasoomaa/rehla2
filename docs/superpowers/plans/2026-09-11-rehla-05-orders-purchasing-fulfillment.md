@@ -192,6 +192,28 @@ git commit -m "feat(purchasing): define purchase contracts and idempotency"
 - Implements: `Rehla\Purchasing\Contracts\ExecutionCreator`.
 - Produces transitions المحددة أدناه وhistory append-only.
 
+مجموعة الانتقالات القانونية الوحيدة، وتطابق SOP وdomain ومتجه الاختبار حرفيًا:
+
+```text
+received -> under_review
+received -> processing
+under_review -> processing
+processing -> under_review
+under_review -> action_required
+processing -> action_required
+action_required -> action_received
+action_received -> under_review
+action_received -> processing
+under_review -> completed
+processing -> completed
+action_received -> completed
+received -> cancelled
+under_review -> cancelled
+processing -> cancelled
+action_required -> cancelled
+action_received -> cancelled
+```
+
 - [ ] **Step 1: اكتب جدول transitions كاختبار parameterized**
 
 ```php
@@ -255,7 +277,7 @@ $this->app->bind(
 
 - [ ] **Step 5: اختبر الصلاحيات والتاريخ**
 
-اختبر منع الانتقال غير المسموح في policy الملتقطة، ومنع موظف بلا`executions.transition`، ومنع transition بعد completed/cancelled، وحماية history عبر SQL، وبقاء execution القديم على policy القديمة بعد نشر نسخة أحدث.
+اختبر منع الانتقال غير المسموح في policy الملتقطة، ومنع موظف بلا`executions.transition`، ومنع transition بعد completed/cancelled، وحماية history عبر SQL، وبقاء execution القديم على policy القديمة بعد نشر نسخة أحدث. يقبل `CompleteExecution` قيمة `issued_document_id` اختيارية: يلزم Documents بإثبات clean و`issued_document` عندما تكون `captured_policy.requires_issued_document = true`، ويسمح بنتيجة نجاح واحدة بلا مستند عندما تكون false.
 
 Run: `php artisan test packages/Rehla/Fulfillment/tests`
 

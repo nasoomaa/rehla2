@@ -148,5 +148,5 @@ The Wallet and Financial Ledger domain owns customer pre-funded balances, transa
 - **Identity Domain**: Calls the Identity-owned `RegistrationWalletInitializer` port synchronously during registration; the Wallet implementation writes the empty wallet in the same registration transaction.
 - **Top-Ups Domain**: Top-up approval triggers `CreditWallet`.
 - **Purchasing & Orders Domain**: Order checkout triggers `DebitWallet` inside the atomic purchase transaction.
-- **Reporting Domain**: Reads ledger entries to compute financial volume metrics.
+- **Reporting Domain**: Does not read the Wallet ledger for order-volume metrics; paid-order count and gross value come from immutable Orders snapshots.
 - **Audit Domain**: Balance adjustments, freezes, and reconciliation discrepancies are recorded in the audit log.

@@ -5,6 +5,8 @@ from unittest.mock import patch
 
 from scripts.docs_checks.common import CheckFailure
 from scripts.docs_checks.semantic_contracts import (
+    EXPECTED_EXECUTION_TRANSITIONS,
+    extract_transitions,
     reject_all,
     require_all,
     require_transaction_contract,
@@ -12,6 +14,11 @@ from scripts.docs_checks.semantic_contracts import (
 
 
 class SemanticAssertionTest(TestCase):
+    def test_transition_parser_requires_the_exact_canonical_set(self) -> None:
+        text = "\n".join(f"{source} -> {target}" for source, target in EXPECTED_EXECUTION_TRANSITIONS)
+        self.assertEqual(extract_transitions(text), EXPECTED_EXECUTION_TRANSITIONS)
+        self.assertNotEqual(extract_transitions(text + "\ncompleted -> processing"), EXPECTED_EXECUTION_TRANSITIONS)
+
     def test_require_all_reports_missing_fragment(self) -> None:
         with TemporaryDirectory() as directory:
             root = Path(directory)
