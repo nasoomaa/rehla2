@@ -5,6 +5,7 @@ from unittest.mock import patch
 from scripts.docs_checks.common import CheckFailure
 from scripts.docs_checks.plan_quality import (
     EXPECTED_PLAN_IDS,
+    RELEASE_PROOF_FRAGMENTS,
     validate_package_owners,
     validate_package_task,
     validate_package_tasks,
@@ -13,6 +14,7 @@ from scripts.docs_checks.plan_quality import (
     validate_cross_plan_gates,
     validate_table_task_schedule,
     validate_interface_task_sets,
+    validate_release_proof,
     validate_plan_sequence,
     validate_requirement_coverage,
 )
@@ -169,6 +171,12 @@ loadTranslationsFrom and rehla-core
                 "08-customer-api": "",
                 "09-admin-control-panel": "",
             })
+
+    def test_release_proof_requires_clean_postgres_execution(self) -> None:
+        with self.assertRaisesRegex(CheckFailure, "empty PostgreSQL"):
+            validate_release_proof(
+                "\n".join(fragment for fragment in RELEASE_PROOF_FRAGMENTS if fragment != "empty PostgreSQL")
+            )
 
     def test_requirements_are_exactly_r01_through_r65(self) -> None:
         contract = fixture_contract()

@@ -6,7 +6,7 @@
 
 **Architecture:** تطبيق Laravel واحد وقاعدة PostgreSQL واحدة، وحدود المجال في `packages/Rehla/<Package>`. تتواصل الحزم عبر Actions وQueries وContracts وDTOs معلنة، وتبقى `Web` و`Api` و`Admin` حزم عرض بلا كتابة مباشرة إلى جداول الأعمال.
 
-**Tech Stack:** Laravel 13.x، PHP 8.5، PostgreSQL 18، Blade، Livewire، Filament 5، Sanctum، Pest/PHPUnit، Vite، Tailwind CSS، Laravel Queue وPostgreSQL Outbox.
+**Tech Stack:** Laravel 13.x، PHP 8.5، PostgreSQL 18، Node.js 24.x LTS، Blade، Livewire، Filament 5، Sanctum، Pest/PHPUnit، Vite، Tailwind CSS، Laravel Queue وPostgreSQL Outbox.
 
 **Spec:** `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`
 
@@ -191,6 +191,7 @@ git diff --check
 - تمر رحلة عميل R63 ورحلة إدارة R63 من المتصفح بالإنجليزية والعربية/RTL وباستخدام لوحة المفاتيح.
 - تنتج المؤشرات الاثنا عشر قيمًا معروفة من fixture ثابت وبمنطقة الزمن المقررة.
 - ينجح fresh install وupgrade migration وworker restart وoutbox lease recovery وتمرين restore لـPostgreSQL وprivate blobs.
+- يثبت release من fresh directory وempty PostgreSQL مع artifact SHA-256 وencrypted backup وconsistency manifest، ويمر secret/license audit بلا unresolved critical/high finding.
 - يحتوي سجل القبول على دليل لكل صف، وتبقى المتطلبات خارج النطاق فقط بحالة `deferred` وسبب ومصدر قرار.
 
 ## 8. التوقف الآمن والاسترجاع

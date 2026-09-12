@@ -10,7 +10,7 @@
 
 **Architecture:** artifact واحد غير قابل للتغيير يشغل web وqueue وscheduler، وتغلق بوابات E2E ثم observability ثم deploy/restore ثم security/performance/final evidence بالتسلسل.
 
-**Tech Stack:** Laravel processes، PostgreSQL 18، Playwright، shell release scripts، CI.
+**Tech Stack:** Laravel 13.x، PHP 8.5، PostgreSQL 18، Node.js 24.x LTS، Playwright، host-native process manager، shell release scripts، CI.
 
 **Prerequisites:** إغلاق بوابات الخطط 01–09 وعدم استخدام هذه الخطة لتعويض feature أوintegration ناقص في خطة سابقة.
 
@@ -52,7 +52,7 @@
 - Modify: `package.json`
 
 **Interfaces:**
-- Consumes: واجهات Web/Admin المكتملة وfixtures آمنة.
+- Consumes: أدلة إغلاق Web وAPI وAdmin وfixtures آمنة؛ لا يعوض feature ناقصًا.
 - Produces: رحلة R63 قابلة للتكرار بالإنجليزية والعربية/RTL ولوحة المفاتيح.
 
 - [ ] **Step 1: اكتب browser journey الأحمر للعميل**
@@ -128,7 +128,8 @@ git commit -m "test(e2e): prove bilingual customer and admin journeys"
 - Test: `tests/Integration/SchedulerSingletonTest.php`
 
 **Interfaces:**
-- Produces: `/up` liveness بلا dependencies، و`/ready` يتحقق من PostgreSQL وstorage metadata؛ أوامر worker/scheduler موثقة.
+- Consumes: نجاح Task 1 وروابط artifacts الخاصة بالرحلتين والوصول.
+- Produces: `/up` liveness بلا dependencies، و`/ready` يتحقق من PostgreSQL وstorage metadata؛ تعريفات host-native موثقة لـweb وqueue وscheduler، ومقاييس وتنبيهات مثبتة.
 
 - [ ] **Step 1: اكتب اختبارات الصحة**
 
@@ -148,7 +149,7 @@ Expected: FAIL قبل endpoints.
 
 - [ ] **Step 3: نفذ health وprocess contracts**
 
-لا تفحص `/up` قاعدة البيانات. يفحص `/ready` `select 1` وقدرة disk الخاصة على metadata operation دون كتابة ملف عميل. وثق processes: web،`queue:work --timeout=90 --tries=1`،scheduler. اضبط `retry_after=120` ليكون أكبر منtimeout.
+لا تفحص `/up` قاعدة البيانات. يفحص `/ready` `select 1` وقدرة disk الخاصة على metadata operation دون كتابة ملف عميل. وثق processes host-native: web،`queue:work --timeout=90 --tries=1`،scheduler، مع مستخدم محدود وworking directory وenvironment file وrestart/backoff وgraceful stop. اضبط `retry_after=120` ليكون أكبر منtimeout. يثبت preflight النسخ المقفلة Laravel 13.x وPHP 8.5 وPostgreSQL 18 وNode.js 24.x LTS ويرفض اختلاف major أوlockfile.
 
 - [ ] **Step 4: أضف metrics وalerts**
 
@@ -198,7 +199,8 @@ git commit -m "ops: add health process and observability contracts"
 - Create: `tests/Integration/UpgradeMigrationTest.php`
 
 **Interfaces:**
-- Produces: artifact immutable من commit واحد،سياسة expand/backfill/contract،backup/restore متناسق لـDB/private blobs.
+- Consumes: نجاح Task 2 وprocess/readiness/alert evidence.
+- Produces: artifact immutable من commit واحد مع artifact SHA-256، سياسة expand/backfill/contract، وbackup/restore مشفر ومتناسق لـDB/private blobs.
 
 - [ ] **Step 1: اكتب اختبار upgrade migration**
 
@@ -210,7 +212,7 @@ Expected: FAIL حتى يوجد fixture وسير الترقية.
 
 - [ ] **Step 2: نفذ artifact verification**
 
-يتحقق script من lockfiles،production install،config cache،route cache،view cache،Vite assets،migrations pending وصحة `/ready`. لا يبني dependencies على خادم الإنتاج.
+يتحقق script من commit SHA واحد وlockfiles وproduction install وconfig/route/view cache وVite assets وmigrations pending وصحة `/ready`، ثم يولد artifact SHA-256 وmanifest الملفات والإصدارات. لا يبني dependencies على خادم الإنتاج ولا يقبل ملفًا غير متتبع أومعدلًا داخل artifact.
 
 - [ ] **Step 3: وثق ونفذ expand/backfill/contract**
 
@@ -218,7 +220,7 @@ Expected: FAIL حتى يوجد fixture وسير الترقية.
 
 - [ ] **Step 4: نفذ backup وrestore rehearsal**
 
-`backup.sh` يلتقط PostgreSQL snapshot/WAL position وmanifest للـprivate blobs مع timestamp واحد. `restore-rehearsal.sh` يعيدهما إلى بيئة معزولة،يشغل integrity queries وsample authorized downloads وwallet reconciliation،ويفشل إذا تجاوز RPO15دقيقة أوRTO4ساعات.
+`backup.sh` يلتقط PostgreSQL snapshot/WAL position وmanifest للـprivate blobs مع timestamp واحد، ويشفر database dump وblob archive بمفتاح من secret store خارج المستودع، ويسجل checksums وcounts في consistency manifest موقع. `restore-rehearsal.sh` يتحقق من التوقيع ويفكهما إلى بيئة معزولة، ويشغل integrity queries وsample authorized downloads وwallet reconciliation ومطابقة روابط documents، ويفشل إذا تجاوز RPO 15 minutes أوRTO 4 hours أوظهر checksum/count mismatch.
 
 - [ ] **Step 5: شغل proof**
 
@@ -263,7 +265,7 @@ git commit -m "ops: prove deploy upgrade backup and restore paths"
 - Modify: `composer.json`, `package.json`, `.github/workflows/ci.yml`
 
 **Interfaces:**
-- Consumes: كل متطلبات R01–R65 ونتائج الاختبارات والخدمات التشغيلية.
+- Consumes: نجاح Task 3 وartifact SHA-256 وupgrade/restore report، وكل متطلبات R01–R65 ونتائج الاختبارات والخدمات التشغيلية.
 - Produces: قرار إطلاق قابل للتدقيق؛ لا exit0 إذا بقي صف داخل النطاق بلادليل.
 
 - [ ] **Step 1: اكتب verifier السجل**
@@ -290,11 +292,11 @@ Expected: FAIL ويطبع IDs غير verified/deferred.
 
 - [ ] **Step 3: أكمل مصفوفة الأمان**
 
-اختبر customer/staff-limited/staff-finance/staff-operations/admin لكل route وAdmin section. افحص IDOR وmass assignment وCSRF/session fixation وSanctum revocation وrate limits وupload content validation وlog redaction وsecurity headers. شغل `composer audit` و`npm audit --audit-level=high` وراجع تراخيص dependencies الإنتاجية.
+اختبر customer/staff-limited/staff-finance/staff-operations/admin لكل route وAdmin section. افحص IDOR وmass assignment وCSRF/session fixation وSanctum revocation وrate limits وupload abuse/content validation وlog redaction. افحص CSP وHSTS وCORS allowlist والكوكيز الأمنية. شغل dependency audit و`composer audit` و`npm audit --audit-level=high` وsecret scan على history/artifact وlicense audit لاعتماديات الإنتاج. شرط البوابة zero unresolved critical/high findings؛ يسجل أي قبول أدنى بخطر ومالك وموعد.
 
 - [ ] **Step 4: ثبت ميزانيات الأداء**
 
-على fixture يضم100خدمة و1000Order و10000ledger entry: service list≤20queries وp95<500ms محليًا؛order detail≤15queries؛admin overview≤20queries وp95<1s؛API list يستخدم pagination ولايعيد أكثر من100عنصر. تفشل الاختبارات عند N+1 أوتجاوز query budget.
+على fixture يضم100خدمة و1000Order و10000ledger entry: service list≤20queries وp95<500ms محليًا؛order detail≤15queries؛admin overview≤20queries وp95<1s؛API list يستخدم pagination ولايعيد أكثر من100عنصر. يشغل load على PostgreSQL باتصالات حقيقية مع شراء واعتماد شحن متزامنين، ويراقب lock wait وdeadlock/retry وqueue/outbox depth/oldest age. تفشل الاختبارات عند N+1 أوتجاوز query/latency budget أوسلامة مالية مختلفة.
 
 - [ ] **Step 5: شغل رحلة القبول الكاملة**
 
@@ -308,7 +310,9 @@ Expected: PASS لكل R52–R59 وR63.
 
 حدث كل صف داخل النطاق إلى`verified` مع `evidence` بصيغة `command :: test result :: artifact path`. أبق عناصر R60 وامتدادات R64 المؤجلة `deferred` بسبب واضح. شغل verifier حتى exit0.
 
-- [ ] **Step 7: شغل بوابة الإصدار من بيئة جديدة**
+- [ ] **Step 7: شغل بوابة الإصدار من checkout نظيف**
+
+أنشئ fresh directory خارج working tree من commit المثبت، وتحقق أن artifact SHA-256 يطابق Task 3. ثبّت من lockfiles فقط، وأنشئ قاعدة PostgreSQL فارغة باسم ينتهي `_testing` ومستخدمًا محدودًا، ثم شغل migrations. لا تستخدم SQLite أوقاعدة مشتركة أوcache من checkout الأصلي. شغل اختبارات كل الحزم التسع عشرة والجذر وArchitecture/Integration/Security/Performance وWeb/API/Admin browser، ثم OpenAPI equality وacceptance verifier وrestore proof. يسجل الدليل المسار المؤقت وSHA والإصدارات وexit code لكل أمر.
 
 ```bash
 composer install --no-interaction --prefer-dist
@@ -320,10 +324,11 @@ npm run test:e2e
 composer audit
 npm audit --audit-level=high
 php scripts/verify-acceptance-register.php
+bash scripts/release/restore-rehearsal.sh
 git diff --check
 ```
 
-Expected: كل الأوامر exit0، ولاصف داخل النطاق بلا دليل،ولا severe security finding غير محسوم.
+Expected: كل الأوامر exit0 من fresh directory وempty PostgreSQL، و`all 19 package suites` ناجحة، ولاصف داخل النطاق بلا دليل، ولا unresolved critical/high finding.
 
 - [ ] **Step 8: اكتب readiness record وCommit**
 
@@ -336,4 +341,4 @@ git commit -m "release: prove Rehla phase one acceptance"
 
 ## Final Release Gate
 
-تغلق الخطة artifact hash وبيئة التشغيل والمراقبة والترحيل والاستعادة والأمان والأداء والوصول، ثم تنفذ R01–R65 من checkout نظيف وتصدر readiness record قابلًا للتدقيق.
+تغلق الخطة بالترتيب: (1) localization/RTL/accessibility E2E، ثم (2) health/workers/scheduler/observability، ثم (3) artifact/migrations/encrypted backup/restore، ثم (4) security/performance/R01–R65 clean-room proof. لا تبدأ مرحلة دون artifact evidence ناجح من سابقتها، وتصدر readiness record قابلًا للتدقيق.

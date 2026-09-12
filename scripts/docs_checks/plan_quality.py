@@ -75,6 +75,12 @@ EXPECTED_INTERFACE_TASKS = {
         "End-to-End Staff Operations Journey",
         "Admin Verification and Release Handoff",
     ],
+    "10-operations-security-release": [
+        "Localization, RTL, Accessibility and Browser Journeys",
+        "Health, Workers, Scheduler and Observability",
+        "Deployment, Migration and Restore Proof",
+        "Security, Performance and Final R01–R65 Release Gate",
+    ],
 }
 
 EXPECTED_ADMIN_AREAS = [
@@ -92,6 +98,26 @@ EXPECTED_ADMIN_AREAS = [
     "Notifications & Dead Letters",
     "Roles & Abilities",
     "Audit",
+]
+
+RELEASE_PROOF_FRAGMENTS = [
+    "Node.js 24.x LTS",
+    "host-native",
+    "artifact SHA-256",
+    "encrypted",
+    "consistency manifest",
+    "RPO 15 minutes",
+    "RTO 4 hours",
+    "secret scan",
+    "license audit",
+    "CSP",
+    "HSTS",
+    "CORS allowlist",
+    "zero unresolved critical/high findings",
+    "fresh directory",
+    "empty PostgreSQL",
+    "all 19 package suites",
+    "restore-rehearsal.sh",
 ]
 
 
@@ -234,6 +260,12 @@ def validate_interface_task_sets(plan_texts: dict[str, str]) -> None:
         require(f"| {area} |" in admin, f"09-admin-control-panel: missing Admin area {area}")
     for guard in ["DB::", "builder update/delete", "raw connection", "relationship mutation", "model-bound forms"]:
         require(guard in admin, f"09-admin-control-panel: missing mutation guard {guard}")
+    validate_release_proof(plan_texts["10-operations-security-release"])
+
+
+def validate_release_proof(text: str) -> None:
+    for fragment in RELEASE_PROOF_FRAGMENTS:
+        require(fragment in text, f"10-operations-security-release: missing release proof {fragment}")
 
 
 def validate_requirement_coverage(contract: dict[str, object]) -> None:

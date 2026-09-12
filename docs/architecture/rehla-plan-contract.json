@@ -136,7 +136,7 @@
       ],
       "outcome": "Operations, security, recovery, and release proof",
       "owned_packages": [],
-      "release_gate": "10-operations-security-release focused and expanded verification passes with recorded evidence"
+      "release_gate": "Ordered E2E, observability, immutable artifact, encrypted restore, security/performance, and R01-R65 clean-room evidence all pass"
     }
   ],
   "packages": {
@@ -1083,7 +1083,7 @@
       "id": "phase-one-release",
       "opened_by": "01-foundation-core",
       "closed_by": "10-operations-security-release",
-      "evidence": "R01-R65 evidence register and clean-room release proof"
+      "evidence": "R01-R65 evidence register plus fresh-directory, empty-PostgreSQL, artifact-hash, encrypted restore, security, performance, and accessibility proof"
     }
   ],
   "deferred_phase_one_domains": [
