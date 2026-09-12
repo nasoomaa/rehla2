@@ -154,7 +154,7 @@ acceptance_id,source_requirement,package,interface,db_invariant,test_file,test_n
     "test:architecture": "php artisan test tests/Architecture",
     "test:integration": "php artisan test --testsuite=Integration",
     "test:e2e": "php artisan test tests/EndToEnd",
-    "analyse": "phpstan analyse --memory-limit=1G",
+    "analyse": "phpstan analyse --memory-limit=1G --debug --no-progress",
     "format:check": "pint --test",
     "verify": [
       "@format:check",

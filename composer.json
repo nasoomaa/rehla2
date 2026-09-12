@@ -57,6 +57,20 @@
             "@php artisan test"
         ],
         "analyse": "phpstan analyse --memory-limit=1G --debug --no-progress",
+        "format:check": "pint --test",
+        "test:unit": "php artisan test --testsuite=Unit",
+        "test:packages": "php artisan test packages/Rehla",
+        "test:architecture": "php artisan test tests/Architecture",
+        "test:integration": "php artisan test --testsuite=Integration",
+        "test:e2e": "php artisan test tests/EndToEnd",
+        "verify": [
+            "@format:check",
+            "@analyse",
+            "@test:architecture",
+            "@test:packages",
+            "@test:integration",
+            "@test:e2e"
+        ],
         "post-autoload-dump": [
             "Illuminate\\Foundation\\ComposerScripts::postAutoloadDump",
             "@php artisan package:discover --ansi"

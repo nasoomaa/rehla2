@@ -488,9 +488,11 @@ git commit -m "feat(core): add money time identifiers and error contracts"
 - Modify: `tests/TestCase.php`, `phpunit.xml`, `composer.json`
 - Create: `.github/workflows/ci.yml`
 - Test: `tests/Architecture/TestingDatabaseGuardTest.php`
+- Test: `tests/Integration/PostgresConnectionTest.php`
+- Test: `tests/EndToEnd/HostHealthTest.php`
 
 **Interfaces:**
-- Produces: guard يرفض driver غير pgsql أوdatabase لا تنتهي `_testing`؛ factory لاتصالين مستقلين لاختبارات السباق.
+- Produces: guard يرفض driver غير pgsql أوdatabase لا تنتهي `_testing`؛ factory لاتصالين مستقلين لاختبارات السباق؛ ودليل اتصال فعلي بـPostgreSQL 18.
 
 - [ ] **Step 1: اكتب اختبار guard الأحمر**
 
