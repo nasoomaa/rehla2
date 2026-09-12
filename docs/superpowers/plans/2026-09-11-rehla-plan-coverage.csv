@@ -3,7 +3,7 @@ R01,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Perfor
 R02,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",R63 end-to-end gate
 R03,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",architecture acceptance
 R04,2026-09-11-rehla-01-foundation-core.md,Task 2: Record Decisions and Atomic Acceptance Register,AcceptanceRegisterTest
-R05,2026-09-11-rehla-09-admin-control-panel.md,Task 1: Filament Operations Panel,AcceptanceRegisterTest
+R05,2026-09-11-rehla-09-admin-control-panel.md,Task 1: Staff Access and Filament Shell,AcceptanceRegisterTest
 R06,2026-09-11-rehla-10-operations-security-release.md,"Task 4: Security, Performance and Final R01–R65 Release Gate",package and end-to-end gates
 R07,2026-09-11-rehla-03-catalog-forms-content.md,Task 1: Service Catalog and Price History,ServiceLifecycleTest
 R08,2026-09-11-rehla-03-catalog-forms-content.md,Task 2: Draft and Published Form Versions,FieldValidationTest
@@ -38,10 +38,10 @@ R36,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 3: Fulfillment Sta
 R37,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 4: Customer Action Requests and Responses,CustomerActionResponseTest
 R38,2026-09-11-rehla-07-customer-web.md,"Task 6: Order, Execution and Customer-Action Tracking",CustomerActionJourneyTest
 R39,2026-09-11-rehla-06-reporting-integrations.md,"Task 2: Outbox Worker, External Delivery and Dead Letters",InAppNotificationTest
-R40,2026-09-11-rehla-09-admin-control-panel.md,Task 1: Filament Operations Panel,AdminCapabilityMatrixTest
+R40,2026-09-11-rehla-09-admin-control-panel.md,Task 2: Complete Operational Resource Matrix,AdminCapabilityMatrixTest
 R41,2026-09-11-rehla-03-catalog-forms-content.md,Task 1: Service Catalog and Price History,ServiceLifecycleTest
 R42,2026-09-11-rehla-03-catalog-forms-content.md,Task 2: Draft and Published Form Versions,FormPublishingTest
-R43,2026-09-11-rehla-09-admin-control-panel.md,Task 1: Filament Operations Panel,AdminCapabilityMatrixTest
+R43,2026-09-11-rehla-09-admin-control-panel.md,Task 2: Complete Operational Resource Matrix,AdminCapabilityMatrixTest
 R44,2026-09-11-rehla-04-wallet-topups.md,Task 3: Atomic Approval and Rejection,ApproveTopUpTest
 R45,2026-09-11-rehla-05-orders-purchasing-fulfillment.md,Task 3: Fulfillment State Machine and Execution Creation,ExecutionStateMachineTest
 R46,2026-09-11-rehla-02-identity-platform-services.md,Task 2: Append-only Audit Trail,AuditImmutabilityTest

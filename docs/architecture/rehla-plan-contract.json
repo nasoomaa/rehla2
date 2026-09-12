@@ -854,7 +854,7 @@
     {
       "requirement_id": "R40",
       "owner_plan": "09-admin-control-panel",
-      "owner_task": "Task 1: Staff Access and Filament Shell",
+      "owner_task": "Task 2: Complete Operational Resource Matrix",
       "acceptance_source": "specs/contracts/admin-operations-contract.md",
       "verification": "AdminCapabilityMatrixTest",
       "final_evidence_plan": "10-operations-security-release"
@@ -878,7 +878,7 @@
     {
       "requirement_id": "R43",
       "owner_plan": "09-admin-control-panel",
-      "owner_task": "Task 1: Staff Access and Filament Shell",
+      "owner_task": "Task 2: Complete Operational Resource Matrix",
       "acceptance_source": "specs/domains/identity-and-access.md",
       "verification": "AdminCapabilityMatrixTest",
       "final_evidence_plan": "10-operations-security-release"

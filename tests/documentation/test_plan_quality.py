@@ -167,6 +167,7 @@ loadTranslationsFrom and rehla-core
             validate_interface_task_sets({
                 "07-customer-web": "### Task 1: Public Catalog, Content and Inquiry\n",
                 "08-customer-api": "",
+                "09-admin-control-panel": "",
             })
 
     def test_requirements_are_exactly_r01_through_r65(self) -> None:

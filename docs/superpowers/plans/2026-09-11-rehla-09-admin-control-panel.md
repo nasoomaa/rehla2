@@ -2,57 +2,55 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Spec:** `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`
-
-**Coverage:** `docs/superpowers/plans/2026-09-11-rehla-plan-coverage.csv`
-
 **Goal:** بناء لوحة عمليات Filament كاملة وآمنة لإدارة رحلة دون تجاوز الحزم المالكة.
 
 **Architecture:** حزمة Admin تقرأ Query/ReadModel contracts وتنفذ named Commands من الحزم المالكة. موارد Filament لا ترتبط بنماذج أعمال قابلة للتعديل ولا تستعمل DB مباشرة.
 
 **Tech Stack:** Filament 5، Laravel staff sessions، TOTP، Pest، Playwright.
 
+**Spec:** `specs/contracts/admin-operations-contract.md`
+
+**Coverage:** `docs/superpowers/plans/2026-09-11-rehla-plan-coverage.csv`
+
 **Prerequisites:** إغلاق بوابة الخطة 08 وتوفر Reporting metrics وكل أوامر الإدارة والاستعلامات العامة من الحزم المالكة.
 
 ## Global Constraints
 
-- Admin guard مستقل وdeny-by-default؛ القدرات الحساسة تتطلب MFA حديثة خلال أربع ساعات.
-- لا `DB::` أوModels عابرة للحزم أوrelationship mutation أوbusiness transitions داخل closures.
-- كل حقل حساس له قدرة وعرض مقنع وتدقيق وسياسة تصدير صريحة.
+- Admin guard وcookie وsession منفصلة عن customer Web وSanctum؛ staff account وحده لا يمنح أي وصول.
+- القدرات الحساسة `topups.review`, `topups.settings.manage`, `access.manage`, `audit.view` وعرض المستندات/الحقول الحساسة تتطلب TOTP وreauth حديثة خلال أربع ساعات.
+- لا `DB::` أوModels عابرة للحزم أوbuilder update/delete أوraw connection أوrelationship mutation أوbusiness transitions داخل closures.
+- كل permitted action يستدعي named command من owner package؛ كل list/detail يستعمل immutable ReadModel allowlist.
 - كل النصوص ثنائية، والبوابة تثبت EN وAR/RTL ولوحة المفاتيح لموظف كامل وآخر محدود.
 
 ---
-
-### Task 1: Filament Operations Panel
+### Task 1: Staff Access and Filament Shell
 
 **Task Completeness Contract:**
-- **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
-- **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
-- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Admin. لا migration أوكتابة خارج المالك.
-- **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
-- **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
-- **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
-- **Transaction boundary:** Action المنسقة تعلن مالك المعاملة، ويشارك providers الاتصال نفسه بلا commit داخلي؛ القراءة البحتة تعلن غياب الكتابة.
-- **External I/O:** ممنوع داخل معاملة الأعمال؛ تسجل القنوات المطلوبة في Outbox ثم تنفذ بعد commit مع retries وfencing.
-- **Privacy:** أقل DTO وحقول لازمة، 404 غير كاشف للعميل، وقدرة صريحة للموظف، ولا storage keys أوsecrets أوinternal notes.
-- **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
-- **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
-- **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
-- **Acceptance IDs:** `R05, R40, R43`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
-- **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
-- **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
-
+- **Files:** القائمة exhaustive؛ يحدث أي ملف إضافي الخطة وسجل القبول قبل التنفيذ.
+- **Contracts:** Admin يستهلك Query/ReadModel وnamed Command surfaces المسجلة فقط؛ لا mutable Models.
+- **Database ownership:** Admin بلا جداول أعمال؛ `Identity/Admin shell` لا يكتب إلا عبر command من المالك.
+- **Authorization:** deny-by-default لكل panel/page/resource/widget/action/field مع ability مستقلة.
+- **Localization:** كل label/help/notification/action في `rehla-admin` بملفي EN/AR متكافئين.
+- **Error codes:** domain codes ثابتة وتتحول إلى إشعار مترجم؛ لا يكشف exception أوSQL.
+- **Transaction boundary:** Admin لا يفتح معاملة المجال؛ command المالكة تنفذ القفل وAudit/notification/Outbox.
+- **External I/O:** لا network داخل command؛ الملفات عبر Documents والتسليم الخارجي عبر Outbox.
+- **Privacy:** field allowlist وmasking وMFA/audit للتوسيع، بلا storage key أوraw payload أوsecret.
+- **RED:** الاختبار المركز يفشل أولًا بسبب السلوك الناقص المحدد.
+- **GREEN:** أقل page/resource/action يمر عبر العقد المالك.
+- **Expanded verification:** Admin tests ثم owner-package integrations وArchitecture وbrowser ثم formatter وإعادة المتأثر.
+- **Acceptance IDs:** `R05, R43, R47` مع command وtest result وartifact قبل `verified`.
+- **Recovery:** إيقاف panel/action/ability؛ لا تعديل أوحذف سجل تاريخي أومالي.
+- **Commit:** الرسالة المحددة بعد المراجعة و`git diff --check` بلا خلط مهام.
 
 **Files:**
-- Create: `packages/Rehla/Admin/src/Providers/RehlaAdminPanelProvider.php`
-- Create: `packages/Rehla/Admin/src/Resources/**`
-- Create: `packages/Rehla/Admin/src/Pages/Overview.php`
-- Create: `packages/Rehla/Admin/src/Actions/{ApproveTopUpAction,RejectTopUpAction,TransitionExecutionAction,RequestCustomerActionAction,PublishServiceAction,PublishFormAction}.php`
-- Create: `packages/Rehla/Admin/src/ReadModels/**`
-- Create: `packages/Rehla/Admin/src/Policies/**`
-- Test: `packages/Rehla/Admin/tests/Feature/AdminCapabilityMatrixTest.php`
-- Test: `packages/Rehla/Admin/tests/Feature/AdminActionsTest.php`
-- Test: `packages/Rehla/Admin/tests/Architecture/NoDirectBusinessWritesTest.php`
+- Create: `packages/Rehla/Admin/src/Providers/AdminServiceProvider.php`
+- Create: `packages/Rehla/Admin/src/Filament/AdminPanelProvider.php`
+- Create: `packages/Rehla/Admin/src/Auth/{StaffLogin,TOTPSetup,TOTPChallenge,SensitiveActionReauth}.php`
+- Create: `packages/Rehla/Admin/src/Http/Middleware/{RequireStaffGuard,RequireRecentMfa}.php`
+- Create: `packages/Rehla/Admin/src/Navigation/AuthorizedNavigation.php`
+- Create: `packages/Rehla/Admin/src/Filament/Pages/{Dashboard,Profile,LocaleSwitcher}.php`
+- Create: `packages/Rehla/Admin/tests/Feature/{StaffAccessTest,MfaReauthenticationTest,NavigationAuthorizationTest}.php`
+- Create: `packages/Rehla/Admin/tests/Architecture/AdminPresentationBoundaryTest.php`
 
 **Mandatory Package Contract — Admin:**
 - Create/verify: `packages/Rehla/Admin/composer.json` and `packages/Rehla/Admin/README.md`.
@@ -61,64 +59,289 @@
 - Create/verify: `packages/Rehla/Admin/src/resources/lang/ar/messages.php`.
 - Create/verify: `packages/Rehla/Admin/tests/Architecture/TranslationCompletenessTest.php`.
 - Translation namespace: `rehla-admin`; `AdminServiceProvider` must call `loadTranslationsFrom(__DIR__.'/../resources/lang', 'rehla-admin')`.
-- يبدأ ملفا `messages.php` متطابقين ولو كانا فارغين، وتضاف مفاتيح EN/AR في الالتزام نفسه. يمنع الحارس النص المرئي الصريح في PHP خارج الثوابت التقنية وfixtures المعلنة.
-- يوثق README عقود Actions/Queries، التفويض، حدود المعاملة، error codes، owned tables، والاستعادة. لا يستورد العرض Models قابلة للتعديل ولا يكتب DB مباشرة.
-- يبدأ التنفيذ باختبار RED، ثم اختبار الحزمة المركز، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة.
+- يبدأ ملفا اللغة متطابقين ولو فارغين، ويفشل الحارس عند literal ظاهر أوModel/DB/relationship mutation.
 
 **Interfaces:**
-- Consumes: domain Queries/ReadModels وActions فقط.
-- Produces: 14قسمًا بصلاحيات مستقلة وحقول حساسة محدودة.
+- Consumes: Identity staff session, `AuthorizesActor`, TOTP and actor context.
+- Produces: `/admin` panel, staff login/logout, TOTP setup/challenge, locale switch and authorized navigation.
 
-- [ ] **Step 1: اكتب capability matrix كـdataset**
+- [ ] **Step 1: Write RED proof**
 
-```php
-dataset('admin sections', [
-    ['overview', 'admin.overview.view', 'view'],
-    ['services', 'services.manage', 'mutate-via-action'],
-    ['application-forms', 'forms.view', 'mutate-via-action'],
-    ['customers', 'customers.view', 'masked-sensitive'],
-    ['travelers', 'travelers.view', 'masked-passport'],
-    ['wallets', 'wallets.view', 'read-only'],
-    ['bank-accounts', 'banks.view', 'mutate-via-action'],
-    ['top-up-requests', 'topups.review', 'approve-reject-action'],
-    ['orders', 'orders.view', 'read-only'],
-    ['service-executions', 'executions.view', 'transition-action'],
-    ['content', 'content.manage', 'mutate-via-action'],
-    ['notifications', 'notifications.view', 'replay-action'],
-    ['roles-permissions', 'access.view', 'mfa-required'],
-    ['audit-log', 'audit.view', 'read-only'],
-]);
-```
+Run StaffAccessTest and expect panel/provider/guard absent.
 
-- [ ] **Step 2: شغل RED**
+- [ ] **Step 2: Implement the smallest contract**
 
-Run: `php artisan test packages/Rehla/Admin/tests/Feature/AdminCapabilityMatrixTest.php`
+Configure a distinct staff guard/cookie/session, rate-limited login, session regeneration, TOTP recovery policy, four-hour sensitive-action reauth and navigation generated only from abilities. Customer sessions/tokens never enter the panel.
 
-Expected: FAIL قبل panel/resources.
+- [ ] **Step 3: Verify focused and expanded behavior**
 
-- [ ] **Step 3: أنشئ panel وread-only projections**
+Prove staff-with-no-abilities sees no pages, limited staff sees exact navigation, customer denied, MFA stale/absent denied, recovery codes one-time, locale EN/AR and boundary test green.
 
-استخدم guard `admin` وpath `/admin`. كل Resource يرتبط ReadModel لا ينفذ `save/update/delete/create`، أوPage تعتمد Query DTO. يمنع static guard `DB::`, `Model::query`, `->save`, `->update`, `->delete` داخل Admin باستثناء migrations غير الموجودة أصلًا.
-
-- [ ] **Step 4: اربط mutations بالـActions**
-
-Approve/Reject TopUp تستدعيان domain actions وتطلبان MFA حديثة. service/form/content actions تستدعي الحزم المالكة. Execution transition/request action تستدعي Fulfillment. لا تعدل Filament form record مباشرة.
-
-- [ ] **Step 5: اختبر حساسية الحقول**
-
-اخف receipt/passport/customer PII عمن لا يملك القدرة الموافقة، واعرضها عبر download action مؤقت ومدقق. Wallet وOrders وAudit read-only دائمًا. اختبر كل صف matrix بموظف يملك القدرة وآخر لا يملكها.
-
-Run: `php artisan test packages/Rehla/Admin/tests`
-
-Expected: PASS لكل 14قسمًا والإجراءات.
-
-- [ ] **Step 6: Commit**
+- [ ] **Step 4: Commit**
 
 ```bash
-git add packages/Rehla/Admin docs/requirements/rehla-phase-1-acceptance.csv
-git commit -m "feat(admin): add capability-scoped operations panel"
+git add packages/Rehla/Admin && git commit -m "feat(admin): add staff shell MFA and deny-by-default navigation"
+```
+
+
+### Task 2: Complete Operational Resource Matrix
+
+**Task Completeness Contract:**
+- **Files:** القائمة exhaustive؛ يحدث أي ملف إضافي الخطة وسجل القبول قبل التنفيذ.
+- **Contracts:** Admin يستهلك Query/ReadModel وnamed Command surfaces المسجلة فقط؛ لا mutable Models.
+- **Database ownership:** Admin بلا جداول أعمال؛ `all 14 administrative areas` لا يكتب إلا عبر command من المالك.
+- **Authorization:** deny-by-default لكل panel/page/resource/widget/action/field مع ability مستقلة.
+- **Localization:** كل label/help/notification/action في `rehla-admin` بملفي EN/AR متكافئين.
+- **Error codes:** domain codes ثابتة وتتحول إلى إشعار مترجم؛ لا يكشف exception أوSQL.
+- **Transaction boundary:** Admin لا يفتح معاملة المجال؛ command المالكة تنفذ القفل وAudit/notification/Outbox.
+- **External I/O:** لا network داخل command؛ الملفات عبر Documents والتسليم الخارجي عبر Outbox.
+- **Privacy:** field allowlist وmasking وMFA/audit للتوسيع، بلا storage key أوraw payload أوsecret.
+- **RED:** الاختبار المركز يفشل أولًا بسبب السلوك الناقص المحدد.
+- **GREEN:** أقل page/resource/action يمر عبر العقد المالك.
+- **Expanded verification:** Admin tests ثم owner-package integrations وArchitecture وbrowser ثم formatter وإعادة المتأثر.
+- **Acceptance IDs:** `R40, R43` مع command وtest result وartifact قبل `verified`.
+- **Recovery:** إيقاف panel/action/ability؛ لا تعديل أوحذف سجل تاريخي أومالي.
+- **Commit:** الرسالة المحددة بعد المراجعة و`git diff --check` بلا خلط مهام.
+
+**Files:**
+- Create: `packages/Rehla/Admin/src/Filament/Widgets/OverviewMetrics.php`
+- Create: `packages/Rehla/Admin/src/Filament/Resources/{Service,Form,ContentPage,Customer,Traveler,Wallet,BankAccount,TopUp,Order,Execution,Notification,AccessRole,AuditEntry}Resource.php`
+- Create: `packages/Rehla/Admin/src/ReadModels/{AdminTableRow,AdminDetail}.php`
+- Create: `packages/Rehla/Admin/tests/Feature/{AdminResourceMatrixTest,AdminCapabilityMatrixTest,AdminReadModelTest}.php`
+- Modify: `packages/Rehla/Admin/src/resources/lang/{en,ar}/messages.php`
+
+**Interfaces:**
+- Consumes: owner-package Queries/ReadModels and commands named in the matrix.
+- Produces the exhaustive resource contract below; omission orundeclared area fails `AdminResourceMatrixTest`.
+
+| Area | View ability | Mutation ability | Sensitive-field ability | Query/ReadModel | Allowed named commands | Forbidden |
+|---|---|---|---|---|---|---|
+| Overview | `admin.overview.view` | none | none | `ProductMetricsReader` | none | edit/export raw cohorts |
+| Services & Policies | `services.view` | `services.manage`, `services.publish` | none | `ServiceAdminReader` | `CreateService`, `UpdateServiceContent`, `ChangeServicePrice`, `PublishService`, `DeactivateService`, `PublishFulfillmentPolicy` | edit published versions/delete history |
+| Forms | `forms.view` | `forms.draft`, `forms.publish` | none | `FormAdminReader` | `CreateFormDraft`, `UpdateFormDraft`, `PublishFormVersion` | edit/delete published version |
+| Content | `content.view` | `content.manage`, `content.publish` | none | `ContentAdminReader` | `CreatePage`, `UpdatePage`, `PublishPage` | unsanitized markup/direct update |
+| Customers | `customers.view` | `customers.manage` | `customers.view_sensitive` | `CustomerAdminReader` | `SuspendCustomer`, `ReactivateCustomer` | password/token/role mutation |
+| Travelers | `travelers.view` | none | `travelers.view_sensitive` | `TravelerAdminReader` | none | staff profile edit/raw passport by default |
+| Wallets & Ledger | `wallets.view` | none | `wallets.view_sensitive` | `WalletAdminReader` | none in Phase 1 | credit/debit/edit/delete/export unrestricted |
+| Bank Accounts | `banks.view` | `banks.manage` | `banks.manage` | `BankAccountAdminReader` | `CreateBankAccount`, `UpdateBankAccount`, `ToggleBankAccountStatus` | delete referenced bank/direct model save |
+| Top-Ups | `topups.view` | `topups.review`, `topups.settings.manage` | `documents.view_sensitive` | `TopUpAdminReader` | `ApproveTopUp`, `RejectTopUp`, `ConfigureMinimumTopUp` | manual wallet write/edit terminal decision |
+| Orders | `orders.view` | none | `orders.view_sensitive` | `OrderAdminReader` | none | edit/delete order orsnapshots |
+| Executions, Actions & Documents | `executions.view` | `executions.transition`, `executions.note` | `documents.view_sensitive` | `ExecutionAdminReader` | `TransitionExecution`, `RequestCustomerAction`, `CompleteExecution`, `CancelExecution`, `AddInternalNote` | invalid policy jump/public file URL |
+| Notifications & Dead Letters | `notifications.view` | `notifications.replay` | `notifications.view_sensitive` | `NotificationAdminReader` | `ReplayOutboxMessage` | payload edit/unreasoned replay/raw recipient PII |
+| Roles & Abilities | `access.view` | `access.manage` | `access.manage` | `AccessAdminReader` | `AssignRole`, `RevokeRole`, `UpdateAbilities` | self-lockout/undeclared ability alias |
+| Audit | `audit.view` | none | `audit.view_sensitive` | `AuditLogReader` | none | update/delete/raw metadata export |
+
+
+- [ ] **Step 1: Write RED proof**
+
+Generate one failing dataset row per matrix cell; first failure is Overview without `admin.overview.view`.
+
+- [ ] **Step 2: Implement the smallest contract**
+
+Build list/detail pages from readonly DTOs and custom actions from named commands. Render no generic Edit/Delete for immutable/history resources. Make absent abilities remove navigation and actions and still enforce server-side denial.
+
+- [ ] **Step 3: Verify focused and expanded behavior**
+
+Run the three matrix tests across staff-none, staff-limited, finance, operations and access-admin actors. Assert every allowed/forbidden action, query, field and empty state in both locales.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add packages/Rehla/Admin && git commit -m "feat(admin): add complete operational resource matrix"
+```
+
+
+### Task 3: Command-Only Mutation and Read-Model Guards
+
+**Task Completeness Contract:**
+- **Files:** القائمة exhaustive؛ يحدث أي ملف إضافي الخطة وسجل القبول قبل التنفيذ.
+- **Contracts:** Admin يستهلك Query/ReadModel وnamed Command surfaces المسجلة فقط؛ لا mutable Models.
+- **Database ownership:** Admin بلا جداول أعمال؛ `Admin source architecture` لا يكتب إلا عبر command من المالك.
+- **Authorization:** deny-by-default لكل panel/page/resource/widget/action/field مع ability مستقلة.
+- **Localization:** كل label/help/notification/action في `rehla-admin` بملفي EN/AR متكافئين.
+- **Error codes:** domain codes ثابتة وتتحول إلى إشعار مترجم؛ لا يكشف exception أوSQL.
+- **Transaction boundary:** Admin لا يفتح معاملة المجال؛ command المالكة تنفذ القفل وAudit/notification/Outbox.
+- **External I/O:** لا network داخل command؛ الملفات عبر Documents والتسليم الخارجي عبر Outbox.
+- **Privacy:** field allowlist وmasking وMFA/audit للتوسيع، بلا storage key أوraw payload أوsecret.
+- **RED:** الاختبار المركز يفشل أولًا بسبب السلوك الناقص المحدد.
+- **GREEN:** أقل page/resource/action يمر عبر العقد المالك.
+- **Expanded verification:** Admin tests ثم owner-package integrations وArchitecture وbrowser ثم formatter وإعادة المتأثر.
+- **Acceptance IDs:** `R40, R60, R64` مع command وtest result وartifact قبل `verified`.
+- **Recovery:** إيقاف panel/action/ability؛ لا تعديل أوحذف سجل تاريخي أومالي.
+- **Commit:** الرسالة المحددة بعد المراجعة و`git diff --check` بلا خلط مهام.
+
+**Files:**
+- Create: `packages/Rehla/Admin/tests/Architecture/{NoBusinessModelsTest,NoDirectDatabaseMutationTest,FilamentCommandOnlyTest,ReadModelImmutabilityTest}.php`
+- Create: `tests/Architecture/AdminContractSurfaceTest.php`
+- Modify: `packages/Rehla/Admin/README.md`
+
+**Interfaces:**
+- Consumes: package/contract maps and Admin PHP token stream.
+- Produces: CI rejection for cross-package `Models`, `DB::`, query-builder mutations, raw connections, relationship writes, model-bound forms and business transition closures.
+
+- [ ] **Step 1: Write RED proof**
+
+Seed fixtures containing aliased imports, fully qualified Models, `DB::table()->update`, relation attach/sync, raw PDO and action closure transition; require one precise failure each plus false-positive fixtures.
+
+- [ ] **Step 2: Implement the smallest contract**
+
+Implement token-aware guard resolving namespaces/import aliases and method chains. Permit technical Filament state only through explicit allowlist; require every action class to reference a public command surface in the contract map.
+
+- [ ] **Step 3: Verify focused and expanded behavior**
+
+Run Admin architecture tests, root architecture suite and mutation resource feature tests after formatter. Prove comments/strings/tests do not cause false positives and dynamic bypasses fail.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add packages/Rehla/Admin/tests tests/Architecture packages/Rehla/Admin/README.md && git commit -m "test(admin): enforce command-only presentation boundaries"
+```
+
+
+### Task 4: Sensitive Data, Documents and Export Policy
+
+**Task Completeness Contract:**
+- **Files:** القائمة exhaustive؛ يحدث أي ملف إضافي الخطة وسجل القبول قبل التنفيذ.
+- **Contracts:** Admin يستهلك Query/ReadModel وnamed Command surfaces المسجلة فقط؛ لا mutable Models.
+- **Database ownership:** Admin بلا جداول أعمال؛ `Identity/Travelers/Documents/Wallet/TopUps/Notifications/Audit sensitive data` لا يكتب إلا عبر command من المالك.
+- **Authorization:** deny-by-default لكل panel/page/resource/widget/action/field مع ability مستقلة.
+- **Localization:** كل label/help/notification/action في `rehla-admin` بملفي EN/AR متكافئين.
+- **Error codes:** domain codes ثابتة وتتحول إلى إشعار مترجم؛ لا يكشف exception أوSQL.
+- **Transaction boundary:** Admin لا يفتح معاملة المجال؛ command المالكة تنفذ القفل وAudit/notification/Outbox.
+- **External I/O:** لا network داخل command؛ الملفات عبر Documents والتسليم الخارجي عبر Outbox.
+- **Privacy:** field allowlist وmasking وMFA/audit للتوسيع، بلا storage key أوraw payload أوsecret.
+- **RED:** الاختبار المركز يفشل أولًا بسبب السلوك الناقص المحدد.
+- **GREEN:** أقل page/resource/action يمر عبر العقد المالك.
+- **Expanded verification:** Admin tests ثم owner-package integrations وArchitecture وbrowser ثم formatter وإعادة المتأثر.
+- **Acceptance IDs:** `R40, R43, R46, R48` مع command وtest result وartifact قبل `verified`.
+- **Recovery:** إيقاف panel/action/ability؛ لا تعديل أوحذف سجل تاريخي أومالي.
+- **Commit:** الرسالة المحددة بعد المراجعة و`git diff --check` بلا خلط مهام.
+
+**Files:**
+- Create: `packages/Rehla/Admin/src/Security/{SensitiveFieldPolicy,FieldMasker,ExportPolicy}.php`
+- Create: `packages/Rehla/Admin/src/Filament/Actions/{ViewPrivateDocument,ExportAuthorizedRows}.php`
+- Create: `packages/Rehla/Admin/tests/Feature/{SensitiveFieldMatrixTest,PrivateDocumentAccessTest,AdminExportPolicyTest}.php`
+- Modify: `packages/Rehla/Admin/src/resources/lang/{en,ar}/messages.php`
+
+**Interfaces:**
+- Consumes: `AuthorizesActor`, Documents authorization/short-lived delivery, owner read models and `AuditWriter`.
+- Produces: field allowlists and audited reveal/download/export decisions; no permanent URLs.
+
+- [ ] **Step 1: Write RED proof**
+
+Write matrix tests for passport, document, wallet/ledger, bank, receipt, notification body, Audit metadata and actor identity; expect masked oromitted fields without each specific ability.
+
+- [ ] **Step 2: Implement the smallest contract**
+
+Require recent MFA for reveal/download/export, audit actor/subject/reason/field set/correlation, safe CSV formula escaping and row/field allowlists. Documents reauthorizes and grants at most 15-minute session-bound delivery with nosniff.
+
+- [ ] **Step 3: Verify focused and expanded behavior**
+
+Prove limited staff cannot infer values from HTML, Livewire payload, export, logs ornotification text; expired/reused document grants fail; Audit payload is redacted and immutable.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add packages/Rehla/Admin && git commit -m "feat(admin): protect sensitive fields documents and exports"
+```
+
+
+### Task 5: End-to-End Staff Operations Journey
+
+**Task Completeness Contract:**
+- **Files:** القائمة exhaustive؛ يحدث أي ملف إضافي الخطة وسجل القبول قبل التنفيذ.
+- **Contracts:** Admin يستهلك Query/ReadModel وnamed Command surfaces المسجلة فقط؛ لا mutable Models.
+- **Database ownership:** Admin بلا جداول أعمال؛ `complete admin operations journey` لا يكتب إلا عبر command من المالك.
+- **Authorization:** deny-by-default لكل panel/page/resource/widget/action/field مع ability مستقلة.
+- **Localization:** كل label/help/notification/action في `rehla-admin` بملفي EN/AR متكافئين.
+- **Error codes:** domain codes ثابتة وتتحول إلى إشعار مترجم؛ لا يكشف exception أوSQL.
+- **Transaction boundary:** Admin لا يفتح معاملة المجال؛ command المالكة تنفذ القفل وAudit/notification/Outbox.
+- **External I/O:** لا network داخل command؛ الملفات عبر Documents والتسليم الخارجي عبر Outbox.
+- **Privacy:** field allowlist وmasking وMFA/audit للتوسيع، بلا storage key أوraw payload أوsecret.
+- **RED:** الاختبار المركز يفشل أولًا بسبب السلوك الناقص المحدد.
+- **GREEN:** أقل page/resource/action يمر عبر العقد المالك.
+- **Expanded verification:** Admin tests ثم owner-package integrations وArchitecture وbrowser ثم formatter وإعادة المتأثر.
+- **Acceptance IDs:** `R19, R21, R36, R39, R41, R42, R44, R45, R46, R57, R61, R63` مع command وtest result وartifact قبل `verified`.
+- **Recovery:** إيقاف panel/action/ability؛ لا تعديل أوحذف سجل تاريخي أومالي.
+- **Commit:** الرسالة المحددة بعد المراجعة و`git diff --check` بلا خلط مهام.
+
+**Files:**
+- Create: `tests/EndToEnd/admin-operations-journey.spec.ts`
+- Create: `tests/EndToEnd/admin-limited-staff.spec.ts`
+- Create: `tests/EndToEnd/admin-accessibility-rtl.spec.ts`
+- Test: `packages/Rehla/Admin/tests/Feature/AdminConcurrentDecisionTest.php`
+- Modify: `package.json`
+
+**Interfaces:**
+- Consumes: Tasks 1–4 plus deterministic domain fixtures.
+- Produces: browser evidence for full and limited staff in EN/AR/RTL and PostgreSQL concurrency evidence.
+
+- [ ] **Step 1: Write RED proof**
+
+Run browser specs; expect missing full sequence and denied-action assertions.
+
+- [ ] **Step 2: Implement the smallest contract**
+
+Cover staff login/TOTP; bank and top-up review/atomic approval; service/policy/form publication; execution transition/action/completion with policy-conditional document; notifications/dead-letter; Audit inspection. Repeat with limited staff and assert every excluded navigation, URL and action denied.
+
+- [ ] **Step 3: Verify focused and expanded behavior**
+
+Run concurrent top-up decision, Admin feature/architecture suites, and browser specs with keyboard/axe/RTL at desktop/tablet. Verify one credit, immutable history, exact Audit/Outbox and no hardcoded text.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add tests/EndToEnd packages/Rehla/Admin package.json && git commit -m "test(admin): prove complete staff operations journey"
+```
+
+
+### Task 6: Admin Verification and Release Handoff
+
+**Task Completeness Contract:**
+- **Files:** القائمة exhaustive؛ يحدث أي ملف إضافي الخطة وسجل القبول قبل التنفيذ.
+- **Contracts:** Admin يستهلك Query/ReadModel وnamed Command surfaces المسجلة فقط؛ لا mutable Models.
+- **Database ownership:** Admin بلا جداول أعمال؛ `all Admin artifacts and acceptance rows` لا يكتب إلا عبر command من المالك.
+- **Authorization:** deny-by-default لكل panel/page/resource/widget/action/field مع ability مستقلة.
+- **Localization:** كل label/help/notification/action في `rehla-admin` بملفي EN/AR متكافئين.
+- **Error codes:** domain codes ثابتة وتتحول إلى إشعار مترجم؛ لا يكشف exception أوSQL.
+- **Transaction boundary:** Admin لا يفتح معاملة المجال؛ command المالكة تنفذ القفل وAudit/notification/Outbox.
+- **External I/O:** لا network داخل command؛ الملفات عبر Documents والتسليم الخارجي عبر Outbox.
+- **Privacy:** field allowlist وmasking وMFA/audit للتوسيع، بلا storage key أوraw payload أوsecret.
+- **RED:** الاختبار المركز يفشل أولًا بسبب السلوك الناقص المحدد.
+- **GREEN:** أقل page/resource/action يمر عبر العقد المالك.
+- **Expanded verification:** Admin tests ثم owner-package integrations وArchitecture وbrowser ثم formatter وإعادة المتأثر.
+- **Acceptance IDs:** `R05, R40, R43, R61, R63, R65` مع command وtest result وartifact قبل `verified`.
+- **Recovery:** إيقاف panel/action/ability؛ لا تعديل أوحذف سجل تاريخي أومالي.
+- **Commit:** الرسالة المحددة بعد المراجعة و`git diff --check` بلا خلط مهام.
+
+**Files:**
+- Create: `packages/Rehla/Admin/tests/Contract/AdminPlanAcceptanceTest.php`
+- Create: `docs/releases/evidence/admin-control-panel.md`
+- Modify: `docs/requirements/rehla-phase-1-acceptance.csv`
+- Test: `tests/Architecture/AdminContractSurfaceTest.php`
+
+**Interfaces:**
+- Consumes: resource/capability/field matrices, architecture results and browser artifacts.
+- Produces: one evidence link for every Admin acceptance row and a handoff to plan 10; no feature implementation is deferred to release.
+
+- [ ] **Step 1: Write RED proof**
+
+Make AdminPlanAcceptanceTest fail on any matrix row without test name/result/artifact orany `planned|red|green` Admin acceptance status.
+
+- [ ] **Step 2: Implement the smallest contract**
+
+Record exact commands, commit SHA, actor matrix, locale/accessibility artifacts and PostgreSQL concurrency result. Mark rows verified only when the named proof exists.
+
+- [ ] **Step 3: Verify focused and expanded behavior**
+
+Run all Admin, owner integration, Architecture and E2E suites from a fresh process; ensure zero incomplete Admin rows, zero direct mutation, zero sensitive leak and clean diff.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add packages/Rehla/Admin docs/releases/evidence/admin-control-panel.md docs/requirements/rehla-phase-1-acceptance.csv && git commit -m "docs(admin): record control panel release evidence"
 ```
 
 ## Final Admin Gate
 
-تثبت البوابة shell والصلاحيات وMFA ومصفوفة الموارد كاملة، وcommand-only mutations، وسياسات الحقول الحساسة والتنزيل والتصدير، ورحلة الموظف من مراجعة الشحن حتى الإكمال والتدقيق مع منع الموظف المحدود.
+تثبت البوابة Tasks 1–6: guard/session/TOTP، الموارد الأربعة عشر كاملة، القدرة لكل view/mutation/field، readonly Queries وnamed Commands، الحراس المعمارية، سياسات الحقول والمستندات والتصدير، ورحلة الموظف الكامل والمحدود باللغتين وRTL ولوحة المفاتيح. لا تنتقل الخطة 10 إلى release proof حتى يصبح Admin acceptance handoff مكتملًا دون feature مؤجل.

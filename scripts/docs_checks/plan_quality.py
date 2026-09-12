@@ -67,7 +67,32 @@ EXPECTED_INTERFACE_TASKS = {
         "Customer Notifications",
         "OpenAPI Equality and Transport Release Gate",
     ],
+    "09-admin-control-panel": [
+        "Staff Access and Filament Shell",
+        "Complete Operational Resource Matrix",
+        "Command-Only Mutation and Read-Model Guards",
+        "Sensitive Data, Documents and Export Policy",
+        "End-to-End Staff Operations Journey",
+        "Admin Verification and Release Handoff",
+    ],
 }
+
+EXPECTED_ADMIN_AREAS = [
+    "Overview",
+    "Services & Policies",
+    "Forms",
+    "Content",
+    "Customers",
+    "Travelers",
+    "Wallets & Ledger",
+    "Bank Accounts",
+    "Top-Ups",
+    "Orders",
+    "Executions, Actions & Documents",
+    "Notifications & Dead Letters",
+    "Roles & Abilities",
+    "Audit",
+]
 
 
 def validate_plan_sequence(contract: dict[str, object]) -> None:
@@ -204,6 +229,11 @@ def validate_interface_task_sets(plan_texts: dict[str, str]) -> None:
     for plan_id, expected in EXPECTED_INTERFACE_TASKS.items():
         actual = re.findall(r"(?m)^### Task \d+:\s*(.+?)\s*$", plan_texts[plan_id])
         require(actual == expected, f"{plan_id}: interface task set mismatch: {actual}")
+    admin = plan_texts["09-admin-control-panel"]
+    for area in EXPECTED_ADMIN_AREAS:
+        require(f"| {area} |" in admin, f"09-admin-control-panel: missing Admin area {area}")
+    for guard in ["DB::", "builder update/delete", "raw connection", "relationship mutation", "model-bound forms"]:
+        require(guard in admin, f"09-admin-control-panel: missing mutation guard {guard}")
 
 
 def validate_requirement_coverage(contract: dict[str, object]) -> None:
