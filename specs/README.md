@@ -1,6 +1,6 @@
 # Rehla — Authoritative Product Specification Corpus
 
-This directory contains the complete, behavior-first specification corpus for **Rehla** (رحلة), an integrated digital travel services platform designed for Sudanese users.
+This directory contains the complete, implementation-independent specification corpus for **Rehla** (رحلة), an integrated digital travel services platform designed for Sudanese users.
 
 This corpus serves as the authoritative source of truth for downstream `iterative-development`, requirements extraction, story decomposition, behavior scenario generation, and system verification.
 
@@ -10,15 +10,8 @@ This corpus serves as the authoritative source of truth for downstream `iterativ
 
 ```text
 specs/
-├── README.md                                      # Corpus map and reading guide
-├── GOVERNANCE.md                                  # Authority, placement, conventions, and completion gate
-├── coverage-manifest.csv                          # Requirement coverage proof for R01-R65
+├── README.md                                      # Corpus map, reading guide, and governance
 ├── product-overview.md                            # High-level product vision, boundaries, invariants, terminology
-│
-├── cross-cutting/                                 # Rules shared by every affected domain and surface
-│   ├── security-and-privacy.md                    # Authentication, abilities, privacy, and abuse controls
-│   ├── localization-accessibility-and-errors.md   # EN/AR, RTL, WCAG, and canonical errors
-│   └── operational-reliability.md                 # Transactions, recovery, telemetry, and compatibility
 │
 ├── domains/                                       # Coherent business domain specifications
 │   ├── identity-and-access.md                     # Accounts, authentication, staff roles, and abilities
@@ -41,8 +34,7 @@ specs/
 │   ├── storage-and-document-pipeline.md           # Private/public file storage and scanning contract
 │   ├── outbox-and-notifications-delivery.md       # Transactional outbox event delivery contract
 │   ├── whatsapp-inquiry-contract.md               # WhatsApp deep-link generation and zero-side-effect contract
-│   ├── bank-transfer-receipt-contract.md          # Bank transfer verification and receipt proof contract
-│   └── service-fulfillment-sop.md                 # Versioned service-specific execution policy
+│   └── bank-transfer-receipt-contract.md          # Bank transfer verification and receipt proof contract
 │
 ├── journeys/                                      # End-to-end observable user and system workflows
 │   ├── journey-01-service-discovery-and-inquiry.md # Discovery, requirements viewing, WhatsApp inquiry
@@ -67,7 +59,7 @@ specs/
 
 ## Specification Principles
 
-1. **Behavior First**: Product behavior and observable outcomes are authoritative. A contract may use SQL or framework-shaped examples when precision requires it, but Laravel package placement and dependency direction remain governed by the architecture document.
+1. **Implementation Independence**: The specifications describe WHAT the system does and all observable behavior, not internal implementation layers (no controllers, Eloquent models, or database schemas).
 2. **Observable Behavior Discipline**: Every requirement is expressed in terms of verifiable, externally observable inputs, outcomes, state transitions, and error codes.
 3. **Immutability of Financial and Historical Records**: Once created, wallet ledger records, commercial order snapshots, published form versions, and audit entries can never be modified or deleted.
 4. **Separation of Concerns**:
@@ -78,11 +70,3 @@ specs/
    - **Commercial Order**: Permanent legal purchase record.
    - **Service Execution**: Operational fulfillment workflow.
 5. **Deterministic Proof**: Test vectors provide precise mathematical and textual fixtures for automated validation.
-
----
-
-## Authority and placement
-
-Read `GOVERNANCE.md` before changing this corpus. `product-overview.md` is Rehla's product foundation, so a second `foundation/` directory would duplicate authority. Framework and package architecture belongs in `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`, and executable delivery plans belong under `docs/superpowers/plans/`; neither should be copied into `specs/`.
-
-Recommended reading order: governance, product overview, the relevant cross-cutting rules, domain, contracts, journey, then test vectors. Use `coverage-manifest.csv` to trace every source requirement R01–R65.
