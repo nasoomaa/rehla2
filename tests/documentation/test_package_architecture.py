@@ -51,6 +51,17 @@ class PackageLayoutTest(TestCase):
 
 
 class PackageDependencyTest(TestCase):
+    def test_parser_does_not_depend_on_heading_language(self) -> None:
+        markdown = """
+## 6. Dependency Rules
+| Consumer | Dependencies |
+|---|---|
+| Core | None from Rehla |
+## 7. Runtime
+"""
+
+        self.assertEqual(parse_dependency_matrix(markdown), {"Core": []})
+
     def test_parses_human_dependency_matrix(self) -> None:
         markdown = """
 ## 6. قواعد الاعتماد

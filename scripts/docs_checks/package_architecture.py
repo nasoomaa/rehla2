@@ -227,7 +227,7 @@ def validate_package_graph(graph: dict[str, list[str]]) -> None:
 
 
 def parse_dependency_matrix(markdown: str) -> dict[str, list[str]]:
-    start = markdown.find("## 6. قواعد الاعتماد")
+    start = markdown.find("## 6.")
     end = markdown.find("## 7.", start + 1)
     require(start >= 0 and end > start, "human dependency matrix section missing")
     matrix: dict[str, list[str]] = {}
@@ -236,7 +236,7 @@ def parse_dependency_matrix(markdown: str) -> dict[str, list[str]]:
         if not match or match.group("consumer") not in EXPECTED_PACKAGES:
             continue
         value = match.group("providers").strip()
-        providers = [] if value == "لا شيء من Rehla" else [
+        providers = [] if value in {"لا شيء من Rehla", "None from Rehla"} else [
             item.strip() for item in value.split(",")
         ]
         matrix[match.group("consumer")] = providers

@@ -71,11 +71,10 @@ def rest_endpoint_section(text: str) -> str:
 
 
 def architecture_route_block(text: str) -> str:
-    marker = text.find("المسارات الأساسية للإصدار الأول:")
-    fence_start = text.find("```text", marker)
-    fence_end = text.find("```", fence_start + len("```text"))
-    require(marker >= 0 and fence_start >= 0 and fence_end > fence_start, "architecture route block missing")
-    return text[fence_start:fence_end]
+    blocks = re.findall(r"```text\s*\n(.*?)```", text, flags=re.DOTALL)
+    matching = [block for block in blocks if extract_operations(block) == EXPECTED_API]
+    require(len(matching) == 1, "architecture route block missing or duplicated")
+    return matching[0]
 
 
 def check_operation_set(path: Path, text: str) -> None:
