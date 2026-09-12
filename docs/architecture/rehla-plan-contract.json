@@ -1,0 +1,1098 @@
+{
+  "schema_version": 1,
+  "meaning": "Authoritative ordered Rehla Phase 1 build program, package build ownership, mandatory artifacts, and requirement evidence routing.",
+  "implementation_plans": [
+    {
+      "id": "01-foundation-core",
+      "order": 1,
+      "path": "docs/superpowers/plans/2026-09-11-rehla-01-foundation-core.md",
+      "depends_on": [],
+      "outcome": "Laravel host, package workspace, Core, architecture and PostgreSQL gates",
+      "owned_packages": [
+        "Core"
+      ],
+      "release_gate": "01-foundation-core focused and expanded verification passes with recorded evidence"
+    },
+    {
+      "id": "02-identity-platform-services",
+      "order": 2,
+      "path": "docs/superpowers/plans/2026-09-11-rehla-02-identity-platform-services.md",
+      "depends_on": [
+        "01-foundation-core"
+      ],
+      "outcome": "Identity and shared platform services",
+      "owned_packages": [
+        "Identity",
+        "Audit",
+        "Documents",
+        "Travelers",
+        "Notifications"
+      ],
+      "release_gate": "02-identity-platform-services focused and expanded verification passes with recorded evidence"
+    },
+    {
+      "id": "03-catalog-forms-content",
+      "order": 3,
+      "path": "docs/superpowers/plans/2026-09-11-rehla-03-catalog-forms-content.md",
+      "depends_on": [
+        "02-identity-platform-services"
+      ],
+      "outcome": "Catalog, policy versions, forms, and public content",
+      "owned_packages": [
+        "Catalog",
+        "Forms",
+        "Content"
+      ],
+      "release_gate": "03-catalog-forms-content focused and expanded verification passes with recorded evidence"
+    },
+    {
+      "id": "04-wallet-topups",
+      "order": 4,
+      "path": "docs/superpowers/plans/2026-09-11-rehla-04-wallet-topups.md",
+      "depends_on": [
+        "03-catalog-forms-content"
+      ],
+      "outcome": "Wallet ledger and bank top-up workflow",
+      "owned_packages": [
+        "Wallet",
+        "TopUps"
+      ],
+      "release_gate": "04-wallet-topups focused and expanded verification passes with recorded evidence"
+    },
+    {
+      "id": "05-orders-purchasing-fulfillment",
+      "order": 5,
+      "path": "docs/superpowers/plans/2026-09-11-rehla-05-orders-purchasing-fulfillment.md",
+      "depends_on": [
+        "04-wallet-topups"
+      ],
+      "outcome": "Atomic purchase and fulfillment lifecycle",
+      "owned_packages": [
+        "Orders",
+        "Purchasing",
+        "Fulfillment"
+      ],
+      "release_gate": "05-orders-purchasing-fulfillment focused and expanded verification passes with recorded evidence"
+    },
+    {
+      "id": "06-reporting-integrations",
+      "order": 6,
+      "path": "docs/superpowers/plans/2026-09-11-rehla-06-reporting-integrations.md",
+      "depends_on": [
+        "05-orders-purchasing-fulfillment"
+      ],
+      "outcome": "Deterministic metrics and external adapters",
+      "owned_packages": [
+        "Reporting",
+        "Integrations"
+      ],
+      "release_gate": "06-reporting-integrations focused and expanded verification passes with recorded evidence"
+    },
+    {
+      "id": "07-customer-web",
+      "order": 7,
+      "path": "docs/superpowers/plans/2026-09-11-rehla-07-customer-web.md",
+      "depends_on": [
+        "06-reporting-integrations"
+      ],
+      "outcome": "Complete customer Web experience",
+      "owned_packages": [
+        "Web"
+      ],
+      "release_gate": "07-customer-web focused and expanded verification passes with recorded evidence"
+    },
+    {
+      "id": "08-customer-api",
+      "order": 8,
+      "path": "docs/superpowers/plans/2026-09-11-rehla-08-customer-api.md",
+      "depends_on": [
+        "07-customer-web"
+      ],
+      "outcome": "Complete versioned customer REST API",
+      "owned_packages": [
+        "Api"
+      ],
+      "release_gate": "08-customer-api focused and expanded verification passes with recorded evidence"
+    },
+    {
+      "id": "09-admin-control-panel",
+      "order": 9,
+      "path": "docs/superpowers/plans/2026-09-11-rehla-09-admin-control-panel.md",
+      "depends_on": [
+        "08-customer-api"
+      ],
+      "outcome": "Complete isolated staff operations panel",
+      "owned_packages": [
+        "Admin"
+      ],
+      "release_gate": "09-admin-control-panel focused and expanded verification passes with recorded evidence"
+    },
+    {
+      "id": "10-operations-security-release",
+      "order": 10,
+      "path": "docs/superpowers/plans/2026-09-11-rehla-10-operations-security-release.md",
+      "depends_on": [
+        "09-admin-control-panel"
+      ],
+      "outcome": "Operations, security, recovery, and release proof",
+      "owned_packages": [],
+      "release_gate": "10-operations-security-release focused and expanded verification passes with recorded evidence"
+    }
+  ],
+  "packages": {
+    "Core": {
+      "owner_plan": "01-foundation-core",
+      "owner_task": "Task 5",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/CoreServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "architecture"
+      ],
+      "owned_tables": []
+    },
+    "Identity": {
+      "owner_plan": "02-identity-platform-services",
+      "owner_task": "Task 1",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/IdentityServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "feature",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "abilities",
+        "personal_access_tokens",
+        "role_ability",
+        "roles",
+        "staff_profiles",
+        "user_role",
+        "users"
+      ]
+    },
+    "Audit": {
+      "owner_plan": "02-identity-platform-services",
+      "owner_task": "Task 2",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/AuditServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "audit_entries"
+      ]
+    },
+    "Documents": {
+      "owner_plan": "02-identity-platform-services",
+      "owner_task": "Task 3",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/DocumentsServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "feature",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "documents",
+        "upload_sessions"
+      ]
+    },
+    "Travelers": {
+      "owner_plan": "02-identity-platform-services",
+      "owner_task": "Task 4",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/TravelersServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "feature",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "travelers"
+      ]
+    },
+    "Notifications": {
+      "owner_plan": "02-identity-platform-services",
+      "owner_task": "Task 5",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/NotificationsServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "feature",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "notifications",
+        "outbox_delivery_attempts",
+        "outbox_messages"
+      ]
+    },
+    "Catalog": {
+      "owner_plan": "03-catalog-forms-content",
+      "owner_task": "Task 1",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/CatalogServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "feature",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "fulfillment_policy_drafts",
+        "fulfillment_policy_versions",
+        "service_media",
+        "service_price_history",
+        "service_requirements",
+        "services"
+      ]
+    },
+    "Forms": {
+      "owner_plan": "03-catalog-forms-content",
+      "owner_task": "Task 2",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/FormsServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "feature",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "form_drafts",
+        "form_versions"
+      ]
+    },
+    "Content": {
+      "owner_plan": "03-catalog-forms-content",
+      "owner_task": "Task 3",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/ContentServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "feature",
+        "architecture"
+      ],
+      "owned_tables": [
+        "content_pages"
+      ]
+    },
+    "Wallet": {
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 1",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/WalletServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "wallet_ledger_entries",
+        "wallet_reconciliation_runs",
+        "wallets"
+      ]
+    },
+    "TopUps": {
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 2",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/TopUpsServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "feature",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "bank_accounts",
+        "top_up_requests",
+        "top_up_settings"
+      ]
+    },
+    "Orders": {
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 1",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/OrdersServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "order_form_snapshots",
+        "order_service_snapshots",
+        "order_traveler_snapshots",
+        "orders"
+      ]
+    },
+    "Purchasing": {
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 2",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/PurchasingServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "purchase_attempts"
+      ]
+    },
+    "Fulfillment": {
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 3",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/FulfillmentServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "feature",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": [
+        "customer_action_requests",
+        "customer_action_responses",
+        "execution_documents",
+        "execution_internal_notes",
+        "execution_status_history",
+        "service_executions"
+      ]
+    },
+    "Reporting": {
+      "owner_plan": "06-reporting-integrations",
+      "owner_task": "Task 1",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/ReportingServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "integration",
+        "architecture"
+      ],
+      "owned_tables": []
+    },
+    "Integrations": {
+      "owner_plan": "06-reporting-integrations",
+      "owner_task": "Task 3",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/IntegrationsServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "unit",
+        "architecture"
+      ],
+      "owned_tables": []
+    },
+    "Web": {
+      "owner_plan": "07-customer-web",
+      "owner_task": "Task 1",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/WebServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "feature",
+        "browser",
+        "architecture"
+      ],
+      "owned_tables": []
+    },
+    "Api": {
+      "owner_plan": "08-customer-api",
+      "owner_task": "Task 1",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/ApiServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "contract",
+        "feature",
+        "architecture"
+      ],
+      "owned_tables": []
+    },
+    "Admin": {
+      "owner_plan": "09-admin-control-panel",
+      "owner_task": "Task 1",
+      "mandatory_artifacts": [
+        "composer.json",
+        "README.md",
+        "src/Providers/AdminServiceProvider.php",
+        "src/resources/lang/en/messages.php",
+        "src/resources/lang/ar/messages.php",
+        "tests/Architecture/TranslationCompletenessTest.php"
+      ],
+      "required_test_kinds": [
+        "feature",
+        "browser",
+        "architecture"
+      ],
+      "owned_tables": []
+    }
+  },
+  "requirements": [
+    {
+      "requirement_id": "R01",
+      "owner_plan": "10-operations-security-release",
+      "owner_task": "Task 4: Security Performance and Final R01-R65 Release Gate",
+      "acceptance_source": "specs/product-overview.md",
+      "verification": "release readiness review",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R02",
+      "owner_plan": "10-operations-security-release",
+      "owner_task": "Task 4: Security Performance and Final R01-R65 Release Gate",
+      "acceptance_source": "specs/product-overview.md",
+      "verification": "R63 end-to-end gate",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R03",
+      "owner_plan": "10-operations-security-release",
+      "owner_task": "Task 4: Security Performance and Final R01-R65 Release Gate",
+      "acceptance_source": "specs/product-overview.md",
+      "verification": "architecture acceptance",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R04",
+      "owner_plan": "01-foundation-core",
+      "owner_task": "Task 2: Record Decisions and Atomic Acceptance Register",
+      "acceptance_source": "specs/journeys/journey-02-account-registration-and-profile.md",
+      "verification": "AcceptanceRegisterTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R05",
+      "owner_plan": "09-admin-control-panel",
+      "owner_task": "Task 1: Staff Access and Filament Shell",
+      "acceptance_source": "specs/contracts/admin-operations-contract.md",
+      "verification": "AcceptanceRegisterTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R06",
+      "owner_plan": "10-operations-security-release",
+      "owner_task": "Task 4: Security Performance and Final R01-R65 Release Gate",
+      "acceptance_source": "specs/README.md",
+      "verification": "package and end-to-end gates",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R07",
+      "owner_plan": "03-catalog-forms-content",
+      "owner_task": "Task 1: Service Catalog and Price History",
+      "acceptance_source": "specs/domains/service-catalog.md",
+      "verification": "ServiceLifecycleTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R08",
+      "owner_plan": "03-catalog-forms-content",
+      "owner_task": "Task 2: Draft and Published Form Versions",
+      "acceptance_source": "specs/domains/application-forms.md",
+      "verification": "FieldValidationTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R09",
+      "owner_plan": "03-catalog-forms-content",
+      "owner_task": "Task 2: Draft and Published Form Versions",
+      "acceptance_source": "specs/domains/application-forms.md",
+      "verification": "PublishedFormImmutabilityTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R10",
+      "owner_plan": "07-customer-web",
+      "owner_task": "Task 1: Public Web Authentication and Account Shell",
+      "acceptance_source": "specs/domains/identity-and-access.md",
+      "verification": "AccountIsolationTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R11",
+      "owner_plan": "02-identity-platform-services",
+      "owner_task": "Task 4: Travelers and Passport Uniqueness",
+      "acceptance_source": "specs/domains/travelers.md",
+      "verification": "TravelerOwnershipTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R12",
+      "owner_plan": "02-identity-platform-services",
+      "owner_task": "Task 4: Travelers and Passport Uniqueness",
+      "acceptance_source": "specs/domains/travelers.md",
+      "verification": "PassportUniquenessTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R13",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 1: Immutable Paid Order and Snapshots",
+      "acceptance_source": "specs/domains/travelers.md",
+      "verification": "OrderImmutabilityTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R14",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 5: Atomic and Idempotent SubmitOrder",
+      "acceptance_source": "specs/domains/orders-and-purchasing.md",
+      "verification": "SubmitOrderTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R15",
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 1: Wallet and Append-only Ledger",
+      "acceptance_source": "specs/domains/wallet-and-ledger.md",
+      "verification": "WalletLedgerTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R16",
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 2: Bank Accounts and Top-up Submission",
+      "acceptance_source": "specs/domains/top-ups.md",
+      "verification": "SubmitTopUpTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R17",
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 2: Bank Accounts and Top-up Submission",
+      "acceptance_source": "specs/domains/top-ups.md",
+      "verification": "BankAccountTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R18",
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 2: Bank Accounts and Top-up Submission",
+      "acceptance_source": "specs/domains/top-ups.md",
+      "verification": "SubmitTopUpTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R19",
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 3: Atomic Approval and Rejection",
+      "acceptance_source": "specs/domains/top-ups.md",
+      "verification": "ApproveTopUpTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R20",
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 3: Atomic Approval and Rejection",
+      "acceptance_source": "specs/domains/top-ups.md",
+      "verification": "ConcurrentApprovalTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R21",
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 3: Atomic Approval and Rejection",
+      "acceptance_source": "specs/domains/top-ups.md",
+      "verification": "RejectTopUpTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R22",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 5: Atomic and Idempotent SubmitOrder",
+      "acceptance_source": "specs/domains/wallet-and-ledger.md",
+      "verification": "SubmitOrderTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R23",
+      "owner_plan": "07-customer-web",
+      "owner_task": "Task 1: Public Web Authentication and Account Shell",
+      "acceptance_source": "specs/domains/service-catalog.md",
+      "verification": "PublicWebTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R24",
+      "owner_plan": "06-reporting-integrations",
+      "owner_task": "Task 3: Integration Adapters and WhatsApp Inquiry Contract",
+      "acceptance_source": "specs/contracts/whatsapp-inquiry-contract.md",
+      "verification": "WhatsAppInquiryLinkTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R25",
+      "owner_plan": "07-customer-web",
+      "owner_task": "Task 2: Web Top-up Purchase and Order Tracking Journeys",
+      "acceptance_source": "specs/journeys/journey-05-service-order-and-instant-purchase.md",
+      "verification": "PurchaseJourneyTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R26",
+      "owner_plan": "07-customer-web",
+      "owner_task": "Task 2: Web Top-up Purchase and Order Tracking Journeys",
+      "acceptance_source": "specs/domains/travelers.md",
+      "verification": "PurchaseJourneyTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R27",
+      "owner_plan": "03-catalog-forms-content",
+      "owner_task": "Task 2: Draft and Published Form Versions",
+      "acceptance_source": "specs/domains/application-forms.md",
+      "verification": "FieldValidationTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R28",
+      "owner_plan": "07-customer-web",
+      "owner_task": "Task 2: Web Top-up Purchase and Order Tracking Journeys",
+      "acceptance_source": "specs/domains/orders-and-purchasing.md",
+      "verification": "PurchaseJourneyTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R29",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 5: Atomic and Idempotent SubmitOrder",
+      "acceptance_source": "specs/domains/orders-and-purchasing.md",
+      "verification": "SubmitOrderTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R30",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 5: Atomic and Idempotent SubmitOrder",
+      "acceptance_source": "specs/domains/service-catalog.md",
+      "verification": "SubmitOrderTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R31",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 5: Atomic and Idempotent SubmitOrder",
+      "acceptance_source": "specs/domains/wallet-and-ledger.md",
+      "verification": "SubmitOrderConcurrencyTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R32",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 5: Atomic and Idempotent SubmitOrder",
+      "acceptance_source": "specs/domains/orders-and-purchasing.md",
+      "verification": "SubmitOrderRollbackTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R33",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 1: Immutable Paid Order and Snapshots",
+      "acceptance_source": "specs/domains/orders-and-purchasing.md",
+      "verification": "OrderImmutabilityTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R34",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 3: Fulfillment State Machine and Execution Creation",
+      "acceptance_source": "specs/domains/fulfillment.md",
+      "verification": "CreateExecutionTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R35",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Tasks 1 and 3",
+      "acceptance_source": "specs/product-overview.md",
+      "verification": "Order and execution separation tests",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R36",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 3: Fulfillment State Machine and Execution Creation",
+      "acceptance_source": "specs/contracts/service-fulfillment-sop.md",
+      "verification": "ExecutionStateMachineTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R37",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 4: Customer Action Requests and Responses",
+      "acceptance_source": "specs/domains/fulfillment.md",
+      "verification": "CustomerActionResponseTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R38",
+      "owner_plan": "07-customer-web",
+      "owner_task": "Task 2: Web Top-up Purchase and Order Tracking Journeys",
+      "acceptance_source": "specs/contracts/customer-rest-api-v1.md",
+      "verification": "CustomerActionJourneyTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R39",
+      "owner_plan": "06-reporting-integrations",
+      "owner_task": "Task 2: Outbox Worker In-app Projector and Dead Letters",
+      "acceptance_source": "specs/domains/notifications.md",
+      "verification": "InAppNotificationTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R40",
+      "owner_plan": "09-admin-control-panel",
+      "owner_task": "Task 1: Staff Access and Filament Shell",
+      "acceptance_source": "specs/contracts/admin-operations-contract.md",
+      "verification": "AdminCapabilityMatrixTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R41",
+      "owner_plan": "03-catalog-forms-content",
+      "owner_task": "Task 1: Service Catalog and Price History",
+      "acceptance_source": "specs/domains/service-catalog.md",
+      "verification": "ServiceLifecycleTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R42",
+      "owner_plan": "03-catalog-forms-content",
+      "owner_task": "Task 2: Draft and Published Form Versions",
+      "acceptance_source": "specs/domains/application-forms.md",
+      "verification": "FormPublishingTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R43",
+      "owner_plan": "09-admin-control-panel",
+      "owner_task": "Task 1: Staff Access and Filament Shell",
+      "acceptance_source": "specs/domains/identity-and-access.md",
+      "verification": "AdminCapabilityMatrixTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R44",
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 3: Atomic Approval and Rejection",
+      "acceptance_source": "specs/contracts/admin-operations-contract.md",
+      "verification": "ApproveTopUpTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R45",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 3: Fulfillment State Machine and Execution Creation",
+      "acceptance_source": "specs/domains/fulfillment.md",
+      "verification": "ExecutionStateMachineTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R46",
+      "owner_plan": "02-identity-platform-services",
+      "owner_task": "Task 2: Append-only Audit Trail",
+      "acceptance_source": "specs/domains/audit.md",
+      "verification": "AuditImmutabilityTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R47",
+      "owner_plan": "02-identity-platform-services",
+      "owner_task": "Task 1: Identity Sessions and Capabilities",
+      "acceptance_source": "specs/cross-cutting/security-and-privacy.md",
+      "verification": "AuthorizationTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R48",
+      "owner_plan": "02-identity-platform-services",
+      "owner_task": "Task 3: Private Document Lifecycle",
+      "acceptance_source": "specs/domains/documents.md",
+      "verification": "DocumentLifecycleTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R49",
+      "owner_plan": "03-catalog-forms-content",
+      "owner_task": "Task 1: Service Catalog and Price History",
+      "acceptance_source": "specs/domains/documents.md",
+      "verification": "ServiceLifecycleTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R50",
+      "owner_plan": "08-customer-api",
+      "owner_task": "Task 1: API Foundation Authentication and Problem Details",
+      "acceptance_source": "specs/cross-cutting/localization-accessibility-and-errors.md",
+      "verification": "ProblemDetailsTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R51",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Tasks 1 3 and 5",
+      "acceptance_source": "specs/product-overview.md",
+      "verification": "status separation integration tests",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R52",
+      "owner_plan": "10-operations-security-release",
+      "owner_task": "Task 4: Security Performance and Final R01-R65 Release Gate",
+      "acceptance_source": "specs/journeys/journey-05-service-order-and-instant-purchase.md",
+      "verification": "phase-one-acceptance.spec.ts",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R53",
+      "owner_plan": "10-operations-security-release",
+      "owner_task": "Task 4: Security Performance and Final R01-R65 Release Gate",
+      "acceptance_source": "specs/journeys/journey-07-family-multiple-orders.md",
+      "verification": "phase-one-acceptance.spec.ts family scenario",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R54",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 1: Immutable Paid Order and Snapshots",
+      "acceptance_source": "specs/domains/travelers.md",
+      "verification": "OrderImmutabilityTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R55",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Tasks 1 and 5",
+      "acceptance_source": "specs/domains/orders-and-purchasing.md",
+      "verification": "order snapshot and price conflict tests",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R56",
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 2: Bank Accounts and Top-up Submission",
+      "acceptance_source": "specs/domains/top-ups.md",
+      "verification": "SubmitTopUpTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R57",
+      "owner_plan": "04-wallet-topups",
+      "owner_task": "Task 3: Atomic Approval and Rejection",
+      "acceptance_source": "specs/domains/top-ups.md",
+      "verification": "ConcurrentApprovalTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R58",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 5: Atomic and Idempotent SubmitOrder",
+      "acceptance_source": "specs/domains/orders-and-purchasing.md",
+      "verification": "SubmitOrderConcurrencyTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R59",
+      "owner_plan": "05-orders-purchasing-fulfillment",
+      "owner_task": "Task 5: Atomic and Idempotent SubmitOrder",
+      "acceptance_source": "specs/domains/orders-and-purchasing.md",
+      "verification": "SubmitOrderConcurrencyTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R60",
+      "owner_plan": "01-foundation-core",
+      "owner_task": "Task 4: Enforce Package Boundaries and Table Ownership",
+      "acceptance_source": "specs/product-overview.md",
+      "verification": "PackageDependencyTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R61",
+      "owner_plan": "10-operations-security-release",
+      "owner_task": "Task 1: Localization RTL Accessibility and Browser Journeys",
+      "acceptance_source": "specs/cross-cutting/localization-accessibility-and-errors.md",
+      "verification": "accessibility.spec.ts",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R62",
+      "owner_plan": "06-reporting-integrations",
+      "owner_task": "Task 1: Product Metrics Contract and Read Models",
+      "acceptance_source": "specs/domains/reporting.md",
+      "verification": "ProductMetricsTest",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R63",
+      "owner_plan": "10-operations-security-release",
+      "owner_task": "Task 4: Security Performance and Final R01-R65 Release Gate",
+      "acceptance_source": "specs/journeys/journey-05-service-order-and-instant-purchase.md",
+      "verification": "phase-one-acceptance.spec.ts",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R64",
+      "owner_plan": "01-foundation-core",
+      "owner_task": "Task 4: Enforce Package Boundaries and Table Ownership",
+      "acceptance_source": "specs/GOVERNANCE.md",
+      "verification": "PackageDependencyTest and public contracts",
+      "final_evidence_plan": "10-operations-security-release"
+    },
+    {
+      "requirement_id": "R65",
+      "owner_plan": "10-operations-security-release",
+      "owner_task": "Task 4: Security Performance and Final R01-R65 Release Gate",
+      "acceptance_source": "specs/product-overview.md",
+      "verification": "phase-one-acceptance.spec.ts",
+      "final_evidence_plan": "10-operations-security-release"
+    }
+  ],
+  "cross_plan_gates": [
+    {
+      "id": "registration-atomicity",
+      "opened_by": "02-identity-platform-services",
+      "closed_by": "04-wallet-topups",
+      "evidence": "account, Audit, wallet, welcome notification, and Outbox roll back together"
+    },
+    {
+      "id": "purchase-readiness",
+      "opened_by": "03-catalog-forms-content",
+      "closed_by": "05-orders-purchasing-fulfillment",
+      "evidence": "captured price, form, policy, documents, debit, order, and execution commit atomically"
+    },
+    {
+      "id": "external-delivery",
+      "opened_by": "02-identity-platform-services",
+      "closed_by": "06-reporting-integrations",
+      "evidence": "fenced Outbox worker and audited dead-letter replay"
+    },
+    {
+      "id": "phase-one-release",
+      "opened_by": "01-foundation-core",
+      "closed_by": "10-operations-security-release",
+      "evidence": "R01-R65 evidence register and clean-room release proof"
+    }
+  ],
+  "deferred_phase_one_domains": [
+    "Cart",
+    "Inventory",
+    "PhysicalShipping",
+    "MultiCurrency",
+    "Refunds",
+    "MultiTravelerOrder",
+    "OrderDrafts"
+  ]
+}

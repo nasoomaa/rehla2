@@ -86,6 +86,82 @@ def validate_package_task(text: str, package: str) -> None:
         require(fragment in text, f"{package}: package task missing {fragment}")
 
 
+def validate_requirement_coverage(contract: dict[str, object]) -> None:
+    rows = contract.get("requirements", [])
+    require(isinstance(rows, list), "requirements must be a list")
+    expected = {f"R{number:02d}" for number in range(1, 66)}
+    actual = [str(row.get("requirement_id", "")) for row in rows]
+    require(len(actual) == len(set(actual)), "duplicate requirement ID")
+    require(set(actual) == expected, f"requirement coverage mismatch: {sorted(set(actual) ^ expected)}")
+    plan_ids = set(EXPECTED_PLAN_IDS)
+    required = {
+        "owner_plan",
+        "owner_task",
+        "acceptance_source",
+        "verification",
+        "final_evidence_plan",
+    }
+    for row in rows:
+        requirement = str(row["requirement_id"])
+        missing = required - row.keys()
+        require(not missing, f"{requirement}: missing fields {sorted(missing)}")
+        require(row["owner_plan"] in plan_ids, f"{requirement}: unknown owner plan")
+        require(bool(str(row["owner_task"])), f"{requirement}: empty owner task")
+        require(
+            row["final_evidence_plan"] == "10-operations-security-release",
+            f"{requirement}: wrong final evidence plan",
+        )
+
+
+def validate_program_ownership(contract: dict[str, object]) -> None:
+    plans = contract["implementation_plans"]
+    packages = contract["packages"]
+    declared: dict[str, str] = {}
+    for plan in plans:
+        for package in plan["owned_packages"]:
+            require(package not in declared, f"{package}: duplicate plan ownership")
+            declared[str(package)] = str(plan["id"])
+    require(set(declared) == set(packages), "plan owned_packages differs from package registry")
+    for package, record in packages.items():
+        require(
+            declared[package] == record["owner_plan"],
+            f"{package}: owner plan mismatch",
+        )
+
+
+def validate_architecture_order(contract: dict[str, object]) -> None:
+    plan_order = {
+        str(row["id"]): int(row["order"])
+        for row in contract["implementation_plans"]
+    }
+    packages = contract["packages"]
+    for consumer, providers in EXPECTED_PACKAGES.items():
+        consumer_order = plan_order[str(packages[consumer]["owner_plan"])]
+        for provider in providers:
+            provider_order = plan_order[str(packages[provider]["owner_plan"])]
+            require(
+                provider_order <= consumer_order,
+                f"{consumer}: provider {provider} is scheduled in a later plan",
+            )
+
+
+def validate_table_schedule(contract: dict[str, object]) -> None:
+    ownership = read_json(ROOT / "docs/architecture/table-ownership.json")
+    expected_by_package = {
+        package: sorted(
+            table
+            for table, row in ownership["tables"].items()
+            if row["owner"] == package
+        )
+        for package in EXPECTED_PACKAGES
+    }
+    for package, record in contract["packages"].items():
+        require(
+            record.get("owned_tables") == expected_by_package[package],
+            f"{package}: owned table schedule differs from table-ownership.json",
+        )
+
+
 def validate_live_paths(contract: dict[str, object]) -> None:
     for row in contract["implementation_plans"]:
         path = ROOT / str(row["path"])
@@ -101,5 +177,9 @@ def check() -> None:
     require(contract.get("schema_version") == 1, "plan contract schema must be 1")
     validate_plan_sequence(contract)
     validate_package_owners(contract)
+    validate_requirement_coverage(contract)
+    validate_program_ownership(contract)
+    validate_architecture_order(contract)
+    validate_table_schedule(contract)
     validate_live_paths(contract)
-    print("  10 plans, 19 package owners")
+    print("  10 plans, 19 package owners, 65 requirements, 40 owned tables")

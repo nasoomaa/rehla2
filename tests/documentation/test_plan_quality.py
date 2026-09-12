@@ -7,6 +7,7 @@ from scripts.docs_checks.plan_quality import (
     validate_package_owners,
     validate_package_task,
     validate_plan_sequence,
+    validate_requirement_coverage,
 )
 
 
@@ -75,3 +76,21 @@ class PlanContractTest(TestCase):
                 ),
                 "Core",
             )
+
+    def test_requirements_are_exactly_r01_through_r65(self) -> None:
+        contract = fixture_contract()
+        contract["requirements"] = [
+            {
+                "requirement_id": f"R{number:02d}",
+                "owner_plan": "01-foundation-core",
+                "owner_task": "Task 1",
+                "acceptance_source": "specs/product-overview.md",
+                "verification": "Acceptance test",
+                "final_evidence_plan": "10-operations-security-release",
+            }
+            for number in range(1, 66)
+        ]
+        validate_requirement_coverage(contract)
+        contract["requirements"].pop()
+        with self.assertRaisesRegex(CheckFailure, "requirement coverage mismatch"):
+            validate_requirement_coverage(contract)
