@@ -42,59 +42,66 @@
 
 
 **Files:**
-- Create: `artisan`, `composer.json`, `composer.lock`, `bootstrap/app.php`, `bootstrap/providers.php`
-- Create: `app/Providers/AppServiceProvider.php`, `phpunit.xml`, `.env.example`
-- Create: `tests/Feature/HostBootTest.php`
-- Preserve: `docs/**`
+- Create: `artisan`, `composer.json`, `composer.lock`, `package.json`, `package-lock.json`, `vite.config.js`, `phpunit.xml`
+- Create: `.editorconfig`, `.gitattributes`, `.gitignore`, `.env.example`, `README.md`
+- Create: Laravel host files under `app/**`, `bootstrap/**`, `config/**`, `database/**`, `public/**`, `resources/**`, `routes/**`, and `storage/**`.
+- Create: `tests/Pest.php`, `tests/TestCase.php`, `tests/Feature/HostBootTest.php`
+- Preserve: `docs/**`, `specs/**`, `scripts/**`, `.agents/**`, `.codex/**`, and every pre-existing file outside the listed host paths.
+- Never stage: `.env`, `.env.testing`, credentials, generated keys, `vendor/**`, or `node_modules/**`.
 
 **Interfaces:**
 - Consumes: PHP8.5، Composer، PostgreSQL18 المتاحان على المضيف.
 - Produces: تطبيق Laravel يقلع من الجذر وبيئة اختبار اسم قاعدة بياناتها `rehla_testing`.
 
-- [ ] **Step 1: أنشئ اختبار إقلاع مضيف فاشلًا**
+- [ ] **Step 1: أنشئ Laravel في مجلد مؤقت وانسخه إلى الجذر**
+
+```bash
+composer create-project laravel/laravel:^13.0 /tmp/rehla-laravel-host
+rsync -a --exclude=.git --exclude=.env /tmp/rehla-laravel-host/ ./
+composer require --dev pestphp/pest pestphp/pest-plugin-laravel larastan/larastan
+php artisan pest:install
+```
+
+لا تستبدل `.env.testing` محليًا موجودًا ولا تضعه في Git. تبقى القيم الآمنة المشتركة في `phpunit.xml` و`.env.example`، وتبقى الأسرار محلية.
+
+- [ ] **Step 2: أنشئ اختبار إقلاع مضيف فاشلًا سلوكيًا**
 
 ```php
 <?php
 
 it('boots the Rehla host in testing mode', function (): void {
     expect(app()->environment())->toBe('testing');
-    expect(config('database.default'))->toBe('pgsql');
+    expect(config('database.default'))->toBe('pgsql')
+        ->and(config('database.connections.pgsql.database'))->toBe('rehla_testing');
 });
 ```
 
-- [ ] **Step 2: تحقق من الفشل قبل وجود Laravel**
+- [ ] **Step 3: تحقق من RED بعد اكتمال bootstrap**
 
 Run: `php artisan test tests/Feature/HostBootTest.php`
 
-Expected: FAIL لأن `artisan` أوbootstrap غير موجود.
+Expected: FAIL لأن scaffold الافتراضي لا يضبط PostgreSQL و`rehla_testing` بعد؛ غياب `artisan` أوbootstrap أوautoload ليس RED مقبولًا.
 
-- [ ] **Step 3: أنشئ Laravel في مجلد مؤقت وانسخه إلى الجذر**
+- [ ] **Step 4: اضبط عقد بيئة الاختبار الملتزم**
 
-```bash
-composer create-project laravel/laravel:^13.0 /tmp/rehla-laravel-host
-rsync -a --exclude=.git /tmp/rehla-laravel-host/ ./
-composer require --dev pestphp/pest pestphp/pest-plugin-laravel larastan/larastan
-php artisan pest:install
-```
+اضبط `phpunit.xml` على `DB_CONNECTION=pgsql` و`DB_DATABASE=rehla_testing`، واحتفظ بـ`APP_ENV=testing` و`CACHE_STORE=array` و`MAIL_MAILER=array` و`QUEUE_CONNECTION=database`. حدّث `.env.example` بقيم PostgreSQL غير سرية؛ يجوز أن يضيف المطور القيم نفسها إلى `.env.testing` المحلي المستبعد من Git.
 
-اضبط `.env.testing` على `DB_CONNECTION=pgsql` و`DB_DATABASE=rehla_testing`، واحتفظ بـ`APP_ENV=testing` و`CACHE_STORE=array` و`MAIL_MAILER=array` و`QUEUE_CONNECTION=database`.
-
-- [ ] **Step 4: ثبت الإصدارات وحقق الإقلاع**
+- [ ] **Step 5: ثبت الإصدارات وحقق الإقلاع**
 
 Run: `composer show laravel/framework && php artisan test tests/Feature/HostBootTest.php`
 
 Expected: Laravel13.x وPASS.
 
-- [ ] **Step 5: ابنِ أصول المضيف**
+- [ ] **Step 6: ابنِ أصول المضيف**
 
 Run: `npm ci && npm run build`
 
 Expected: Vite build ناجح بلا ملفات مفقودة.
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 7: Commit**
 
 ```bash
-git add artisan app bootstrap composer.json composer.lock config database package.json package-lock.json phpunit.xml public resources routes storage tests .env.example
+git add .editorconfig .gitattributes .gitignore .env.example README.md artisan app bootstrap composer.json composer.lock config database package.json package-lock.json phpunit.xml public resources routes storage tests vite.config.js
 git commit -m "build: bootstrap Laravel host"
 ```
 

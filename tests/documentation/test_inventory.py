@@ -39,11 +39,11 @@ class InventoryTest(TestCase):
 
     def test_final_audit_must_report_exact_corpus_and_status(self) -> None:
         text = "\n".join([
-            "| `docs/` و`specs/` عدا manifest الوثائق نفسه | 69 | 17750 |",
-            "| `.agents/README.md` والمهارات التسع | 10 | 380 |",
-            "| الإجمالي المراجع في هذا التدقيق | 79 | 18130 |",
+            "| `docs/` و`specs/` عدا manifest الوثائق نفسه | 7 | 100 |",
+            "| `.agents/README.md` والمهارات التسع | 2 | 20 |",
+            "| الإجمالي المراجع في هذا التدقيق | 9 | 120 |",
             "19 package; 28/28; 65/65; 9 skills; `planned`; لم يُنشأ",
         ])
-        validate_audit_summary(text, 69, 17750, 10, 380)
+        validate_audit_summary(text, 7, 100, 2, 20)
         with self.assertRaisesRegex(CheckFailure, "scope or status evidence"):
-            validate_audit_summary(text.replace("`planned`", "completed"), 69, 17750, 10, 380)
+            validate_audit_summary(text.replace("`planned`", "completed"), 7, 100, 2, 20)
