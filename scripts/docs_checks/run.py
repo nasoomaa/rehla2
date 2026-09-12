@@ -12,6 +12,7 @@ GROUPS = {
     "semantics": "scripts.docs_checks.semantic_contracts",
     "inventory": "scripts.docs_checks.inventory",
     "plans": "scripts.docs_checks.plan_quality",
+    "skills": "scripts.docs_checks.agent_skills",
 }
 
 
