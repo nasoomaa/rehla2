@@ -358,9 +358,16 @@ git commit -m "feat(documents): secure private upload lifecycle"
 - Create: `packages/Rehla/Travelers/src/database/migrations/*_create_travelers_table.php`
 - Create: `packages/Rehla/Travelers/src/Enums/Gender.php`
 - Create: `packages/Rehla/Travelers/src/Data/{TravelerData,TravelerSnapshot}.php`
+- Create: `packages/Rehla/Travelers/src/Contracts/{TravelerReader,TravelerSnapshotReader}.php`
+- Create: `packages/Rehla/Travelers/src/Exceptions/{DuplicatePassport,TravelerNotFound,InvalidTraveler}.php`
 - Create: `packages/Rehla/Travelers/src/Actions/{CreateTraveler,UpdateTraveler}.php`
 - Create: `packages/Rehla/Travelers/src/Queries/{ListOwnedTravelers,GetOwnedTravelerSnapshot}.php`
 - Create: `packages/Rehla/Travelers/src/Support/NormalizePassportNumber.php`
+- Modify: `packages/Rehla/Travelers/{composer.json,README.md}`
+- Modify: `packages/Rehla/Travelers/src/Providers/TravelersServiceProvider.php`
+- Modify: `packages/Rehla/Core/src/Errors/ProblemCode.php`
+- Modify: `packages/Rehla/Core/tests/Unit/ProblemCodeTest.php`
+- Modify: `scripts/create-rehla-packages.php`
 - Test: `packages/Rehla/Travelers/tests/Feature/TravelerOwnershipTest.php`
 - Test: `packages/Rehla/Travelers/tests/Integration/PassportUniquenessTest.php`
 
@@ -377,6 +384,8 @@ git commit -m "feat(documents): secure private upload lifecycle"
 
 **Interfaces:**
 - Produces: `GetOwnedTravelerSnapshot::handle(string $accountId, string $travelerId): TravelerSnapshot`.
+- Produces: `TravelerSnapshotReader` بواسطة `GetOwnedTravelerSnapshot`، و`TravelerReader::listOwned(string $accountId, int $page, int $perPage): array<TravelerSnapshot>` بواسطة `ListOwnedTravelers`.
+- Produces: `CreateTraveler::handle(TravelerData): TravelerSnapshot`; `UpdateTraveler::handle(string $travelerId, TravelerData): TravelerSnapshot`. كلاهما يترجم PostgreSQL SQLSTATE `23505` إلى `DuplicatePassport` بالرمز العام الثابت.
 - Produces snapshot: fullName،dateOfBirth،gender،passportNumber،passportIssuedAt،passportExpiresAt.
 
 - [ ] **Step 1: اكتب اختبارات التطبيع والملكية**
@@ -399,13 +408,13 @@ Expected: FAIL قبل schema/actions.
 
 - [ ] **Step 3: نفذ traveler والـsnapshot**
 
-أنشئ `travelers(id uuid, owner_id uuid, full_name, date_of_birth date, gender, passport_number, normalized_passport_number unique, passport_issued_at date, passport_expires_at date, timestamps)`. يطبق normalizer `mb_strtoupper` ثم يحذف Unicode whitespace و`-`. يمنع تاريخ إصدار بعد الانتهاء أوانتهاء قبل تاريخ الميلاد.
+أنشئ `travelers(id uuid, owner_id uuid, full_name, date_of_birth date, gender, passport_number, normalized_passport_number unique, passport_issued_at date, passport_expires_at date, timestamps)`. يطبق normalizer `mb_strtoupper` ثم يحذف Unicode whitespace و`- _ / .` ويرفض ما تبقى خارج `A-Z0-9` أوطول 6–12. يمنع ميلادًا غير ماضٍ أوأقدم من 120 سنة، وإصدارًا ليس بعد الميلاد وفي الماضي، وانتهاءً ليس بعد الإصدار وفي المستقبل.
 
 لا تضف nationality أوpassport country. أعد404 موحدة عند عدم الملكية لتجنب كشف المعرف.
 
 - [ ] **Step 4: أثبت سباق uniqueness**
 
-استخدم اتصالين PostgreSQL لإدخال الشكلين المطبعين نفسيهما، وتوقع نجاح واحد وخطأ domain واحد بلا500.
+استخدم عمليتين واتصالين PostgreSQL متزامنين لإدخال الشكلين المطبعين نفسيهما، وتوقع نجاح واحد وخطأ domain واحد بلا500.
 
 Run: `php artisan test packages/Rehla/Travelers/tests`
 

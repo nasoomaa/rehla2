@@ -1300,7 +1300,7 @@
       "owner": "Travelers",
       "migration_plan": "02-identity-platform-services",
       "migration_task": "Task 4",
-      "migration_path": "packages/Rehla/Travelers/src/database/migrations/*_travelers.php"
+      "migration_path": "packages/Rehla/Travelers/src/database/migrations/*_create_travelers_table.php"
     },
     "upload_sessions": {
       "owner": "Documents",
