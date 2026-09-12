@@ -65,3 +65,31 @@ git diff --check
 ```
 
 تسجل النتيجة النهائية الفعلية بعد إعادة القراءة المستقلة في قسم «مصفوفة تغطية التصميم» الذي تضيفه بوابة المراجعة الأخيرة.
+
+## مصفوفة تغطية التصميم
+
+راجعت المصفوفة المستقلة الأقسام الخمسة عشر في تصميم المحاذاة وربطت كل قرار بملفات تغييره والمدقق الذي يفشل عند ارتداده:
+
+| design_section | implementing_task | changed_files | validation_group | result |
+|---:|---|---|---|---|
+| 1 | Task 8 | governance, architecture, audit | inventory | PASS |
+| 2 | Task 8 | manifest and gap matrix | inventory | PASS |
+| 3 | Task 2 | architecture and all implementation paths | package | PASS |
+| 4 | Task 3 | package map and Composer ordering | package | PASS |
+| 5 | Task 4 | contract map and domain ports | package + semantics | PASS |
+| 6 | Task 5 | REST contract and API plan | api | PASS |
+| 7 | Task 5 | Problem Details and trace semantics | api | PASS |
+| 8 | Task 6 | purchase, Outbox, document cleanup contracts | semantics | PASS |
+| 9 | Task 7 | Forms, Fulfillment, Reporting and test vectors | semantics | PASS |
+| 10 | Task 3 | three machine-readable architecture maps | package | PASS |
+| 11 | Task 8 | complete docs/specs manifest | inventory | PASS |
+| 12 | Task 8 | master and detailed execution plans | plans + inventory | PASS |
+| 13 | Task 8 | unified validation runner | all | PASS |
+| 14 | Task 8 | measurable acceptance matrix | all | PASS |
+| 15 | Task 8 | explicit deferred scope | inventory + plans | PASS |
+
+## نتيجة المراجعة المستقلة
+
+- ظهرت جميع الملفات المتغيرة منذ `f45def9` في manifest أوفي أدوات الاختبار المرتبطة به، ولا يوجد ملف مواصفة أوخطة خارج القراءة.
+- نجحت اختبارات المدققات في عملية جديدة، ثم نجحت مجموعات package وapi وsemantics وinventory وplans مجتمعة.
+- لا توجد فجوة متبقية في التصميم أوتسلسل الخطط وفق العقود الحالية. يبدأ إثبات التنفيذ الفعلي فقط عند تنفيذ خطة Foundation وتحديث سجل القبول من `planned` إلى أدلة اختبارات حقيقية.

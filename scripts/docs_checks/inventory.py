@@ -122,7 +122,7 @@ def write_manifest() -> None:
     rows = expected_manifest_rows(documentation_files())
     MANIFEST.parent.mkdir(parents=True, exist_ok=True)
     with MANIFEST.open("w", encoding="utf-8", newline="") as stream:
-        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]), lineterminator="\n")
         writer.writeheader()
         writer.writerows(rows)
 
