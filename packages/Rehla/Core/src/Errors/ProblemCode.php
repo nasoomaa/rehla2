@@ -15,5 +15,9 @@ enum ProblemCode: string
     case IdempotencyKeyReused = 'idempotency.key_reused';
     case OperationInProgress = 'operation.in_progress';
     case DocumentNotClean = 'document.not_clean';
+    case DocumentUnsupportedType = 'document.unsupported_type';
+    case DocumentFileTooLarge = 'document.file_too_large';
+    case DocumentVerificationFailed = 'document.verification_failed';
+    case DocumentInvalidAttachment = 'document.invalid_attachment';
     case ForbiddenResource = 'auth.forbidden_resource';
 }

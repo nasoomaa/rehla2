@@ -15,6 +15,10 @@ it('publishes the canonical stable problem codes', function (): void {
         'idempotency.key_reused',
         'operation.in_progress',
         'document.not_clean',
+        'document.unsupported_type',
+        'document.file_too_large',
+        'document.verification_failed',
+        'document.invalid_attachment',
         'auth.forbidden_resource',
     ]);
 

@@ -30,6 +30,14 @@ return [
 
     'disks' => [
 
+        'private' => [
+            'driver' => 'local',
+            'root' => storage_path('app/rehla-private'),
+            'serve' => false,
+            'throw' => true,
+            'report' => true,
+        ],
+
         'local' => [
             'driver' => 'local',
             'root' => storage_path('app/private'),

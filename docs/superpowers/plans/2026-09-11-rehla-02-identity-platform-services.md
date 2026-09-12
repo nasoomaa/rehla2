@@ -270,7 +270,9 @@ git commit -m "feat(identity): add accounts roles and deny-by-default abilities"
 - Modify: `packages/Rehla/Documents/{composer.json,README.md}`
 - Modify: `packages/Rehla/Documents/src/Providers/DocumentsServiceProvider.php`
 - Modify: `packages/Rehla/Core/src/Errors/ProblemCode.php`
+- Modify: `packages/Rehla/Core/tests/Unit/ProblemCodeTest.php`
 - Modify: `config/filesystems.php`
+- Modify: `phpstan.neon` to register package-owned `src/config` directories as Laravel config paths.
 - Modify: `scripts/create-rehla-packages.php`
 - Test: `packages/Rehla/Documents/tests/Feature/DocumentLifecycleTest.php`
 - Test: `packages/Rehla/Documents/tests/Integration/DocumentRaceTest.php`
@@ -291,7 +293,7 @@ git commit -m "feat(identity): add accounts roles and deny-by-default abilities"
 - Produces: `DocumentDownloadAuthorizer::authorize(string $documentId, ActorData $actor): StreamedResponse` بعد فحص owner أوstaff ability؛ لا ينتج storage path أوpublic URL.
 - Produces: `DocumentScanner::scan(string $absolutePath): ScanResult`; الاستدعاء الخارجي يحدث خارج المعاملة ويفشل مغلقًا.
 
-- [ ] **Step 1: اكتب اختبار دورة الحالات والملكية**
+- [x] **Step 1: اكتب اختبار دورة الحالات والملكية**
 
 ```php
 it('allows attachment only for a clean document owned by the account', function (): void {
@@ -305,19 +307,19 @@ it('allows attachment only for a clean document owned by the account', function 
 });
 ```
 
-- [ ] **Step 2: شغل RED**
+- [x] **Step 2: شغل RED**
 
 Run: `php artisan test packages/Rehla/Documents/tests`
 
 Expected: FAIL لغياب lifecycle.
 
-- [ ] **Step 3: أنشئ schema والتخزين الآمن**
+- [x] **Step 3: أنشئ schema والتخزين الآمن**
 
 أنشئ `upload_sessions(id, owner_id, purpose, expires_at, claimed_at)` و`documents(id, upload_session_id, owner_id, purpose, disk, storage_key, original_name, declared_mime, detected_mime, size_bytes, sha256, status, rejection_code, scan_token, scan_lease_expires_at, cleanup_claim_token, cleanup_lease_expires_at, scanned_at, attached_at, purged_at, timestamps)`. استخدم أسماء تخزين عشوائية ولا تستخدم اسم العميل في المسار. يسجل `private` disk بجذر غير عام و`serve=false` و`throw=true`.
 
 الحالات المسموحة: `pending_scan → quarantined → clean|rejected`; ثم `clean → attached|cleanup_claimed` و`pending_scan → cleanup_claimed` بعد 24 ساعة، و`rejected → cleanup_claimed` بعد 30 يومًا، و`cleanup_claimed → purged`. لا يوجد انتقال من rejected إلىclean؛ يعاد الرفع بمعرف جديد. يستخدم scan claim وcleanup claim token/lease لمنع عامل قديم من اعتماد نتيجة بعد انتهاء حجزه.
 
-- [ ] **Step 4: تحقق من البايتات والتنظيف والسباق**
+- [x] **Step 4: تحقق من البايتات والتنظيف والسباق**
 
 اختبر MIME معلنًا يخالف magic bytes، وملف polyglot، وPDF تالفًا، وملفًا أكبر من الحد، واستجابة تنزيل بـ`Content-Disposition: attachment`, `nosniff`, private cache headers. نفذ cleanup بقفل الصف وشرط `claimed_at is null`; نفذ attach بقفل الصف نفسه.
 
@@ -325,7 +327,7 @@ Run: `php artisan test packages/Rehla/Documents/tests`
 
 Expected: PASS، وسباق cleanup/attach لا يحذف ملفًا attached.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/Rehla/Documents config/filesystems.php

@@ -7,3 +7,6 @@ parameters:
         - app
         - packages/Rehla
     tmpDir: storage/framework/cache/phpstan
+    configDirectories:
+        - config
+        - packages/Rehla/*/src/config
