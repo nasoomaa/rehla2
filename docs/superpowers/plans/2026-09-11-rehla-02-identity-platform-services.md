@@ -365,7 +365,7 @@ it('normalizes passport globally without revealing another owner', function (): 
     createTraveler($ownerA, passport: ' p-12 34 ');
 
     expect(fn () => createTraveler($ownerB, passport: 'P1234'))
-        ->toThrow(DuplicatePassport::class, ErrorCode::DuplicatePassport->value);
+        ->toThrow(DuplicatePassport::class, ProblemCode::TravelerPassportConflict->value);
     expect(fn () => getTraveler($ownerB, travelerOf($ownerA)->id))->toThrow(TravelerNotFound::class);
 });
 ```

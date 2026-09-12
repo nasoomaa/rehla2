@@ -19,4 +19,4 @@ Wallet debits, bank top-ups, order snapshots, and reports require exact arithmet
 
 ## Consequences
 
-Money tests cover overflow, currency mismatch, subtraction below zero, and absence of floating-point APIs. Time-dependent behavior receives a Clock and never reads mutable wall time directly inside domain rules.
+Money tests cover overflow, the SDG-only currency contract, subtraction below zero, and absence of floating-point APIs. Time-dependent behavior receives a Clock and never reads mutable wall time directly inside domain rules.

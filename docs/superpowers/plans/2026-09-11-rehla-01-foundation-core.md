@@ -380,13 +380,18 @@ git commit -m "test: enforce package architecture boundaries"
 
 
 **Files:**
+- Modify: `composer.json`
+- Create: `phpstan.neon`
+- Modify: `packages/Rehla/Core/src/Providers/CoreServiceProvider.php`
 - Create: `packages/Rehla/Core/src/Money/Money.php`
-- Create: `packages/Rehla/Core/src/Identifiers/Uuid.php`
+- Create: `packages/Rehla/Core/src/Identifiers/OpaqueId.php`
 - Create: `packages/Rehla/Core/src/Time/Clock.php`
 - Create: `packages/Rehla/Core/src/Time/SystemClock.php`
-- Create: `packages/Rehla/Core/src/Errors/ErrorCode.php`
+- Create: `packages/Rehla/Core/src/Errors/ProblemCode.php`
 - Test: `packages/Rehla/Core/tests/Unit/MoneyTest.php`
-- Test: `packages/Rehla/Core/tests/Unit/UuidTest.php`
+- Test: `packages/Rehla/Core/tests/Unit/OpaqueIdTest.php`
+- Test: `packages/Rehla/Core/tests/Unit/ClockTest.php`
+- Test: `packages/Rehla/Core/tests/Unit/ProblemCodeTest.php`
 
 **Mandatory Package Contract — Core:**
 - Create/verify: `packages/Rehla/Core/composer.json` and `packages/Rehla/Core/README.md`.
@@ -400,7 +405,7 @@ git commit -m "test: enforce package architecture boundaries"
 - Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Core/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
-- Produces: `Money::sdg(int $minor)`, `Money::add`, `Money::subtract`, `Money::isLessThan`; `Clock::now(): CarbonImmutable`; رموز أخطاء ثابتة.
+- Produces: `Money::sdg(int $minor)`, `Money::add`, `Money::subtract`, `Money::isLessThan`; `OpaqueId::generate/fromString`; `Clock::now(): CarbonImmutable`; و`ProblemCode` بقيم عامة lower dot notation.
 
 - [ ] **Step 1: اكتب اختبارات Money الفاشلة**
 
@@ -413,7 +418,7 @@ it('keeps SDG arithmetic in integer minor units', function (): void {
         ->and($balance->currency())->toBe('SDG');
 });
 
-it('rejects currency mismatch and negative construction', function (): void {
+it('rejects negative construction and subtraction below zero', function (): void {
     expect(fn () => Money::sdg(-1))->toThrow(InvalidArgumentException::class);
 });
 ```
@@ -442,7 +447,7 @@ final readonly class Money
 }
 ```
 
-أكمل `add/subtract/isLessThan` مع رفض اختلاف العملة والنتيجة السالبة. عرف ErrorCode على الأقل: `INSUFFICIENT_BALANCE`, `SERVICE_UNAVAILABLE`, `PRICE_CHANGED`, `FORM_VERSION_CHANGED`, `DUPLICATE_PASSPORT`, `TRANSACTION_REFERENCE_USED`, `IDEMPOTENCY_KEY_REUSED`, `OPERATION_IN_PROGRESS`, `DOCUMENT_NOT_CLEAN`, `FORBIDDEN_RESOURCE`.
+أكمل `add/subtract/isLessThan` مع فحص overflow ورفض النتيجة السالبة. يدعم الإصدار الأول SDG فقط. عرّف `ProblemCode` بالقيم العامة: `wallet.insufficient_balance`, `service.unavailable`, `service.price_changed`, `form.version_changed`, `traveler.passport_conflict`, `top_up.reference_used`, `idempotency.key_reused`, `operation.in_progress`, `document.not_clean`, `auth.forbidden_resource`. يجب أن تطابق كل قيمة regex القانوني للأكواد العامة.
 
 - [ ] **Step 4: شغل اختبارات Core والتحليل**
 
