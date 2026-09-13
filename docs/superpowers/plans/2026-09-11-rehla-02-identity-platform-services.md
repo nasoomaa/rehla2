@@ -450,10 +450,15 @@ git commit -m "feat(travelers): add owned traveler profiles and passport uniquen
 
 **Files:**
 - Create: `packages/Rehla/Notifications/src/database/migrations/*_create_notification_tables.php`
-- Create: `packages/Rehla/Notifications/src/Data/OutboxMessageData.php`
-- Create: `packages/Rehla/Notifications/src/Contracts/OutboxWriter.php`
+- Create: `packages/Rehla/Notifications/src/Data/{OutboxMessageData,OutboxEnvelope,NotificationData,NotificationSnapshot,NotificationPage}.php`
+- Create: `packages/Rehla/Notifications/src/Contracts/{OutboxWriter,NotificationRecorder,NotificationReader}.php`
 - Create: `packages/Rehla/Notifications/src/Infrastructure/IdentityRegistrationNotificationRecorder.php`
+- Create: `packages/Rehla/Notifications/src/Queries/ListOwnedNotifications.php`
+- Create: `packages/Rehla/Notifications/src/Exceptions/NotificationNotFound.php`
+- Create: `packages/Rehla/Notifications/src/config/notifications.php`
+- Modify: `packages/Rehla/Notifications/{composer.json,README.md}`
 - Modify: `packages/Rehla/Notifications/src/Providers/NotificationsServiceProvider.php`
+- Modify: `scripts/create-rehla-packages.php`
 - Create: `packages/Rehla/Notifications/src/Actions/{AppendOutboxMessage,ClaimOutboxBatch,MarkDelivered,MarkFailed,CreateInAppNotification,MarkNotificationRead}.php`
 - Create: `packages/Rehla/Notifications/src/Models/{OutboxMessage,Notification}.php`
 - Test: `packages/Rehla/Notifications/tests/Integration/OutboxTransactionTest.php`
@@ -473,8 +478,12 @@ git commit -m "feat(travelers): add owned traveler profiles and passport uniquen
 
 **Interfaces:**
 - Produces: `OutboxWriter::append(OutboxMessageData): string` يعمل على اتصال ومعاملة المستدعي.
-- Produces: `ClaimOutboxBatch::handle(int $limit, string $workerId, CarbonImmutable $now): array<OutboxEnvelope>`.
+- Produces: `ClaimOutboxBatch::handle(int $limit, string $workerId): array<OutboxEnvelope>`؛ أهلية الصف وانتهاء lease ووقت السياج كلها تعتمد PostgreSQL `CURRENT_TIMESTAMP`، ومدة lease من إعداد الحزمة.
+- Produces: `NotificationRecorder::record(NotificationData): NotificationSnapshot` بواسطة `CreateInAppNotification`، و`NotificationReader::listOwned(string $accountId, int $page, int $perPage, bool $unreadOnly = false): NotificationPage` بواسطة `ListOwnedNotifications`.
+- Produces: `MarkNotificationRead::handle(string $accountId, string $notificationId): NotificationSnapshot` idempotent؛ السجل المفقود وسجل مالك آخر يعطيان `NotificationNotFound` نفسها.
+- Produces: `MarkDelivered::handle(string $messageId, string $workerId, string $lockToken): bool` و`MarkFailed::handle(string $messageId, string $workerId, string $lockToken, string $safeError, string $traceId): bool`؛ `false` يعني claim مفقودة ولا يسمح للعامل القديم بأي أثر.
 - Implements: `Rehla\Identity\Contracts\RegistrationNotificationRecorder` عبر adapter يكتب إشعار الترحيب وOutbox القنوات المفعلة في معاملة التسجيل بلا network I/O أوcommit.
+- Deferred explicitly to plan 06 Task 2: `NotificationChannel`, worker/console dispatch, `outbox_delivery_attempts`, وdead-letter replay؛ Task 5 يثبت persistence وclaim/fencing/backoff/dead-letter فقط.
 
 - [ ] **Step 1: اكتب اختبارات المعاملة والـlease**
 
@@ -511,11 +520,11 @@ Expected: FAIL قبل schema.
 
 - [ ] **Step 3: نفذ outbox schema وclaim**
 
-أنشئ `outbox_messages(id, event_name, aggregate_type, aggregate_id, payload_version, payload jsonb, deduplication_key unique, available_at, locked_at, locked_by, lock_token, lease_expires_at, attempts default0, delivered_at, last_error, last_trace_id, created_at)` و`notifications(id, user_id, type, payload, read_at, created_at)`. ينشأ in-app notification مع العملية، ويستخدم claim معاملة قصيرة و`FOR UPDATE SKIP LOCKED` ويولد token جديدًا عند كل claim أو استعادة lease منتهية. اربط `RegistrationNotificationRecorder` بالـadapter في `NotificationsServiceProvider`، واجعله ينضم لمعاملة Identity ولا يطلق event مطلوبًا لصحة التسجيل.
+أنشئ `outbox_messages(id, event_name, aggregate_type, aggregate_id, payload_version, payload jsonb, deduplication_key unique, status, available_at, locked_at, locked_by, lock_token, lease_expires_at, attempts default0, delivered_at, dead_lettered_at, last_error, last_trace_id, created_at)` و`notifications(id, user_id, type, payload jsonb, read_at, created_at)`. ينشأ in-app notification مع العملية، ويستخدم claim معاملة قصيرة و`FOR UPDATE SKIP LOCKED` ويولد token جديدًا عند كل claim أو استعادة lease منتهية. اربط `RegistrationNotificationRecorder` بالـadapter في `NotificationsServiceProvider`، واجعله ينضم لمعاملة Identity ولا يطلق event مطلوبًا لصحة التسجيل. يحفظ payload للإشعار `title.en/ar`, `body.en/ar`, و`target_link`، ولا يقبل DTO نصًا أحادي اللغة.
 
 - [ ] **Step 4: أثبت التنافس والاسترداد**
 
-باستخدام اتصالين، توقع ألا يطالب عاملان بالسجل نفسه. قدم clock بعد انتهاء lease وتوقع claim جديدًا وtoken مختلفًا، ثم أثبت أن العامل القديم لا يستطيع MarkDelivered أو MarkFailed. ينقل الفشل الخامس الرسالة إلى dead-letter دون حذفها، ويحفظ error منظفًا وtrace ID فقط.
+باستخدام اتصالين، توقع ألا يطالب عاملان بالسجل نفسه. اجعل lease منتهيًا في PostgreSQL ثم توقع claim جديدًا وtoken مختلفًا، وأثبت أن العامل القديم لا يستطيع `MarkDelivered` أو`MarkFailed`. تتحقق عمليات الإنهاء والفشل من `lease_expires_at > CURRENT_TIMESTAMP` داخل SQL نفسه. تستخدم المحاولات 1–4 تأخيرات 30 و60 و120 و240 ثانية، وينقل الفشل الخامس الرسالة إلى `dead_letter` مع `dead_lettered_at` دون حذفها، ويحفظ error منظفًا محدودًا وtrace ID فقط، ويكتب Audit وينبه السجل دون payload أوstack trace.
 
 Run: `php artisan test packages/Rehla/Notifications/tests`
 
