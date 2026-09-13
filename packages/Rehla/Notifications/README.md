@@ -23,15 +23,16 @@ Only this package may create migrations for or write its owned tables. Consumers
 - `NotificationsOutbox`: `Rehla\Notifications\Contracts\OutboxWriter`
 - `NotificationReader`: `Rehla\Notifications\Contracts\NotificationReader`
 - `NotificationRecorder`: `Rehla\Notifications\Contracts\NotificationRecorder`
-- `NotificationChannelPort`: `Rehla\Notifications\Contracts\NotificationChannel`
+- `ClaimOutboxBatch`, `MarkDelivered`, and `MarkFailed` implement short PostgreSQL claim and fencing operations.
 
-These are contract-map declarations for later owner tasks; the Foundation scaffold does not implement domain behavior prematurely.
+`NotificationChannel` and external dispatch are introduced by plan 06. Consumers receive immutable snapshots and envelopes rather than mutable models.
 
 ## Runtime contract
 
 - Authorization denies by default and is enforced by the owning action or query.
 - Transaction participation uses the caller's connection when the contract declares it; this package never commits an outer transaction.
 - External I/O does not run inside a business transaction. Required delivery is recorded through the owner Outbox contract after the relevant plan task exists.
+- PostgreSQL `CURRENT_TIMESTAMP`, a fresh claim token, and `FOR UPDATE SKIP LOCKED` fence workers. Failure five retains the row as a dead letter and writes sanitized diagnostics and Audit.
 - Public error identities use stable lowercase dot notation. Internal exceptions and messages are not public identities.
 - Recovery disables the affected path or applies a forward-only correction after immutable records exist.
 

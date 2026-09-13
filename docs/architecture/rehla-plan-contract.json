@@ -30,7 +30,7 @@
         "Notifications"
       ],
       "release_gate": "02-identity-platform-services focused and expanded verification passes with recorded evidence",
-      "execution_status": "in_progress"
+      "execution_status": "completed"
     },
     {
       "id": "03-catalog-forms-content",

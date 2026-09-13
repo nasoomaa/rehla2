@@ -290,6 +290,9 @@ foreach ($packageMap['packages'] as $package => $dependencies) {
     if ($package === 'Travelers') {
         $requires['illuminate/database'] = '^13.0';
     }
+    if ($package === 'Notifications') {
+        $requires['illuminate/database'] = '^13.0';
+    }
     foreach ($dependencies as $dependency) {
         $requires['rehla/'.strtolower($dependency)] = '@dev';
     }

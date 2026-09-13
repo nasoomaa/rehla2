@@ -2,4 +2,9 @@
 
 declare(strict_types=1);
 
-return [];
+return [
+    'welcome' => [
+        'title' => 'Welcome to Rehla',
+        'body' => 'Your Rehla account is ready.',
+    ],
+];

@@ -459,6 +459,8 @@ git commit -m "feat(travelers): add owned traveler profiles and passport uniquen
 - Modify: `packages/Rehla/Notifications/{composer.json,README.md}`
 - Modify: `packages/Rehla/Notifications/src/Providers/NotificationsServiceProvider.php`
 - Modify: `scripts/create-rehla-packages.php`
+- Modify: `docs/architecture/rehla-plan-contract.json`
+- Modify: `docs/superpowers/plans/2026-09-12-rehla-plan-manifest.csv`
 - Create: `packages/Rehla/Notifications/src/Actions/{AppendOutboxMessage,ClaimOutboxBatch,MarkDelivered,MarkFailed,CreateInAppNotification,MarkNotificationRead}.php`
 - Create: `packages/Rehla/Notifications/src/Models/{OutboxMessage,Notification}.php`
 - Test: `packages/Rehla/Notifications/tests/Integration/OutboxTransactionTest.php`
@@ -485,7 +487,7 @@ git commit -m "feat(travelers): add owned traveler profiles and passport uniquen
 - Implements: `Rehla\Identity\Contracts\RegistrationNotificationRecorder` عبر adapter يكتب إشعار الترحيب وOutbox القنوات المفعلة في معاملة التسجيل بلا network I/O أوcommit.
 - Deferred explicitly to plan 06 Task 2: `NotificationChannel`, worker/console dispatch, `outbox_delivery_attempts`, وdead-letter replay؛ Task 5 يثبت persistence وclaim/fencing/backoff/dead-letter فقط.
 
-- [ ] **Step 1: اكتب اختبارات المعاملة والـlease**
+- [x] **Step 1: اكتب اختبارات المعاملة والـlease**
 
 ```php
 it('rolls back outbox with the business transaction', function (): void {
@@ -512,17 +514,17 @@ it('rolls registration back when recording the welcome message fails', function 
 });
 ```
 
-- [ ] **Step 2: شغل RED**
+- [x] **Step 2: شغل RED**
 
 Run: `php artisan test packages/Rehla/Notifications/tests`
 
 Expected: FAIL قبل schema.
 
-- [ ] **Step 3: نفذ outbox schema وclaim**
+- [x] **Step 3: نفذ outbox schema وclaim**
 
 أنشئ `outbox_messages(id, event_name, aggregate_type, aggregate_id, payload_version, payload jsonb, deduplication_key unique, status, available_at, locked_at, locked_by, lock_token, lease_expires_at, attempts default0, delivered_at, dead_lettered_at, last_error, last_trace_id, created_at)` و`notifications(id, user_id, type, payload jsonb, read_at, created_at)`. ينشأ in-app notification مع العملية، ويستخدم claim معاملة قصيرة و`FOR UPDATE SKIP LOCKED` ويولد token جديدًا عند كل claim أو استعادة lease منتهية. اربط `RegistrationNotificationRecorder` بالـadapter في `NotificationsServiceProvider`، واجعله ينضم لمعاملة Identity ولا يطلق event مطلوبًا لصحة التسجيل. يحفظ payload للإشعار `title.en/ar`, `body.en/ar`, و`target_link`، ولا يقبل DTO نصًا أحادي اللغة.
 
-- [ ] **Step 4: أثبت التنافس والاسترداد**
+- [x] **Step 4: أثبت التنافس والاسترداد**
 
 باستخدام اتصالين، توقع ألا يطالب عاملان بالسجل نفسه. اجعل lease منتهيًا في PostgreSQL ثم توقع claim جديدًا وtoken مختلفًا، وأثبت أن العامل القديم لا يستطيع `MarkDelivered` أو`MarkFailed`. تتحقق عمليات الإنهاء والفشل من `lease_expires_at > CURRENT_TIMESTAMP` داخل SQL نفسه. تستخدم المحاولات 1–4 تأخيرات 30 و60 و120 و240 ثانية، وينقل الفشل الخامس الرسالة إلى `dead_letter` مع `dead_lettered_at` دون حذفها، ويحفظ error منظفًا محدودًا وtrace ID فقط، ويكتب Audit وينبه السجل دون payload أوstack trace.
 
@@ -530,16 +532,16 @@ Run: `php artisan test packages/Rehla/Notifications/tests`
 
 Expected: PASS.
 
-- [ ] **Step 5: حدث سجل القبول وبوابة الخطة**
+- [x] **Step 5: راجع سجل القبول وأغلق بوابة الخطة**
 
 Run: `composer verify && git diff --check`
 
 Expected: PASS للهوية والتدقيق والوثائق والمسافرين والإشعارات وكل اختبارات المعمارية.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
-git add packages/Rehla/Notifications docs/requirements/rehla-phase-1-acceptance.csv
+git add packages/Rehla/Notifications scripts/create-rehla-packages.php docs/architecture/rehla-plan-contract.json docs/superpowers/plans/2026-09-11-rehla-02-identity-platform-services.md docs/superpowers/plans/2026-09-12-rehla-plan-manifest.csv
 git commit -m "feat(notifications): add transactional outbox foundation"
 ```
 
