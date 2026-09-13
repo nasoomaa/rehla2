@@ -368,6 +368,7 @@ git commit -m "feat(documents): secure private upload lifecycle"
 - Modify: `packages/Rehla/Core/src/Errors/ProblemCode.php`
 - Modify: `packages/Rehla/Core/tests/Unit/ProblemCodeTest.php`
 - Modify: `scripts/create-rehla-packages.php`
+- Modify: `docs/requirements/rehla-phase-1-acceptance.csv`
 - Test: `packages/Rehla/Travelers/tests/Feature/TravelerOwnershipTest.php`
 - Test: `packages/Rehla/Travelers/tests/Integration/PassportUniquenessTest.php`
 
@@ -388,7 +389,7 @@ git commit -m "feat(documents): secure private upload lifecycle"
 - Produces: `CreateTraveler::handle(TravelerData): TravelerSnapshot`; `UpdateTraveler::handle(string $travelerId, TravelerData): TravelerSnapshot`. كلاهما يترجم PostgreSQL SQLSTATE `23505` إلى `DuplicatePassport` بالرمز العام الثابت.
 - Produces snapshot: fullName،dateOfBirth،gender،passportNumber،passportIssuedAt،passportExpiresAt.
 
-- [ ] **Step 1: اكتب اختبارات التطبيع والملكية**
+- [x] **Step 1: اكتب اختبارات التطبيع والملكية**
 
 ```php
 it('normalizes passport globally without revealing another owner', function (): void {
@@ -400,19 +401,19 @@ it('normalizes passport globally without revealing another owner', function (): 
 });
 ```
 
-- [ ] **Step 2: شغل RED**
+- [x] **Step 2: شغل RED**
 
 Run: `php artisan test packages/Rehla/Travelers/tests`
 
 Expected: FAIL قبل schema/actions.
 
-- [ ] **Step 3: نفذ traveler والـsnapshot**
+- [x] **Step 3: نفذ traveler والـsnapshot**
 
 أنشئ `travelers(id uuid, owner_id uuid, full_name, date_of_birth date, gender, passport_number, normalized_passport_number unique, passport_issued_at date, passport_expires_at date, timestamps)`. يطبق normalizer `mb_strtoupper` ثم يحذف Unicode whitespace و`- _ / .` ويرفض ما تبقى خارج `A-Z0-9` أوطول 6–12. يمنع ميلادًا غير ماضٍ أوأقدم من 120 سنة، وإصدارًا ليس بعد الميلاد وفي الماضي، وانتهاءً ليس بعد الإصدار وفي المستقبل.
 
 لا تضف nationality أوpassport country. أعد404 موحدة عند عدم الملكية لتجنب كشف المعرف.
 
-- [ ] **Step 4: أثبت سباق uniqueness**
+- [x] **Step 4: أثبت سباق uniqueness**
 
 استخدم عمليتين واتصالين PostgreSQL متزامنين لإدخال الشكلين المطبعين نفسيهما، وتوقع نجاح واحد وخطأ domain واحد بلا500.
 
@@ -420,10 +421,10 @@ Run: `php artisan test packages/Rehla/Travelers/tests`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
-git add packages/Rehla/Travelers
+git add packages/Rehla/Travelers packages/Rehla/Core/src/Errors/ProblemCode.php packages/Rehla/Core/tests/Unit/ProblemCodeTest.php scripts/create-rehla-packages.php docs/requirements/rehla-phase-1-acceptance.csv docs/superpowers/plans/2026-09-11-rehla-02-identity-platform-services.md
 git commit -m "feat(travelers): add owned traveler profiles and passport uniqueness"
 ```
 

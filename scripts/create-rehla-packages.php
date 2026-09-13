@@ -287,6 +287,9 @@ foreach ($packageMap['packages'] as $package => $dependencies) {
         $requires['illuminate/filesystem'] = '^13.0';
         $requires['symfony/http-foundation'] = '^8.0';
     }
+    if ($package === 'Travelers') {
+        $requires['illuminate/database'] = '^13.0';
+    }
     foreach ($dependencies as $dependency) {
         $requires['rehla/'.strtolower($dependency)] = '@dev';
     }

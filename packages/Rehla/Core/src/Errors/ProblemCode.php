@@ -11,6 +11,8 @@ enum ProblemCode: string
     case ServicePriceChanged = 'service.price_changed';
     case FormVersionChanged = 'form.version_changed';
     case TravelerPassportConflict = 'traveler.passport_conflict';
+    case TravelerNotFound = 'traveler.not_found';
+    case TravelerInvalidDates = 'traveler.invalid_dates';
     case TopUpReferenceUsed = 'top_up.reference_used';
     case IdempotencyKeyReused = 'idempotency.key_reused';
     case OperationInProgress = 'operation.in_progress';

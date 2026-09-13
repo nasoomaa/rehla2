@@ -11,6 +11,8 @@ it('publishes the canonical stable problem codes', function (): void {
         'service.price_changed',
         'form.version_changed',
         'traveler.passport_conflict',
+        'traveler.not_found',
+        'traveler.invalid_dates',
         'top_up.reference_used',
         'idempotency.key_reused',
         'operation.in_progress',

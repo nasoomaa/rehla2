@@ -18,10 +18,12 @@ Only this package may create migrations for or write its owned tables. Consumers
 
 ## Declared public surfaces
 
-- `TravelerReader`: `Rehla\Travelers\Contracts\TravelerReader`
-- `TravelerSnapshot`: `Rehla\Travelers\Contracts\TravelerSnapshotReader`
+- `CreateTraveler::handle(TravelerData): TravelerSnapshot`
+- `UpdateTraveler::handle(string, TravelerData): TravelerSnapshot`
+- `TravelerReader::listOwned(string, int, int): array<TravelerSnapshot>`
+- `TravelerSnapshotReader::getOwned(string, string): TravelerSnapshot`
 
-These are contract-map declarations for later owner tasks; the Foundation scaffold does not implement domain behavior prematurely.
+Snapshots expose only the six traveler profile fields and the opaque traveler identifier. Queries scope every read by owner and return the same not-found result for missing and foreign records.
 
 ## Runtime contract
 
@@ -29,6 +31,7 @@ These are contract-map declarations for later owner tasks; the Foundation scaffo
 - Transaction participation uses the caller's connection when the contract declares it; this package never commits an outer transaction.
 - External I/O does not run inside a business transaction. Required delivery is recorded through the owner Outbox contract after the relevant plan task exists.
 - Public error identities use stable lowercase dot notation. Internal exceptions and messages are not public identities.
+- Passport numbers are canonicalized globally before a PostgreSQL unique constraint is applied. Unique violations become `traveler.passport_conflict`.
 - Recovery disables the affected path or applies a forward-only correction after immutable records exist.
 
 ## Localization
