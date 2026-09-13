@@ -54,18 +54,21 @@ final readonly class AttachPublicDocuments implements PublicDocuments
             if ($row === null || $row->owner_id !== $ownerId) {
                 throw new DocumentAccessDenied;
             }
-            if ($row->status !== DocumentStatus::Clean->value || $row->disk !== 'public') {
+            if (! in_array($row->status, [DocumentStatus::Clean->value, DocumentStatus::Attached->value], true)
+                || $row->disk !== 'public') {
                 throw new DocumentNotClean;
             }
             if ($row->purpose !== $purpose->value) {
                 throw new DocumentNotClean(ProblemCode::DocumentInvalidAttachment);
             }
 
-            DB::table('documents')->where('id', $documentId)->update([
-                'status' => DocumentStatus::Attached->value,
-                'attached_at' => $now,
-                'updated_at' => $now,
-            ]);
+            if ($row->status === DocumentStatus::Clean->value) {
+                DB::table('documents')->where('id', $documentId)->update([
+                    'status' => DocumentStatus::Attached->value,
+                    'attached_at' => $now,
+                    'updated_at' => $now,
+                ]);
+            }
             $references[] = new DocumentReference(
                 id: $documentId,
                 purpose: $purpose,

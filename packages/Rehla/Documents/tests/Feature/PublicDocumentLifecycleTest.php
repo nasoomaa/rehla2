@@ -123,4 +123,13 @@ it('attaches only clean public media owned by the caller', function (): void {
     expect($attached)->toHaveCount(1)
         ->and($attached[0]->status)->toBe(DocumentStatus::Attached)
         ->and((array) $attached[0])->not->toHaveKey('storageKey');
+
+    $reattached = DB::transaction(fn () => app(PublicDocuments::class)->assertCleanPublic(
+        [$document->id],
+        $ownerA,
+        [DocumentPurpose::ServiceMedia],
+    ));
+
+    expect($reattached)->toHaveCount(1)
+        ->and($reattached[0]->status)->toBe(DocumentStatus::Attached);
 });

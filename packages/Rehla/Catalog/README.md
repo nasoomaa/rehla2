@@ -27,15 +27,20 @@ Only this package may create migrations for or write its owned tables. Consumers
 - `CatalogQuote`: `Rehla\Catalog\Contracts\ServiceQuoteReader`
 - `CatalogFulfillmentPolicy`: `Rehla\Catalog\Contracts\PublishedFulfillmentPolicyReader`
 
-These are contract-map declarations for later owner tasks; the Foundation scaffold does not implement domain behavior prematurely.
+`ServiceCatalog` returns immutable published-service snapshots, `ServiceQuoteReader` returns the current integer-SDG price and version, and `PublishedFulfillmentPolicyReader` returns the latest immutable policy version. Administrative actions expose no mutable database model.
+
+`CatalogAuthorizer` is a Catalog-owned inbound port. It is deliberately unbound here, so administrative mutations fail closed until the Admin package binds its Identity-backed adapter. Tests bind an explicit fake.
 
 ## Runtime contract
 
-- Authorization denies by default and is enforced by the owning action or query.
-- Transaction participation uses the caller's connection when the contract declares it; this package never commits an outer transaction.
-- External I/O does not run inside a business transaction. Required delivery is recorded through the owner Outbox contract after the relevant plan task exists.
-- Public error identities use stable lowercase dot notation. Internal exceptions and messages are not public identities.
-- Recovery disables the affected path or applies a forward-only correction after immutable records exist.
+- Every administrative action checks `CatalogAuthorizer` before writing. Public catalog and quote reads expose active state only where the contract says so.
+- Catalog owns each transaction for service, price, ordering, and policy mutations. Document attachment and Audit append join the same database connection and transaction; neither provider commits internally.
+- No external I/O runs inside these transactions. Catalog does not send notifications or write an Outbox record for the lifecycle implemented here.
+- Public errors include `service.not_found`, `service.unavailable`, `service.fulfillment_policy_missing`, and `fulfillment.policy_immutable`. Validation failures remain internal until a presentation adapter maps them.
+- Service prices use positive integer SDG minor units. Each price change locks the service row and appends an immutable history row in the same transaction.
+- Published fulfillment policies have canonical SHA-256 checksums, sequential per-service versions, and PostgreSQL protection against update and delete.
+- Service media is accepted only through `PublicDocuments`; snapshots expose document IDs and bilingual alt text without disk paths or storage keys.
+- Recovery disables a service or applies a forward-only corrective price or policy version. Existing price history and published policies are never rewritten or rolled back destructively.
 
 ## Localization
 

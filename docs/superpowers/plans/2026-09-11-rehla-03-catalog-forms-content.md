@@ -43,7 +43,7 @@
 
 **Files:**
 - Create: `packages/Rehla/Catalog/src/database/migrations/*_create_catalog_tables.php`
-- Create: `packages/Rehla/Catalog/src/database/migrations/*_protect_fulfillment_policy_versions.php`
+- Create: `packages/Rehla/Catalog/src/database/migrations/*_protect_catalog_history.php`
 - Create: `packages/Rehla/Catalog/src/Enums/ServiceStatus.php`
 - Create: `packages/Rehla/Catalog/src/Data/{ServiceData,ServiceRequirementData,ServiceMediaData,ServiceQuote,ServiceSnapshot,FulfillmentPolicyData}.php`
 - Create: `packages/Rehla/Catalog/src/Actions/{CreateService,UpdateServiceContent,ChangeServicePrice,PublishService,DeactivateService,ReorderServices,SaveFulfillmentPolicyDraft,PublishFulfillmentPolicy}.php`
@@ -90,7 +90,7 @@
 - Produces: `PublishedFulfillmentPolicyReader::forService(string $serviceId): FulfillmentPolicyData`؛ السياسة وإصداراتها مملوكة لـCatalog ولا تعتمد Purchasing على Fulfillment لقراءتها.
 - Mutations: كل Action إدارية تستقبل `actorId` و`correlationId` opaque وتستدعي `CatalogAuthorizer` قبل الكتابة؛ تغييرات السعر والحالة والسياسة تضيف Audit في المعاملة نفسها.
 
-- [ ] **Step 1: اكتب اختبارات lifecycle والسعر**
+- [x] **Step 1: اكتب اختبارات lifecycle والسعر**
 
 ```php
 it('keeps price history and blocks ordering a disabled service', function (): void {
@@ -106,13 +106,13 @@ it('keeps price history and blocks ordering a disabled service', function (): vo
 });
 ```
 
-- [ ] **Step 2: شغل RED**
+- [x] **Step 2: شغل RED**
 
 Run: `php artisan test packages/Rehla/Catalog/tests`
 
 Expected: FAIL قبل وجود الجداول.
 
-- [ ] **Step 3: نفذ schema والـActions**
+- [x] **Step 3: نفذ schema والـActions**
 
 أنشئ:
 
@@ -134,7 +134,7 @@ fulfillment_policy_versions: id, service_id, version, policy jsonb, checksum,
 
 تضيف تصحيحات Documents الغرضين `service_media` و`bank_logo` بحد 5 MiB وصور JPEG/PNG فقط. يبقى الرفع على private staging؛ بعد نجاح decoder وClamAV يكتب العامل النسخة المنظفة على public disk ثم يعتمد مفتاحها وقرصها بسياج scan، ويحذف المرشح العام إن فقد lease. لا يصبح أي ملف مرفوض أوغير مفحوص متاحًا علنًا. يربط `PublicDocuments` الملفات النظيفة العامة ويمنع المالك الآخر والغرض الخاطئ.
 
-- [ ] **Step 4: أثبت النشر والتعطيل والترتيب**
+- [x] **Step 4: أثبت النشر والتعطيل والترتيب**
 
 اختبر منع نشر خدمة بلااسمين أووصف أوrequirement أوسعر أوصورة clean/public. اختبر أن التعطيل يخفي الخدمة من listing ويترك details التاريخية متاحة للعقود الداخلية. اختبر version/checksum وحماية policy المنشورة، وأن العقد يعيد معرف النسخة immutable الذي تلتقطه Purchasing لاحقًا. إثبات بقاء Orders/Executions القديمة على النسخة الملتقطة مؤجل صراحة إلى الخطة 05 حيث تنشأ جداولها.
 
@@ -142,7 +142,7 @@ Run: `php artisan test packages/Rehla/Catalog/tests`
 
 Expected: PASS.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add packages/Rehla/Catalog docs/requirements/rehla-phase-1-acceptance.csv

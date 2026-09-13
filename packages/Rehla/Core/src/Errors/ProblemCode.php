@@ -8,7 +8,10 @@ enum ProblemCode: string
 {
     case WalletInsufficientBalance = 'wallet.insufficient_balance';
     case ServiceUnavailable = 'service.unavailable';
+    case ServiceNotFound = 'service.not_found';
     case ServicePriceChanged = 'service.price_changed';
+    case ServiceFulfillmentPolicyMissing = 'service.fulfillment_policy_missing';
+    case FulfillmentPolicyImmutable = 'fulfillment.policy_immutable';
     case FormVersionChanged = 'form.version_changed';
     case TravelerPassportConflict = 'traveler.passport_conflict';
     case TravelerNotFound = 'traveler.not_found';

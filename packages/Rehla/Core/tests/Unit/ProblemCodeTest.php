@@ -8,7 +8,10 @@ it('publishes the canonical stable problem codes', function (): void {
     expect(array_column(ProblemCode::cases(), 'value'))->toBe([
         'wallet.insufficient_balance',
         'service.unavailable',
+        'service.not_found',
         'service.price_changed',
+        'service.fulfillment_policy_missing',
+        'fulfillment.policy_immutable',
         'form.version_changed',
         'traveler.passport_conflict',
         'traveler.not_found',
