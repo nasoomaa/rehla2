@@ -68,7 +68,8 @@
     "DocumentReference": {
       "owner": "Documents",
       "namespaces": [
-        "Rehla\\Documents\\Data\\DocumentReference"
+        "Rehla\\Documents\\Data\\DocumentReference",
+        "Rehla\\Documents\\Contracts\\PublicDocuments"
       ]
     },
     "TravelerReader": {
@@ -141,6 +142,12 @@
       "owner": "Catalog",
       "namespaces": [
         "Rehla\\Catalog\\Contracts\\PublishedFulfillmentPolicyReader"
+      ]
+    },
+    "CatalogAuthorizationPort": {
+      "owner": "Catalog",
+      "namespaces": [
+        "Rehla\\Catalog\\Contracts\\CatalogAuthorizer"
       ]
     },
     "FormsPublished": {
@@ -1230,7 +1237,8 @@
       "provider": "Catalog",
       "surfaces": [
         "CatalogService",
-        "CatalogFulfillmentPolicy"
+        "CatalogFulfillmentPolicy",
+        "CatalogAuthorizationPort"
       ],
       "mode": "sync",
       "transaction_owner": "none",
@@ -1393,6 +1401,13 @@
       "owner": "Notifications",
       "implemented_by": "Rehla\\Integrations\\Channels\\ConfiguredNotificationChannel",
       "binding_provider": "Rehla\\Integrations\\Providers\\IntegrationsServiceProvider",
+      "transaction_owner": "none"
+    },
+    {
+      "port": "Rehla\\Catalog\\Contracts\\CatalogAuthorizer",
+      "owner": "Catalog",
+      "implemented_by": "Rehla\\Admin\\Infrastructure\\IdentityCatalogAuthorizer",
+      "binding_provider": "Rehla\\Admin\\Providers\\AdminServiceProvider",
       "transaction_owner": "none"
     }
   ],

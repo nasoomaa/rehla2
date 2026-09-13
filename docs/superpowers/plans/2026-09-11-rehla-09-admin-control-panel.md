@@ -48,6 +48,7 @@
 - Create: `packages/Rehla/Admin/src/Auth/{StaffLogin,TOTPSetup,TOTPChallenge,SensitiveActionReauth}.php`
 - Create: `packages/Rehla/Admin/src/Http/Middleware/{RequireStaffGuard,RequireRecentMfa}.php`
 - Create: `packages/Rehla/Admin/src/Navigation/AuthorizedNavigation.php`
+- Create: `packages/Rehla/Admin/src/Infrastructure/IdentityCatalogAuthorizer.php`
 - Create: `packages/Rehla/Admin/src/Filament/Pages/{Dashboard,Profile,LocaleSwitcher}.php`
 - Create: `packages/Rehla/Admin/tests/Feature/{StaffAccessTest,MfaReauthenticationTest,NavigationAuthorizationTest}.php`
 - Create: `packages/Rehla/Admin/tests/Architecture/AdminPresentationBoundaryTest.php`
@@ -63,6 +64,7 @@
 
 **Interfaces:**
 - Consumes: Identity staff session, `AuthorizesActor`, TOTP and actor context.
+- Implements: Catalog-owned `CatalogAuthorizer` عبر `IdentityCatalogAuthorizer`؛ يبني staff `ActorData` من جلسة الخادم ويطلب `services.manage`. تبقى أوامر Catalog fail-closed قبل تسجيل هذا adapter.
 - Produces: `/admin` panel, staff login/logout, TOTP setup/challenge, locale switch and authorized navigation.
 
 - [ ] **Step 1: Write RED proof**

@@ -26,7 +26,7 @@
 **Task Completeness Contract:**
 - **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
 - **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
-- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Catalog. لا migration أوكتابة خارج المالك.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ Catalog يملك جداول الكتالوج، وتصحيح Documents يوسع قيود جدول `documents` المملوك له فقط. لا كتابة مباشرة بين الحزمتين.
 - **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
 - **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
 - **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
@@ -43,13 +43,32 @@
 
 **Files:**
 - Create: `packages/Rehla/Catalog/src/database/migrations/*_create_catalog_tables.php`
+- Create: `packages/Rehla/Catalog/src/database/migrations/*_protect_fulfillment_policy_versions.php`
 - Create: `packages/Rehla/Catalog/src/Enums/ServiceStatus.php`
-- Create: `packages/Rehla/Catalog/src/Data/{ServiceData,ServiceQuote,ServiceSnapshot,FulfillmentPolicyData}.php`
+- Create: `packages/Rehla/Catalog/src/Data/{ServiceData,ServiceRequirementData,ServiceMediaData,ServiceQuote,ServiceSnapshot,FulfillmentPolicyData}.php`
 - Create: `packages/Rehla/Catalog/src/Actions/{CreateService,UpdateServiceContent,ChangeServicePrice,PublishService,DeactivateService,ReorderServices,SaveFulfillmentPolicyDraft,PublishFulfillmentPolicy}.php`
 - Create: `packages/Rehla/Catalog/src/Queries/{ListPublishedServices,GetServiceDetails,GetCurrentServiceQuote,GetPublishedFulfillmentPolicy}.php`
-- Create: `packages/Rehla/Catalog/src/Contracts/{ServiceCatalog,PublishedFulfillmentPolicyReader}.php`
+- Create: `packages/Rehla/Catalog/src/Contracts/{ServiceCatalog,ServiceQuoteReader,PublishedFulfillmentPolicyReader,CatalogAuthorizer}.php`
+- Create: `packages/Rehla/Catalog/src/Exceptions/{ServiceNotFound,ServiceNotPublishable,FulfillmentPolicyMissing,FulfillmentPolicyInvalid,FulfillmentPolicyImmutable}.php`
+- Modify: `packages/Rehla/Catalog/{composer.json,README.md}`
+- Modify: `packages/Rehla/Catalog/src/Providers/CatalogServiceProvider.php`
+- Modify: `scripts/create-rehla-packages.php`
+- Modify: `packages/Rehla/Documents/src/Enums/DocumentPurpose.php`
+- Modify: `packages/Rehla/Documents/src/Actions/ScanDocument.php`
+- Modify: `packages/Rehla/Documents/src/Providers/DocumentsServiceProvider.php`
+- Create: `packages/Rehla/Documents/src/Contracts/PublicDocuments.php`
+- Create: `packages/Rehla/Documents/src/Actions/AttachPublicDocuments.php`
+- Create: `packages/Rehla/Documents/src/database/migrations/*_enable_public_document_purposes.php`
+- Modify: `packages/Rehla/Documents/README.md`
+- Modify: `config/filesystems.php`
+- Modify: `docs/architecture/rehla-package-contract-map.json`
+- Modify: `docs/requirements/rehla-phase-1-acceptance.csv`
+- Modify: `packages/Rehla/Core/src/Errors/ProblemCode.php`
+- Modify: `packages/Rehla/Core/tests/Unit/ProblemCodeTest.php`
+- Test: `packages/Rehla/Documents/tests/Feature/PublicDocumentLifecycleTest.php`
 - Test: `packages/Rehla/Catalog/tests/Feature/ServiceLifecycleTest.php`
 - Test: `packages/Rehla/Catalog/tests/Integration/PriceHistoryTest.php`
+- Test: `packages/Rehla/Catalog/tests/Integration/FulfillmentPolicyImmutabilityTest.php`
 
 **Mandatory Package Contract — Catalog:**
 - Create/verify: `packages/Rehla/Catalog/composer.json` and `packages/Rehla/Catalog/README.md`.
@@ -63,9 +82,13 @@
 - Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Catalog/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
-- Produces: `ServiceCatalog::currentQuote(string $serviceId): ServiceQuote`.
-- Produces `ServiceQuote(serviceId, priceMinor, currency, quoteVersion, available)` و`ServiceSnapshot(name, descriptions, expectedDuration, notes, requirements)`.
+- Consumes: `CatalogAuthorizer::assertCanManage(string $actorId): void`; العقد مملوك لـCatalog ويفشل مغلقًا حتى يربط Admin adapter في خطته، فتختبر Actions بـfake صريح ولا تستورد Catalog حزمة Identity.
+- Consumes: `PublicDocuments::assertCleanPublic(array $documentIds, string $ownerId, array $requiredPurposes): array<DocumentReference>`؛ يربط المستندات بعد فحصها ونقلها من private staging إلى public disk، داخل معاملة Catalog ومن دون كشف storage key.
+- Produces: `ServiceCatalog::listPublished(int $page, int $perPage): array<ServiceSnapshot>` و`ServiceCatalog::getPublishedBySlug(string $slug): ServiceSnapshot` و`ServiceCatalog::getById(string $serviceId): ServiceSnapshot`.
+- Produces: `ServiceQuoteReader::currentQuote(string $serviceId): ServiceQuote` بواسطة `GetCurrentServiceQuote`.
+- Produces `ServiceQuote(serviceId, priceMinor, currency, quoteVersion, available)` و`ServiceSnapshot(id, slug, name, descriptions, expectedDuration, notes, requirements, media)` كقيم immutable.
 - Produces: `PublishedFulfillmentPolicyReader::forService(string $serviceId): FulfillmentPolicyData`؛ السياسة وإصداراتها مملوكة لـCatalog ولا تعتمد Purchasing على Fulfillment لقراءتها.
+- Mutations: كل Action إدارية تستقبل `actorId` و`correlationId` opaque وتستدعي `CatalogAuthorizer` قبل الكتابة؛ تغييرات السعر والحالة والسياسة تضيف Audit في المعاملة نفسها.
 
 - [ ] **Step 1: اكتب اختبارات lifecycle والسعر**
 
@@ -107,11 +130,13 @@ fulfillment_policy_versions: id, service_id, version, policy jsonb, checksum,
                              published_by, published_at, created_at
 ```
 
-يفرض check أن `price_minor >= 0` و`currency='SDG'`. `ChangeServicePrice` يقفل service، يزيد `price_version`، يحدث السعر، يضيف history وAudit في معاملة واحدة. ينشر `PublishFulfillmentPolicy` نسخة immutable وفق `specs/contracts/service-fulfillment-sop.md`، ويمنع PostgreSQL UPDATE/DELETE للنسخة المنشورة.
+يفرض check أن `price_minor > 0` و`currency='SDG'`. `ChangeServicePrice` يقفل service، يزيد `price_version`، يحدث السعر، يضيف history وAudit في معاملة واحدة. ينشر `PublishFulfillmentPolicy` نسخة immutable وفق `specs/contracts/service-fulfillment-sop.md`، ويمنع PostgreSQL UPDATE/DELETE للنسخة المنشورة.
+
+تضيف تصحيحات Documents الغرضين `service_media` و`bank_logo` بحد 5 MiB وصور JPEG/PNG فقط. يبقى الرفع على private staging؛ بعد نجاح decoder وClamAV يكتب العامل النسخة المنظفة على public disk ثم يعتمد مفتاحها وقرصها بسياج scan، ويحذف المرشح العام إن فقد lease. لا يصبح أي ملف مرفوض أوغير مفحوص متاحًا علنًا. يربط `PublicDocuments` الملفات النظيفة العامة ويمنع المالك الآخر والغرض الخاطئ.
 
 - [ ] **Step 4: أثبت النشر والتعطيل والترتيب**
 
-اختبر منع نشر خدمة بلااسمين أووصف أوrequirement أوسعر أوصورة clean/public. اختبر أن التعطيل يخفي الخدمة من listing ويترك details التاريخية متاحة للعقود الداخلية. اختبر version/checksum وحماية policy المنشورة وبقاء Orders/Executions القديمة على النسخة الملتقطة.
+اختبر منع نشر خدمة بلااسمين أووصف أوrequirement أوسعر أوصورة clean/public. اختبر أن التعطيل يخفي الخدمة من listing ويترك details التاريخية متاحة للعقود الداخلية. اختبر version/checksum وحماية policy المنشورة، وأن العقد يعيد معرف النسخة immutable الذي تلتقطه Purchasing لاحقًا. إثبات بقاء Orders/Executions القديمة على النسخة الملتقطة مؤجل صراحة إلى الخطة 05 حيث تنشأ جداولها.
 
 Run: `php artisan test packages/Rehla/Catalog/tests`
 
