@@ -29,6 +29,7 @@ Only this package may create migrations for or write its owned tables. Consumers
 
 - Authorization denies by default and is enforced by the owning action or query.
 - Customer uploads use the non-public `private` disk with random keys. Magic bytes, decoded image structure, polyglot markers, malware, and size quotas are checked before a document becomes clean.
+- Service media and bank logos remain in private staging until scanning succeeds, then the sanitized image moves to the public disk. `PublicDocuments` attaches only clean public media owned by the caller.
 - Download authorization is repeated for every stream and returns attachment, no-sniff, CSP, and private no-store headers without exposing a path or permanent URL.
 - Transaction participation uses the caller's connection when the contract declares it; this package never commits an outer transaction.
 - External I/O does not run inside a business transaction. Required delivery is recorded through the owner Outbox contract after the relevant plan task exists.

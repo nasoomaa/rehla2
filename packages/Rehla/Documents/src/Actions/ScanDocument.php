@@ -47,11 +47,13 @@ final readonly class ScanDocument
         );
         $result = $structuralResult->clean ? $this->scanner->scan($contents) : $structuralResult;
 
+        $purpose = DocumentPurpose::from($claim['purpose']);
+        $candidateDisk = $result->clean && $purpose->isPublic() ? 'public' : $claim['disk'];
         $candidateContents = $result->clean ? $sanitized : $contents;
-        $candidateKey = ($result->clean ? 'clean/' : 'quarantine/')
+        $candidateKey = ($result->clean ? ($purpose->isPublic() ? 'media/' : 'clean/') : 'quarantine/')
             .OpaqueId::generate()->value()
             .$this->extensionFor($detectedMime !== '' ? $detectedMime : $claim['declared_mime']);
-        if (! $this->filesystems->disk($claim['disk'])->put($candidateKey, $candidateContents)) {
+        if (! $this->filesystems->disk($candidateDisk)->put($candidateKey, $candidateContents)) {
             throw new RuntimeException;
         }
 
@@ -62,10 +64,11 @@ final readonly class ScanDocument
             detectedMime: $detectedMime,
             contents: $candidateContents,
             candidateKey: $candidateKey,
+            candidateDisk: $candidateDisk,
         );
 
         if (! $updated) {
-            $this->filesystems->disk($claim['disk'])->delete($candidateKey);
+            $this->filesystems->disk($candidateDisk)->delete($candidateKey);
 
             return $this->reference($documentId);
         }
@@ -76,7 +79,7 @@ final readonly class ScanDocument
     }
 
     /**
-     * @return array{disk: string, storage_key: string, declared_mime: string, token: string}|null
+     * @return array{disk: string, storage_key: string, declared_mime: string, purpose: string, token: string}|null
      */
     private function claim(string $documentId): ?array
     {
@@ -107,6 +110,7 @@ final readonly class ScanDocument
                 'disk' => (string) $row->disk,
                 'storage_key' => (string) $row->storage_key,
                 'declared_mime' => (string) $row->declared_mime,
+                'purpose' => (string) $row->purpose,
                 'token' => $token,
             ];
         });
@@ -183,6 +187,7 @@ final readonly class ScanDocument
         string $detectedMime,
         string $contents,
         string $candidateKey,
+        string $candidateDisk,
     ): bool {
         return DB::transaction(function () use (
             $documentId,
@@ -191,6 +196,7 @@ final readonly class ScanDocument
             $detectedMime,
             $contents,
             $candidateKey,
+            $candidateDisk,
         ): bool {
             $now = $this->clock->now();
             $values = [
@@ -198,6 +204,7 @@ final readonly class ScanDocument
                 'status' => $result->clean ? DocumentStatus::Clean->value : DocumentStatus::Rejected->value,
                 'rejection_code' => $result->rejectionCode,
                 'storage_key' => $candidateKey,
+                'disk' => $candidateDisk,
                 'size_bytes' => strlen($contents),
                 'sha256' => hash('sha256', $contents),
                 'scan_token' => null,
