@@ -15,7 +15,7 @@
     "Orders": ["Core"],
     "Purchasing": ["Core", "Identity", "Catalog", "Forms", "Travelers", "Documents", "Wallet", "Orders", "Audit", "Notifications"],
     "Fulfillment": ["Core", "Identity", "Orders", "Forms", "Documents", "Purchasing", "Audit", "Notifications"],
-    "Content": ["Core", "Identity", "Audit"],
+    "Content": ["Core", "Audit"],
     "Integrations": ["Core", "Notifications"],
     "Reporting": ["Core", "Identity", "Travelers", "TopUps", "Orders", "Fulfillment"],
     "Web": ["Core", "Identity", "Catalog", "Forms", "Travelers", "Documents", "Wallet", "TopUps", "Orders", "Fulfillment", "Purchasing", "Notifications", "Content", "Integrations"],

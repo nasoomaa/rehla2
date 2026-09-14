@@ -15,7 +15,7 @@ EXPECTED_PACKAGES = {
     "Notifications": ["Core", "Identity", "Audit"],
     "Catalog": ["Core", "Documents", "Audit"],
     "Forms": ["Core", "Catalog", "Audit"],
-    "Content": ["Core", "Identity", "Audit"],
+    "Content": ["Core", "Audit"],
     "TopUps": [
         "Core",
         "Identity",
@@ -320,8 +320,8 @@ def check_dependency_artifacts() -> None:
     validate_package_graph(packages)
     require(len(packages) == 19, f"expected 19 packages, got {len(packages)}")
     require(
-        sum(map(len, packages.values())) == 98,
-        "expected 98 package dependency edges",
+        sum(map(len, packages.values())) == 97,
+        "expected 97 package dependency edges",
     )
 
     contract_map = read_json(
@@ -349,4 +349,4 @@ def check_dependency_artifacts() -> None:
 def check() -> None:
     check_layout(implementation_documents())
     check_dependency_artifacts()
-    print("  19 packages, 98 edges, 98 contract edge records, 0 cycles, 1 owner per table")
+    print("  19 packages, 97 edges, 97 contract edge records, 0 cycles, 1 owner per table")

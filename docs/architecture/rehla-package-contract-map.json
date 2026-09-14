@@ -186,6 +186,12 @@
         "Rehla\\Content\\Contracts\\ContentAdminCommands"
       ]
     },
+    "ContentAuthorizationPort": {
+      "owner": "Content",
+      "namespaces": [
+        "Rehla\\Content\\Contracts\\ContentAuthorizer"
+      ]
+    },
     "TopUpsReader": {
       "owner": "TopUps",
       "namespaces": [
@@ -797,18 +803,6 @@
     },
     {
       "consumer": "Content",
-      "provider": "Identity",
-      "surfaces": [
-        "IdentityAuthorization",
-        "IdentityReader"
-      ],
-      "mode": "sync",
-      "transaction_owner": "Content",
-      "write_rule": "provider_command_only",
-      "failure_rule": "abort_consumer_operation"
-    },
-    {
-      "consumer": "Content",
       "provider": "Audit",
       "surfaces": [
         "AuditWriter"
@@ -1351,7 +1345,8 @@
       "provider": "Content",
       "surfaces": [
         "ContentPublished",
-        "ContentAdmin"
+        "ContentAdmin",
+        "ContentAuthorizationPort"
       ],
       "mode": "sync",
       "transaction_owner": "none",

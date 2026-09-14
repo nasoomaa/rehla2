@@ -16,9 +16,9 @@
 
 | النطاق | الملفات | الأسطر | طريقة الإثبات |
 |---|---:|---:|---|
-| `docs/` و`specs/` عدا manifest الوثائق نفسه | 74 | 18184 | توليد ديناميكي ومقارنة set/line count |
+| `docs/` و`specs/` عدا manifest الوثائق نفسه | 74 | 18212 | توليد ديناميكي ومقارنة set/line count |
 | `.agents/README.md` والمهارات التسع | 10 | 380 | فهرس مساوي للمجلد + validator رسمي ومحلي |
-| الإجمالي المراجع في هذا التدقيق | 84 | 18564 | لا توجد قراءة بالعينة |
+| الإجمالي المراجع في هذا التدقيق | 84 | 18592 | لا توجد قراءة بالعينة |
 
 يحصر [documentation manifest](2026-09-12-rehla-documentation-manifest.csv) كل ملف Markdown/CSV/JSON في `docs/` و`specs/` عدا نفسه. ويحصر manifest الخطط كل ملف Markdown داخل `docs/superpowers/plans`، بينما يثبت مدقق المهارات المجموعة الدقيقة تحت `.agents/skills`.
 
@@ -26,9 +26,9 @@
 
 | # | الخطة | المهام | الحزم المالكة | المتطلبات الأساسية | الحالة |
 |---:|---|---:|---|---|---|
-| 1 | Foundation & Core | 6 | Core | لا توجد؛ قرارات المنتج والخرائط جاهزة | in_progress |
-| 2 | Identity & Platform Services | 5 | Identity, Audit, Documents, Travelers, Notifications | 01 | planned |
-| 3 | Catalog, Forms & Content | 3 | Catalog, Forms, Content | 02 | planned |
+| 1 | Foundation & Core | 6 | Core | لا توجد؛ قرارات المنتج والخرائط جاهزة | completed |
+| 2 | Identity & Platform Services | 5 | Identity, Audit, Documents, Travelers, Notifications | 01 | completed |
+| 3 | Catalog, Forms & Content | 3 | Catalog, Forms, Content | 02 | completed |
 | 4 | Wallet & Top-Ups | 3 | Wallet, TopUps | 03 | planned |
 | 5 | Orders, Purchasing & Fulfillment | 5 | Orders, Purchasing, Fulfillment | 04 | planned |
 | 6 | Reporting & Integrations | 3 | Reporting, Integrations | 05 | planned |
@@ -65,7 +65,7 @@
 | Api | 08 / Task 1 | enforced | 0 |
 | Admin | 09 / Task 1 | enforced | 0 |
 
-النتيجة الآلية: 19 package، 98 dependency edges، 98 contract-edge records، صفر cycles، 40 جدولًا بمالك وكاتب واحد، وصفر runtime paths للحزم خارج `src/`.
+النتيجة الآلية: 19 package، 97 dependency edges، 97 contract-edge records، صفر cycles، 40 جدولًا بمالك وكاتب واحد، وصفر runtime paths للحزم خارج `src/`.
 
 ## اكتمال Web وAPI وAdmin
 
@@ -143,7 +143,7 @@
 python3 -m unittest discover -s tests/documentation -v
   PASS: 38 tests
 python3 -m scripts.docs_checks.run --group package
-  PASS: 19 packages, 98 edges, 98 contracts, 0 cycles, 1 owner per table
+  PASS: 19 packages, 97 edges, 97 contracts, 0 cycles, 1 owner per table
 python3 -m scripts.docs_checks.run --group api
   PASS: 28/28 operations in spec, architecture, and plan
 python3 -m scripts.docs_checks.run --group semantics

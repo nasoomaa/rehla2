@@ -3418,9 +3418,10 @@
             "dist": {
                 "type": "path",
                 "url": "packages/Rehla/Catalog",
-                "reference": "87cd175e2075f7d8e95b0d7ff7e425005f20cd67"
+                "reference": "72e9f2e02cc5d8be9ef6df3f59d800a0448c20be"
             },
             "require": {
+                "illuminate/database": "^13.0",
                 "illuminate/support": "^13.0",
                 "php": "^8.5",
                 "rehla/audit": "@dev",
@@ -3460,14 +3461,14 @@
             "dist": {
                 "type": "path",
                 "url": "packages/Rehla/Content",
-                "reference": "41bd45501649e26733b7a74afba13e8d9534b0aa"
+                "reference": "099e90705e8a690a913755884f445b654f3195de"
             },
             "require": {
+                "illuminate/database": "^13.0",
                 "illuminate/support": "^13.0",
                 "php": "^8.5",
                 "rehla/audit": "@dev",
-                "rehla/core": "@dev",
-                "rehla/identity": "@dev"
+                "rehla/core": "@dev"
             },
             "type": "library",
             "extra": {
@@ -3541,14 +3542,17 @@
             "dist": {
                 "type": "path",
                 "url": "packages/Rehla/Documents",
-                "reference": "3b6212e7a66bfc55bb49c8abff4b3eda65f0178b"
+                "reference": "fbff3ad5ec67f3a060ba32be7353adc6ecb7cab5"
             },
             "require": {
+                "illuminate/database": "^13.0",
+                "illuminate/filesystem": "^13.0",
                 "illuminate/support": "^13.0",
                 "php": "^8.5",
                 "rehla/audit": "@dev",
                 "rehla/core": "@dev",
-                "rehla/identity": "@dev"
+                "rehla/identity": "@dev",
+                "symfony/http-foundation": "^8.0"
             },
             "type": "library",
             "extra": {
@@ -3583,9 +3587,10 @@
             "dist": {
                 "type": "path",
                 "url": "packages/Rehla/Forms",
-                "reference": "a451f07b0af32795486944813d79604d6da49d54"
+                "reference": "30035285a3814e3d0094b6519cdda1b03f9ccc6a"
             },
             "require": {
+                "illuminate/database": "^13.0",
                 "illuminate/support": "^13.0",
                 "php": "^8.5",
                 "rehla/audit": "@dev",
@@ -3672,9 +3677,12 @@
             "dist": {
                 "type": "path",
                 "url": "packages/Rehla/Identity",
-                "reference": "b5adaadf27a56ec5146b48c850a754c9b3157bfb"
+                "reference": "4074b426117b00837fdc9cfa3da33f3335131c13"
             },
             "require": {
+                "illuminate/auth": "^13.0",
+                "illuminate/database": "^13.0",
+                "illuminate/hashing": "^13.0",
                 "illuminate/support": "^13.0",
                 "php": "^8.5",
                 "rehla/audit": "@dev",
@@ -3754,9 +3762,10 @@
             "dist": {
                 "type": "path",
                 "url": "packages/Rehla/Notifications",
-                "reference": "bc051a03a8a3d849f6662d2b368920f99e7cf980"
+                "reference": "473e8ecf9e8ccf0be736883119013e256cc3aaae"
             },
             "require": {
+                "illuminate/database": "^13.0",
                 "illuminate/support": "^13.0",
                 "php": "^8.5",
                 "rehla/audit": "@dev",
@@ -3975,9 +3984,10 @@
             "dist": {
                 "type": "path",
                 "url": "packages/Rehla/Travelers",
-                "reference": "c53fa17fd6a2c7299908202fedddd375dce835ae"
+                "reference": "9a519da762929199b46581f20a01b75cee32e330"
             },
             "require": {
+                "illuminate/database": "^13.0",
                 "illuminate/support": "^13.0",
                 "php": "^8.5",
                 "rehla/audit": "@dev",

@@ -94,8 +94,8 @@ it('keeps every acceptance row unique complete and in a legal state', function (
     $records = acceptanceRecords();
     $ids = $records->pluck('acceptance_id');
 
-    expect($records)->toHaveCount(208)
-        ->and($ids->unique())->toHaveCount(208);
+    expect($records)->toHaveCount(209)
+        ->and($ids->unique())->toHaveCount(209);
 
     foreach ($records as $record) {
         expect($record['source_requirement'])->toMatch('/^R(?:0[1-9]|[1-5][0-9]|6[0-5])$/')

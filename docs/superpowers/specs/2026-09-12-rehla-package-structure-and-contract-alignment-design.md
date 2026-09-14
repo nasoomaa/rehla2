@@ -172,7 +172,7 @@ packages/Rehla/Web/
 | `Notifications` | `Core`, `Identity`, `Audit` |
 | `Catalog` | `Core`, `Documents`, `Audit` |
 | `Forms` | `Core`, `Catalog`, `Audit` |
-| `Content` | `Core`, `Identity`, `Audit` |
+| `Content` | `Core`, `Audit` |
 | `TopUps` | `Core`, `Identity`, `Documents`, `Wallet`, `Audit`, `Notifications` |
 | `Orders` | `Core` |
 | `Purchasing` | `Core`, `Identity`, `Catalog`, `Forms`, `Travelers`, `Documents`, `Wallet`, `Orders`, `Audit`, `Notifications` |

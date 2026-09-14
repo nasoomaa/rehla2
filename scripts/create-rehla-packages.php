@@ -299,6 +299,9 @@ foreach ($packageMap['packages'] as $package => $dependencies) {
     if ($package === 'Forms') {
         $requires['illuminate/database'] = '^13.0';
     }
+    if ($package === 'Content') {
+        $requires['illuminate/database'] = '^13.0';
+    }
     foreach ($dependencies as $dependency) {
         $requires['rehla/'.strtolower($dependency)] = '@dev';
     }

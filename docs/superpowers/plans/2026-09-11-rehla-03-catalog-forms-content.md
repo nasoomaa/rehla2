@@ -64,6 +64,7 @@
 - Modify: `docs/architecture/rehla-package-contract-map.json`
 - Modify: `docs/requirements/rehla-phase-1-acceptance.csv`
 - Modify: `tests/Architecture/AcceptanceRegisterTest.php`
+- Modify: `tests/Architecture/AcceptanceRegisterTest.php`
 - Modify: `packages/Rehla/Core/src/Errors/ProblemCode.php`
 - Modify: `packages/Rehla/Core/tests/Unit/ProblemCodeTest.php`
 - Test: `packages/Rehla/Documents/tests/Feature/PublicDocumentLifecycleTest.php`
@@ -280,7 +281,7 @@ git commit -m "feat(forms): add immutable service form versions"
 **Task Completeness Contract:**
 - **Files:** القائمة التالية exhaustive لهذه المهمة؛ أي ملف إنتاجي إضافي يحدث الخطة وسجل القبول أولًا.
 - **Contracts:** قسم Interfaces أدناه يحدد المدخلات والمخرجات؛ لا Models قابلة للتعديل ولا عقد غير مسجل في خريطة الحواف.
-- **Database ownership:** `table-ownership.json` هو المرجع؛ النطاق المكتشف: Catalog, Content, Forms. لا migration أوكتابة خارج المالك.
+- **Database ownership:** `table-ownership.json` هو المرجع؛ Content وحده يملك `content_pages`. لا migration أوكتابة خارج المالك.
 - **Authorization:** deny-by-default مع owner/other-account وstaff ability حيث ينطبقان، ولا تعتمد الحماية على الواجهة وحدها.
 - **Localization:** كل نص ظاهر يستخدم مفاتيح EN/AR متكافئة في حزمة المالك، ورموز API محايدة لغويًا.
 - **Error codes:** أخطاء المجال العامة lower dot notation ومسجلة في Core/Problem Details؛ لا رسائل أوexceptions داخلية كهوية عامة.
@@ -290,7 +291,7 @@ git commit -m "feat(forms): add immutable service form versions"
 - **RED:** أول خطوة سلوكية تشغل اختبارًا يفشل للسبب المتوقع المحدد، لا بسبب bootstrap أوfixture مكسور.
 - **GREEN:** أقل تنفيذ ينجح الاختبار المركز مع PostgreSQL عندما توجد معاملة أوقيد أوتزامن.
 - **Expanded verification:** اختبارات الحزمة والمستهلكين وArchitecture ثم formatter وإعادة الاختبارات المتأثرة؛ لا يغلق الصف من اختبار مركز فقط.
-- **Acceptance IDs:** `R07, R08, R09, R27, R41, R42, R49 (supporting evidence)`؛ يسجل كل ID command وtest name ونتيجة ومسار artifact قبل `verified`.
+- **Acceptance IDs:** `R50 (supporting localization evidence)`؛ يسجل command وtest name ونتيجة ومسار artifact قبل `verified`.
 - **Recovery:** تعطيل المسار أوforward-only correction للسجلات الثابتة؛ لا rollback مدمر لـLedger/Audit/Orders/FormVersions أوblobs مرتبطة.
 - **Commit:** الالتزام المحدد آخر المهمة بعد GREEN والتحقق الموسع و`git diff --check`، ولا يضم تغييرات مهمة أخرى.
 
@@ -298,10 +299,32 @@ git commit -m "feat(forms): add immutable service form versions"
 **Files:**
 - Create: `packages/Rehla/Content/src/database/migrations/*_create_content_pages.php`
 - Create: `packages/Rehla/Content/src/Enums/PageStatus.php`
-- Create: `packages/Rehla/Content/src/Data/PageData.php`
-- Create: `packages/Rehla/Content/src/Actions/{CreatePage,UpdatePage,PublishPage}.php`
+- Create: `packages/Rehla/Content/src/Data/{PageInputData,PageData}.php`
+- Create: `packages/Rehla/Content/src/Actions/{CreatePage,UpdatePage,PublishPage,ContentAdminActions}.php`
 - Create: `packages/Rehla/Content/src/Queries/GetPublishedPage.php`
+- Create: `packages/Rehla/Content/src/Contracts/{PublishedContentReader,ContentAdminCommands,ContentAuthorizer}.php`
+- Create: `packages/Rehla/Content/src/Exceptions/{ContentPageNotFound,ContentSlugExists,ContentValidationFailed}.php`
+- Create: `packages/Rehla/Content/src/Support/HtmlSanitizer.php`
+- Modify: `packages/Rehla/Content/{composer.json,README.md}`
+- Modify: `composer.lock` (synchronize local path-package metadata for completed plans 01–03)
+- Modify: `packages/Rehla/Content/src/Providers/ContentServiceProvider.php`
+- Modify: `packages/Rehla/Content/src/resources/lang/{en,ar}/messages.php`
+- Modify: `packages/Rehla/Core/src/Errors/ProblemCode.php`
+- Modify: `packages/Rehla/Core/tests/Unit/ProblemCodeTest.php`
+- Modify: `scripts/create-rehla-packages.php`
+- Modify: `docs/architecture/rehla-package-contract-map.json`
+- Modify: `docs/architecture/rehla-package-map.json`
+- Modify: `docs/architecture/rehla-plan-contract.json`
+- Modify: `docs/REHLA-LARAVEL-PACKAGE-ARCHITECTURE.md`
+- Modify: `docs/superpowers/specs/2026-09-12-rehla-package-structure-and-contract-alignment-design.md`
+- Modify: `docs/superpowers/plans/2026-09-12-rehla-package-structure-and-contract-alignment.md`
+- Modify: `docs/superpowers/plans/2026-09-11-rehla-09-admin-control-panel.md`
+- Modify: `docs/superpowers/plans/2026-09-12-rehla-plan-manifest.csv`
+- Modify: `docs/requirements/rehla-phase-1-acceptance.csv`
+- Modify: `docs/reviews/{2026-09-12-rehla-build-plans-and-agent-skills-audit.md,2026-09-12-rehla-package-contract-alignment-audit.md,2026-09-12-rehla-documentation-manifest.csv}`
+- Modify: `scripts/docs_checks/package_architecture.py`
 - Test: `packages/Rehla/Content/tests/Feature/ContentPublishingTest.php`
+- Test: `packages/Rehla/Content/tests/Unit/HtmlSanitizerTest.php`
 
 **Mandatory Package Contract — Content:**
 - Create/verify: `packages/Rehla/Content/composer.json` and `packages/Rehla/Content/README.md`.
@@ -315,30 +338,37 @@ git commit -m "feat(forms): add immutable service form versions"
 - Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Content/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
-- Produces: `GetPublishedPage::handle(string $slug, string $locale): PageData` مع fallback إلى الإنجليزية.
+- Consumes: `ContentAuthorizer::assertCanManage(string $actorId): void`؛ العقد مملوك لـContent ويفشل مغلقًا حتى يربط Admin adapter في خطته.
+- Produces: `PublishedContentReader::getBySlug(string $slug, string $locale): PageData` بواسطة `GetPublishedPage`؛ يعيد `locale` و`direction` ولا يكشف المسودات.
+- Produces: `ContentAdminCommands` بواسطة `ContentAdminActions` للإنشاء والتعديل والنشر دون إعادة Model قابل للتعديل.
+- `PageInputData` يفرض slug صالحًا، عنواني EN/AR، جسمي EN/AR، وحقول SEO ثنائية اللغة؛ `HtmlSanitizer` ينظف HTML في الخادم قبل التخزين.
+- كل Action إدارية تستقبل `actorId` و`correlationId` opaque وتستدعي `ContentAuthorizer` قبل الكتابة وتسجل Audit في معاملة Content نفسها.
+- لا تعتمد Content على Identity مباشرة؛ يترجم Admin جلسة الموظف وقرار Identity إلى المنفذ المملوك لـContent مثل منافذ Catalog وForms.
 
-- [ ] **Step 1: اكتب اختبار النشر والترجمة**
+- [x] **Step 1: اكتب اختبار النشر والترجمة**
 
 ```php
-it('returns Arabic content and falls back to English when a field is empty', function (): void {
-    publishPage(slug: 'home', titleEn: 'Travel services', titleAr: 'خدمات السفر', bodyEn: 'Welcome', bodyAr: '');
+it('returns complete Arabic content with its rtl direction', function (): void {
+    publishPage(slug: 'home', titleEn: 'Travel services', titleAr: 'خدمات السفر', bodyEn: 'Welcome', bodyAr: 'مرحبًا');
 
     $page = app(GetPublishedPage::class)->handle('home', 'ar');
-    expect($page->title)->toBe('خدمات السفر')->and($page->body)->toBe('Welcome');
+    expect($page->title)->toBe('خدمات السفر')
+        ->and($page->body)->toBe('مرحبًا')
+        ->and($page->direction)->toBe('rtl');
 });
 ```
 
-- [ ] **Step 2: شغل RED**
+- [x] **Step 2: شغل RED**
 
 Run: `php artisan test packages/Rehla/Content/tests`
 
 Expected: FAIL قبل schema.
 
-- [ ] **Step 3: نفذ pages وAudit**
+- [x] **Step 3: نفذ pages وAudit**
 
-أنشئ `content_pages(id, slug unique, title_en, title_ar, body_en, body_ar, status, published_at, updated_by, timestamps)`. نظف HTML عبر allowlist تمنع script وevent attributes وjavascript URLs. تسجل create/update/publish عبر AuditWriter.
+أنشئ `content_pages(id, slug unique, title_en, title_ar, body_en, body_ar, meta_title_en, meta_title_ar, meta_description_en, meta_description_ar, status, published_at, updated_by, timestamps)`. نظف HTML عبر allowlist تمنع script وiframe وevent attributes وjavascript URLs. تسجل create/update/publish عبر AuditWriter. يرفض النشر أي نقص في عنوان أوbody بالإنجليزية أوالعربية؛ fallback الإنجليزي محصور في نصوص الواجهة أوحقول SEO الاختيارية ولا يسمح بنشر محتوى أساسي ناقص.
 
-- [ ] **Step 4: اختبر الأمان وRTL contract**
+- [x] **Step 4: اختبر الأمان وRTL contract**
 
 اختبر إزالة `<script>` و`onclick`، ومنع موظف بلا`content.manage`، وإرجاع locale وdirection الصحيحين في DTO.
 
@@ -346,7 +376,7 @@ Run: `php artisan test packages/Rehla/Content/tests`
 
 Expected: PASS.
 
-- [ ] **Step 5: شغل بوابة الخطة وCommit**
+- [x] **Step 5: شغل بوابة الخطة وCommit**
 
 Run: `composer verify && git diff --check`
 

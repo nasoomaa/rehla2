@@ -17,6 +17,9 @@ enum ProblemCode: string
     case FormSchemaIntegrityFailed = 'form.schema_integrity_failed';
     case FormNotFound = 'form.not_found';
     case FormDraftNotFound = 'form.draft_not_found';
+    case ContentPageNotFound = 'content.page_not_found';
+    case ContentSlugExists = 'content.slug_exists';
+    case ContentValidationFailed = 'content.validation_failed';
     case TravelerPassportConflict = 'traveler.passport_conflict';
     case TravelerNotFound = 'traveler.not_found';
     case TravelerInvalidDates = 'traveler.invalid_dates';
