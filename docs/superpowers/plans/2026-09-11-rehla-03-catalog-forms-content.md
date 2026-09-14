@@ -63,6 +63,7 @@
 - Modify: `config/filesystems.php`
 - Modify: `docs/architecture/rehla-package-contract-map.json`
 - Modify: `docs/requirements/rehla-phase-1-acceptance.csv`
+- Modify: `tests/Architecture/AcceptanceRegisterTest.php`
 - Modify: `packages/Rehla/Core/src/Errors/ProblemCode.php`
 - Modify: `packages/Rehla/Core/tests/Unit/ProblemCodeTest.php`
 - Test: `packages/Rehla/Documents/tests/Feature/PublicDocumentLifecycleTest.php`
@@ -174,12 +175,23 @@ git commit -m "feat(catalog): add service lifecycle prices and requirements"
 - Create: `packages/Rehla/Forms/src/database/migrations/*_protect_published_form_versions.php`
 - Create: `packages/Rehla/Forms/src/Enums/{FieldType,FormVersionStatus}.php`
 - Create: `packages/Rehla/Forms/src/Data/{FormFieldData,PublishedFormData,ValidatedSubmission}.php`
-- Create: `packages/Rehla/Forms/src/Actions/{CreateFormDraft,UpdateFormDraft,PublishFormVersion}.php`
-- Create: `packages/Rehla/Forms/src/Queries/GetPublishedForm.php`
-- Create: `packages/Rehla/Forms/src/Contracts/FormSubmissionValidator.php`
+- Create: `packages/Rehla/Forms/src/Actions/{CreateFormDraft,UpdateFormDraft,PublishFormVersion,FormAdminActions}.php`
+- Create: `packages/Rehla/Forms/src/Queries/{GetPublishedForm,ValidateFormSubmission}.php`
+- Create: `packages/Rehla/Forms/src/Contracts/{PublishedFormReader,FormSubmissionValidator,FormAdminCommands,FormsAuthorizer}.php`
+- Create: `packages/Rehla/Forms/src/Exceptions/{FormDraftNotFound,FormNotFound,FormSchemaIntegrityFailed,FormValidationFailed,FormVersionOutdated}.php`
+- Modify: `packages/Rehla/Forms/{composer.json,README.md}`
+- Modify: `packages/Rehla/Forms/src/Providers/FormsServiceProvider.php`
+- Modify: `packages/Rehla/Forms/src/resources/lang/{en,ar}/messages.php`
+- Modify: `packages/Rehla/Core/src/Errors/ProblemCode.php`
+- Modify: `packages/Rehla/Core/tests/Unit/ProblemCodeTest.php`
+- Modify: `scripts/create-rehla-packages.php`
+- Modify: `docs/architecture/rehla-package-contract-map.json`
+- Modify: `docs/superpowers/plans/2026-09-11-rehla-09-admin-control-panel.md`
+- Modify: `docs/requirements/rehla-phase-1-acceptance.csv`
 - Test: `packages/Rehla/Forms/tests/Feature/FormPublishingTest.php`
 - Test: `packages/Rehla/Forms/tests/Integration/PublishedFormImmutabilityTest.php`
 - Test: `packages/Rehla/Forms/tests/Unit/FieldValidationTest.php`
+- Test support remains local to each listed test file so every focused command runs independently.
 
 **Mandatory Package Contract — Forms:**
 - Create/verify: `packages/Rehla/Forms/composer.json` and `packages/Rehla/Forms/README.md`.
@@ -193,15 +205,17 @@ git commit -m "feat(catalog): add service lifecycle prices and requirements"
 - Acceptance coverage: `سجل القبول الذري المرتبط بعقود هذه الحزمة`. يبدأ التنفيذ بـRED محدد، ثم `php artisan test packages/Rehla/Forms/tests`، ثم `php artisan test packages/Rehla tests/Architecture`، ثم formatter وإعادة الاختبارات المتأثرة قبل commit.
 
 **Interfaces:**
-- Produces: `GetPublishedForm::handle(string $serviceId): PublishedFormData`.
+- Consumes: `FormsAuthorizer::assertCanDraft(string $actorId): void` و`assertCanPublish(string $actorId): void`؛ العقد مملوك لـForms ويفشل مغلقًا حتى يربط Admin adapter في خطته.
+- Produces: `PublishedFormReader::forService(string $serviceId): PublishedFormData` بواسطة `GetPublishedForm`.
 - Produces: `FormSubmissionValidator::validate(string $formVersionId, array $answers): ValidatedSubmission`؛ يعيد answers مطبعة ومراجع `document_id` opaque وتصنيفاتها المطلوبة دون استدعاء Documents.
+- Produces: `FormAdminCommands` بواسطة `FormAdminActions` كواجهة إدارية للأوامر الثلاثة، وتستدعي كل Action منفذ التفويض المناسب قبل الكتابة وتسجل Audit في المعاملة نفسها.
 
-- [ ] **Step 1: اكتب data set لكل الأنواع الأحد عشر**
+- [x] **Step 1: اكتب data set لكل الأنواع الأحد عشر**
 
 ```php
 dataset('form field types', [
     'short_text', 'long_text', 'email', 'phone', 'number', 'date',
-    'select', 'radio', 'checkbox', 'file', 'image',
+    'dropdown', 'radio', 'checkbox', 'file_upload', 'image_upload',
 ]);
 
 it('round-trips and validates every field type', function (string $type): void {
@@ -211,42 +225,42 @@ it('round-trips and validates every field type', function (string $type): void {
 })->with('form field types');
 ```
 
-- [ ] **Step 2: شغل RED**
+- [x] **Step 2: شغل RED**
 
 Run: `php artisan test packages/Rehla/Forms/tests`
 
 Expected: FAIL لكل الأنواع قبل التنفيذ.
 
-- [ ] **Step 3: أنشئ form schema ثابتًا**
+- [x] **Step 3: أنشئ form schema ثابتًا**
 
-أنشئ `form_drafts(id, service_id unique, schema jsonb, updated_by, timestamps)` و`form_versions(id, service_id, version, schema jsonb, checksum char(64), status, published_by, published_at, created_at)` مع unique `(service_id,version)` وإصدار published واحد حالي لكل خدمة عبر partial unique index.
+أنشئ `form_drafts(id, service_id unique, schema jsonb, current_version_id nullable unique, updated_by, timestamps)` و`form_versions(id, service_id, version, schema jsonb, checksum char(64), status='published', published_by, published_at, created_at)` مع unique `(service_id,version)`. يبقى مؤشر النسخة الحالية في `form_drafts.current_version_id` القابل للتعديل؛ لا تتغير نسخة منشورة سابقة عند نشر نسخة أحدث.
 
 يمثل كل field بهذه المفاتيح المحددة:
 
 ```json
 {
   "key": "passport_scan",
-  "type": "file",
+  "type": "file_upload",
   "label": {"en": "Passport scan", "ar": "صورة الجواز"},
   "order": 10,
   "required": true,
   "helper": {"en": "Upload a clear copy", "ar": "ارفع نسخة واضحة"},
   "options": [],
-  "validation": {"document_purpose": "passport", "max_files": 1}
+  "validation": {"document_purpose": "passport_scan", "max_files": 1}
 }
 ```
 
-`select` و`radio` يحتاجان options غير فارغة وفريدة. يتحقق Forms في file/image من cardinality وصيغة opaque `document_id` فقط ويستخرج purpose/mime المطلوبة في `ValidatedSubmission`؛ لا يعتمد Forms على Documents ولا يفحص الملكية أو`clean`. تستدعي Purchasing لاحقًا `OwnedDocuments::assertCleanOwned`. بقية الأنواع تستخدم validators صريحة لا نصوص قواعد قابلة للتنفيذ من admin.
+`dropdown` و`radio` يحتاجان options ثنائية اللغة غير فارغة وفريدة. يتحقق Forms في `file_upload/image_upload` من cardinality وصيغة opaque `document_id` فقط ويستخرج purpose/mime المطلوبة في `ValidatedSubmission`؛ لا يعتمد Forms على Documents ولا يفحص الملكية أو`clean`. تستدعي Purchasing لاحقًا `OwnedDocuments::assertCleanOwned`. بقية الأنواع تستخدم validators صريحة وregex من allowlist ثابتة، لا نصوص قواعد قابلة للتنفيذ من admin.
 
-- [ ] **Step 4: أضف حماية PostgreSQL للمنشور**
+- [x] **Step 4: أضف حماية PostgreSQL للمنشور**
 
-أضف trigger يمنع UPDATE وDELETE عندما `OLD.status='published'`. النشر ينسخ draft إلىصف جديد، يرتب المفاتيح قبل SHA-256، ولا يعيد استعمال صف سابق.
+أضف trigger يمنع UPDATE وDELETE لكل صف في `form_versions`. النشر يقفل صف draft، ينسخه إلىصف جديد، يرتب مفاتيح objects تكراريًا قبل SHA-256، ثم يحرك `current_version_id` دون تعديل النسخة السابقة ولا إعادة استعمال صف سابق.
 
 Run: `php artisan test packages/Rehla/Forms/tests/Integration/PublishedFormImmutabilityTest.php`
 
 Expected: UPDATE/DELETE المباشران يفشلان، والنشر الجديد لا يغير checksum القديم.
 
-- [ ] **Step 5: أثبت validation الكامل**
+- [x] **Step 5: أثبت validation الكامل**
 
 اختبر label ثنائي اللغة، order فريد، required/optional، helper، options، min/max/regex allowlist، email/phone/date/number، image purpose وfile purpose، ومفاتيح answers غير المعرفة.
 
@@ -254,7 +268,7 @@ Run: `php artisan test packages/Rehla/Forms/tests`
 
 Expected: PASS لكل R08 وR09 وR27 وR42.
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/Rehla/Forms docs/requirements/rehla-phase-1-acceptance.csv

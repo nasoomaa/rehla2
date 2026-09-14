@@ -66,8 +66,8 @@ it('maps every product section and mandatory atomic family', function (): void {
         'R08' => [
             'FormFieldType::short_text', 'FormFieldType::long_text', 'FormFieldType::email',
             'FormFieldType::phone', 'FormFieldType::number', 'FormFieldType::date',
-            'FormFieldType::select', 'FormFieldType::radio', 'FormFieldType::checkbox',
-            'FormFieldType::file', 'FormFieldType::image', 'FormField::label',
+            'FormFieldType::dropdown', 'FormFieldType::radio', 'FormFieldType::checkbox',
+            'FormFieldType::file_upload', 'FormFieldType::image_upload', 'FormField::label',
             'FormField::displayOrder', 'FormField::required', 'FormField::helperText',
             'FormField::options', 'FormField::validationRules',
         ],

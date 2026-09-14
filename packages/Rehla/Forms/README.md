@@ -23,15 +23,18 @@ Only this package may create migrations for or write its owned tables. Consumers
 - `FormsValidator`: `Rehla\Forms\Contracts\FormSubmissionValidator`
 - `FormsAdmin`: `Rehla\Forms\Contracts\FormAdminCommands`
 
-These are contract-map declarations for later owner tasks; the Foundation scaffold does not implement domain behavior prematurely.
+`PublishedFormReader` returns the current immutable form version. `FormSubmissionValidator` validates answers against that exact current version and returns normalized answers plus opaque document references and required classifications. `FormAdminCommands` exposes draft creation, draft updates, and publication without exposing mutable database models.
+
+`FormsAuthorizer` is an inbound Forms-owned port. It remains unbound in this package, so administrative commands fail closed until Admin provides its Identity-backed adapter.
 
 ## Runtime contract
 
-- Authorization denies by default and is enforced by the owning action or query.
-- Transaction participation uses the caller's connection when the contract declares it; this package never commits an outer transaction.
-- External I/O does not run inside a business transaction. Required delivery is recorded through the owner Outbox contract after the relevant plan task exists.
-- Public error identities use stable lowercase dot notation. Internal exceptions and messages are not public identities.
-- Recovery disables the affected path or applies a forward-only correction after immutable records exist.
+- Draft and publish commands call the matching `FormsAuthorizer` ability before writing. Public reads and validation require the current published pointer.
+- Forms owns draft and publication transactions. Audit appends on the same database connection and does not commit internally.
+- Forms performs no external I/O and never queries Documents. File answers are UUID-shaped opaque references; Purchasing later verifies ownership, scan state, purpose, MIME, and attachment eligibility.
+- Public errors use `form.version_outdated`, `form.validation_failed`, `form.schema_integrity_failed`, and non-enumerating not-found codes.
+- Every publication inserts a new sequential version with canonical SHA-256 checksum. PostgreSQL rejects update and delete for every `form_versions` row; the mutable draft stores the current-version pointer.
+- Recovery publishes a forward-only corrected version and moves the draft pointer. Historical versions are never rewritten or deleted.
 
 ## Localization
 

@@ -12,7 +12,11 @@ enum ProblemCode: string
     case ServicePriceChanged = 'service.price_changed';
     case ServiceFulfillmentPolicyMissing = 'service.fulfillment_policy_missing';
     case FulfillmentPolicyImmutable = 'fulfillment.policy_immutable';
-    case FormVersionChanged = 'form.version_changed';
+    case FormVersionOutdated = 'form.version_outdated';
+    case FormValidationFailed = 'form.validation_failed';
+    case FormSchemaIntegrityFailed = 'form.schema_integrity_failed';
+    case FormNotFound = 'form.not_found';
+    case FormDraftNotFound = 'form.draft_not_found';
     case TravelerPassportConflict = 'traveler.passport_conflict';
     case TravelerNotFound = 'traveler.not_found';
     case TravelerInvalidDates = 'traveler.invalid_dates';

@@ -168,6 +168,12 @@
         "Rehla\\Forms\\Contracts\\FormAdminCommands"
       ]
     },
+    "FormsAuthorizationPort": {
+      "owner": "Forms",
+      "namespaces": [
+        "Rehla\\Forms\\Contracts\\FormsAuthorizer"
+      ]
+    },
     "ContentPublished": {
       "owner": "Content",
       "namespaces": [
@@ -1250,7 +1256,8 @@
       "provider": "Forms",
       "surfaces": [
         "FormsPublished",
-        "FormsAdmin"
+        "FormsAdmin",
+        "FormsAuthorizationPort"
       ],
       "mode": "sync",
       "transaction_owner": "none",
@@ -1407,6 +1414,13 @@
       "port": "Rehla\\Catalog\\Contracts\\CatalogAuthorizer",
       "owner": "Catalog",
       "implemented_by": "Rehla\\Admin\\Infrastructure\\IdentityCatalogAuthorizer",
+      "binding_provider": "Rehla\\Admin\\Providers\\AdminServiceProvider",
+      "transaction_owner": "none"
+    },
+    {
+      "port": "Rehla\\Forms\\Contracts\\FormsAuthorizer",
+      "owner": "Forms",
+      "implemented_by": "Rehla\\Admin\\Infrastructure\\IdentityFormsAuthorizer",
       "binding_provider": "Rehla\\Admin\\Providers\\AdminServiceProvider",
       "transaction_owner": "none"
     }
